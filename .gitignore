@@ -1,0 +1,36 @@
+node_modules/
+dist/
+.env
+.env.local
+*.session
+*.session-journal
+
+# Expo
+.expo/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+
+# iOS
+ios/
+*.xcworkspace
+*.xcodeproj
+
+# Android
+android/
+*.apk
+*.aab
+
+# Drizzle
+drizzle/meta/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Telegram
+telegram_messages.json
+telegram_fetch.py

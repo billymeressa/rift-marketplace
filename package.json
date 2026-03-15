@@ -1,0 +1,8 @@
+{
+  "name": "xz-marketplace",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ]
+}
