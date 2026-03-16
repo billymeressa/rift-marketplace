@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/client.js';
-import { users, listings } from '../db/schema.js';
-import { eq, desc, and } from 'drizzle-orm';
+import { users, listings, orders, reviews, sellerVerifications } from '../db/schema.js';
+import { eq, desc, and, sql } from 'drizzle-orm';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
@@ -99,6 +99,69 @@ router.get('/:id/listings', async (req, res) => {
   } catch (error) {
     console.error('Get user listings error:', error);
     res.status(500).json({ error: 'Failed to fetch listings' });
+  }
+});
+
+// GET /users/:id/trust - Computed trust score
+router.get('/:id/trust', async (req, res) => {
+  try {
+    const [user] = await db
+      .select({ createdAt: users.createdAt })
+      .from(users)
+      .where(eq(users.id, req.params.id))
+      .limit(1);
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const [[verification], [orderCount], [reviewStats]] = await Promise.all([
+      db.select({ status: sellerVerifications.verificationStatus })
+        .from(sellerVerifications)
+        .where(eq(sellerVerifications.userId, req.params.id))
+        .limit(1),
+      db.select({ count: sql<number>`count(*)::int` })
+        .from(orders)
+        .where(and(
+          sql`(${orders.buyerId} = ${req.params.id} OR ${orders.sellerId} = ${req.params.id})`,
+          eq(orders.status, 'completed')
+        )),
+      db.select({
+          avg: sql<number>`round(avg(${reviews.rating})::numeric, 1)`,
+          count: sql<number>`count(*)::int`,
+        })
+        .from(reviews)
+        .where(eq(reviews.revieweeId, req.params.id)),
+    ]);
+
+    const isVerified = verification?.status === 'verified';
+    const isPending = verification?.status === 'pending';
+    const completedOrders = orderCount?.count ?? 0;
+    const averageRating = reviewStats?.avg ? Number(reviewStats.avg) : null;
+    const totalReviews = reviewStats?.count ?? 0;
+    const memberSinceDays = Math.floor(
+      (Date.now() - user.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+    );
+
+    // Trust score: 0-100
+    const verificationPoints = isVerified ? 30 : isPending ? 10 : 0;
+    const orderPoints = Math.min(completedOrders * 3, 30);
+    const ratingPoints = averageRating ? (averageRating / 5) * 25 : 0;
+    const agePoints = Math.min(memberSinceDays / 30, 15);
+    const overallScore = Math.round(verificationPoints + orderPoints + ratingPoints + agePoints);
+
+    res.json({
+      overallScore,
+      isVerified,
+      completedOrders,
+      averageRating,
+      totalReviews,
+      memberSinceDays,
+    });
+  } catch (error) {
+    console.error('Get trust score error:', error);
+    res.status(500).json({ error: 'Failed to compute trust score' });
   }
 });
 

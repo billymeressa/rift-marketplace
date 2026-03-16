@@ -24,6 +24,28 @@ export type {
   UpdateProfileInput,
 } from './types/auth';
 
+export type {
+  OrderStatus,
+  EscrowStatus,
+  StatusHistoryEntry,
+  Order,
+  CreateOrderInput,
+  CounterOrderInput,
+} from './types/order';
+
+export type {
+  VerificationStatus,
+  BusinessType,
+  SellerVerification,
+  SubmitVerificationInput,
+} from './types/verification';
+
+export type {
+  Review,
+  CreateReviewInput,
+  TrustScore,
+} from './types/review';
+
 // Constants
 export { REGIONS, REGION_OPTIONS } from './constants/regions';
 export { PRODUCTS, PRODUCT_OPTIONS } from './constants/products';
