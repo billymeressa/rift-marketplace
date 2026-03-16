@@ -33,7 +33,13 @@
     },
     "plugins": [
       "expo-router",
-      "@sentry/react-native"
+      [
+        "@sentry/react-native",
+        {
+          "organization": "moss-enterprises",
+          "project": "javascript-react"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
