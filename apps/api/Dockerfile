@@ -31,7 +31,6 @@ COPY --from=base /app/packages/shared ./packages/shared
 COPY --from=base /app/apps/api/dist ./apps/api/dist
 COPY --from=base /app/apps/api/package.json ./apps/api/
 COPY --from=base /app/node_modules ./node_modules
-COPY --from=base /app/apps/api/node_modules ./apps/api/node_modules 2>/dev/null || true
 
 WORKDIR /app/apps/api
 EXPOSE 3000
