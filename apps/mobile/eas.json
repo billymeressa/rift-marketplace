@@ -15,13 +15,13 @@
       "distribution": "internal",
       "android": { "buildType": "apk" },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://rift-api.up.railway.app/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://rift-marketplace-production.up.railway.app/api/v1"
       }
     },
     "production": {
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://rift-api.up.railway.app/api/v1"
+        "EXPO_PUBLIC_API_URL": "https://rift-marketplace-production.up.railway.app/api/v1"
       }
     }
   },
