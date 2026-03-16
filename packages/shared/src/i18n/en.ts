@@ -1,6 +1,6 @@
 export const en = {
   common: {
-    appName: 'MerkatoHub',
+    appName: 'Rift',
     buy: 'Buy',
     sell: 'Sell',
     search: 'Search',
@@ -24,7 +24,7 @@ export const en = {
     all: 'All',
   },
   auth: {
-    welcome: 'Welcome to MerkatoHub',
+    welcome: 'Welcome to Rift',
     subtitle: 'Ethiopia\'s coffee & agriculture marketplace',
     enterPhone: 'Enter your phone number',
     phoneHint: 'e.g. 0911234567',
@@ -174,3 +174,4 @@ export const en = {
 };
 
 export type TranslationKeys = typeof en;
+ typeof en;

@@ -2,7 +2,7 @@ import type { TranslationKeys } from './en';
 
 export const am: TranslationKeys = {
   common: {
-    appName: 'መርካቶHub',
+    appName: 'ሪፍት',
     buy: 'ግዢ',
     sell: 'ሽያጭ',
     search: 'ፈልግ',
@@ -26,7 +26,7 @@ export const am: TranslationKeys = {
     all: 'ሁሉም',
   },
   auth: {
-    welcome: 'እንኳን ወደ መርካቶHub በደህና መጡ',
+    welcome: 'እንኳን ወደ ሪፍት በደህና መጡ',
     subtitle: 'የኢትዮጵያ የቡና እና የግብርና ገበያ',
     enterPhone: 'ስልክ ቁጥርዎን ያስገቡ',
     phoneHint: 'ለምሳሌ 0911234567',
@@ -173,4 +173,8 @@ export const am: TranslationKeys = {
     memberSince: 'አባል ከ',
     totalReviews: 'ጠቅላላ ግምገማዎች',
   },
+};
+},
+};
+},
 };

@@ -18,7 +18,7 @@ app.use(express.json());
 
 // Root
 app.get('/', (_req, res) => {
-  res.json({ name: 'MerkatoHub API', version: '1.0.0', docs: '/api/v1' });
+  res.json({ name: 'Rift API', version: '1.0.0', docs: '/api/v1' });
 });
 
 // Health check
@@ -39,3 +39,4 @@ app.listen(port, () => {
 });
 
 export default app;
+ app;
