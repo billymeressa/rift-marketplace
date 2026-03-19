@@ -1,6 +1,7 @@
 import { db } from '../db/client.js';
 import { otpCodes } from '../db/schema.js';
 import { eq, and, gt } from 'drizzle-orm';
+import { getChatIdByPhone, sendTelegramMessage } from './telegram.js';
 
 export function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
@@ -21,39 +22,19 @@ export function isValidEthiopianPhone(phone: string): boolean {
   return /^\+251[79]\d{8}$/.test(normalized);
 }
 
-async function sendViaSandbox(phone: string, code: string): Promise<void> {
-  const username = process.env.AT_USERNAME ?? 'sandbox';
-  const apiKey = process.env.AT_API_KEY!;
-  const from = process.env.AT_SENDER_ID ?? 'Rift';
-
-  const res = await fetch('https://api.sandbox.africastalking.com/version1/messaging', {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Content-Type': 'application/x-www-form-urlencoded',
-      'apiKey': apiKey,
-    },
-    body: new URLSearchParams({
-      username,
-      to: phone,
-      message: `Your Rift verification code is: ${code}`,
-      from,
-    }).toString(),
-  });
-
-  const data = await res.json() as any;
-  console.log(`[OTP] AT sandbox response for ${phone}:`, JSON.stringify(data));
-
-  if (!res.ok) throw new Error(`AT sandbox error: ${JSON.stringify(data)}`);
-}
-
 export async function createOtp(phone: string): Promise<string> {
+  const chatId = await getChatIdByPhone(phone);
+  if (!chatId) {
+    throw new Error('TELEGRAM_NOT_REGISTERED');
+  }
+
   const code = generateOtp();
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
   await db.insert(otpCodes).values({ phone, code, expiresAt });
 
-  await sendViaSandbox(phone, code);
+  await sendTelegramMessage(chatId, `🔐 Your Rift verification code is: ${code}\n\nThis code expires in 5 minutes.`);
+  console.log(`[OTP] Sent to ${phone} via Telegram`);
 
   return code;
 }

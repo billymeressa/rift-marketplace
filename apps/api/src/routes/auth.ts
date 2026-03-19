@@ -29,9 +29,16 @@ router.post('/otp/send', async (req, res) => {
 
     await createOtp(normalized);
     res.json({ message: 'OTP sent', phone: normalized });
-  } catch (error) {
+  } catch (error: any) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid input', details: error.errors });
+      return;
+    }
+    if (error?.message === 'TELEGRAM_NOT_REGISTERED') {
+      res.status(400).json({
+        error: 'telegram_not_registered',
+        message: 'Register your phone with our Telegram bot first',
+      });
       return;
     }
     console.error('Send OTP error:', error);
