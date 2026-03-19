@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import TrustBadge from './TrustBadge';
@@ -27,53 +27,63 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const regionLabel    = listing.region  ? (REGION_LABELS[listing.region]?.[lang]     || listing.region)  : null;
   const conditionLabel = listing.process ? (CONDITION_LABELS[listing.process]?.[lang] || listing.process) : null;
 
+  const images: string[] = listing.images || [];
+  const hasImage = images.length > 0;
+
   return (
     <TouchableOpacity
       style={styles.card}
       onPress={() => router.push(`/listing/${listing.id}`)}
       activeOpacity={0.7}
     >
-      <View style={styles.header}>
-        <View style={[styles.badge, listing.type === 'buy' ? styles.buyBadge : styles.sellBadge]}>
-          <Text style={styles.badgeText}>
-            {listing.type === 'buy'
-              ? (lang === 'am' ? 'ግዢ' : lang === 'om' ? 'BITTAA' : 'BUY')
-              : (lang === 'am' ? 'ሽያጭ' : lang === 'om' ? 'GURGURTAA' : 'SELL')}
-          </Text>
-        </View>
-        <Text style={styles.productBadge}>{productLabel}</Text>
-        <Text style={styles.time}>{timeAgo(listing.createdAt)}</Text>
-      </View>
-
-      <Text style={styles.title} numberOfLines={2}>{listing.title}</Text>
-
-      <View style={styles.details}>
-        {regionLabel && (
-          <Text style={styles.detail}>{regionLabel}</Text>
-        )}
-        {listing.grade && (
-          <Text style={styles.detail}>G{listing.grade}</Text>
-        )}
-        {conditionLabel && (
-          <Text style={styles.detail}>{conditionLabel}</Text>
-        )}
-        {listing.quantity && listing.unit && (
-          <Text style={styles.detail}>{listing.quantity} {listing.unit}</Text>
-        )}
-      </View>
-
-      {listing.price && (
-        <Text style={styles.price}>
-          {listing.currency === 'USD' ? '$' : ''}{Number(listing.price).toLocaleString()} {listing.currency === 'ETB' ? 'ETB' : ''}
-        </Text>
+      {/* Image thumbnail */}
+      {hasImage && (
+        <Image source={{ uri: images[0] }} style={styles.thumbnail} />
       )}
 
-      {listing.user?.name ? (
-        <View style={styles.posterRow}>
-          <Text style={styles.poster}>{listing.user.name}</Text>
-          {listing.user?.id && <TrustBadge userId={listing.user.id} />}
+      <View style={hasImage ? styles.bodyWithImage : undefined}>
+        <View style={styles.header}>
+          <View style={[styles.badge, listing.type === 'buy' ? styles.buyBadge : styles.sellBadge]}>
+            <Text style={styles.badgeText}>
+              {listing.type === 'buy'
+                ? (lang === 'am' ? 'ግዢ' : lang === 'om' ? 'BITTAA' : 'BUY')
+                : (lang === 'am' ? 'ሽያጭ' : lang === 'om' ? 'GURGURTAA' : 'SELL')}
+            </Text>
+          </View>
+          <Text style={styles.productBadge}>{productLabel}</Text>
+          <Text style={styles.time}>{timeAgo(listing.createdAt)}</Text>
         </View>
-      ) : null}
+
+        <Text style={styles.title} numberOfLines={2}>{listing.title}</Text>
+
+        <View style={styles.details}>
+          {regionLabel && (
+            <Text style={styles.detail}>{regionLabel}</Text>
+          )}
+          {listing.grade && (
+            <Text style={styles.detail}>G{listing.grade}</Text>
+          )}
+          {conditionLabel && (
+            <Text style={styles.detail}>{conditionLabel}</Text>
+          )}
+          {listing.quantity && listing.unit && (
+            <Text style={styles.detail}>{listing.quantity} {listing.unit}</Text>
+          )}
+        </View>
+
+        {listing.price && (
+          <Text style={styles.price}>
+            {listing.currency === 'USD' ? '$' : ''}{Number(listing.price).toLocaleString()} {listing.currency === 'ETB' ? 'ETB' : ''}
+          </Text>
+        )}
+
+        {listing.user?.name ? (
+          <View style={styles.posterRow}>
+            <Text style={styles.poster}>{listing.user.name}</Text>
+            {listing.user?.id && <TrustBadge userId={listing.user.id} />}
+          </View>
+        ) : null}
+      </View>
     </TouchableOpacity>
   );
 }
@@ -82,7 +92,7 @@ const styles = StyleSheet.create({
   card: {
     backgroundColor: '#fff',
     borderRadius: 12,
-    padding: 16,
+    overflow: 'hidden',
     marginHorizontal: 16,
     marginVertical: 6,
     shadowColor: '#000',
@@ -91,10 +101,20 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
+  thumbnail: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#F0F0F0',
+  },
+  bodyWithImage: {
+    padding: 16,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 8,
+    paddingHorizontal: 16,
+    paddingTop: 16,
   },
   badge: {
     paddingHorizontal: 8,
@@ -131,12 +151,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#1a1a1a',
     marginBottom: 8,
+    paddingHorizontal: 16,
   },
   details: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 6,
     marginBottom: 4,
+    paddingHorizontal: 16,
   },
   detail: {
     fontSize: 13,
@@ -151,6 +173,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#2E7D32',
     marginTop: 6,
+    paddingHorizontal: 16,
   },
   poster: {
     fontSize: 12,
@@ -161,5 +184,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginTop: 6,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
 });

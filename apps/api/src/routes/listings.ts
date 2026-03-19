@@ -20,6 +20,7 @@ const createListingSchema = z.object({
   unit: z.string().max(20).optional(),
   price: z.number().positive().optional(),
   currency: z.enum(['ETB', 'USD']).optional(),
+  images: z.array(z.string().url()).max(5).optional(),
 });
 
 const updateListingSchema = createListingSchema.partial();
@@ -85,6 +86,7 @@ router.get('/', async (req, res) => {
           unit: listings.unit,
           price: listings.price,
           currency: listings.currency,
+          images: listings.images,
           status: listings.status,
           createdAt: listings.createdAt,
           updatedAt: listings.updatedAt,
@@ -150,6 +152,7 @@ router.get('/:id', async (req, res) => {
         unit: listings.unit,
         price: listings.price,
         currency: listings.currency,
+        images: listings.images,
         status: listings.status,
         createdAt: listings.createdAt,
         updatedAt: listings.updatedAt,
@@ -207,6 +210,7 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
         unit: data.unit,
         price: data.price != null ? String(data.price) : null,
         currency: data.currency ?? 'ETB',
+        images: data.images ?? [],
       })
       .returning();
 

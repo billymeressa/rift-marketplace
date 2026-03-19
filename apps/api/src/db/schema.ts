@@ -25,6 +25,7 @@ export const listings = pgTable('listings', {
   unit: varchar('unit', { length: 15 }),
   price: decimal('price'),
   currency: varchar('currency', { length: 3 }).notNull().default('ETB'),
+  images: jsonb('images').notNull().default([]),
   status: varchar('status', { length: 10 }).notNull().default('active'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),

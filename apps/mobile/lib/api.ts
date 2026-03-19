@@ -53,6 +53,13 @@ export const api = {
     return apiRequest<{ value: string; count: number; label?: string }[]>(`/suggestions?${params}`);
   },
 
+  // Upload
+  uploadImage: (base64: string) =>
+    apiRequest<{ url: string; publicId: string }>('/upload', {
+      method: 'POST',
+      body: JSON.stringify({ image: base64 }),
+    }),
+
   // Listings
   getListings: (params?: Record<string, string>) => {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';

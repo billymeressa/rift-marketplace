@@ -16,6 +16,7 @@ import {
 } from '../../lib/options';
 import ResponsiveContainer from '../../components/ResponsiveContainer';
 import SuggestInput from '../../components/SuggestInput';
+import ImagePickerSection from '../../components/ImagePickerSection';
 
 interface ChipSelectProps {
   options: { value: string; en: string; am: string; om: string }[];
@@ -60,9 +61,10 @@ export default function CreateScreen() {
     unit: 'kg',
     price: '',
     currency: 'ETB',
+    images: [] as string[],
   });
 
-  const update = (key: string, value: string) => setForm((f) => ({ ...f, [key]: value }));
+  const update = (key: string, value: any) => setForm((f) => ({ ...f, [key]: value }));
 
   const showGrade     = GRADED_PRODUCTS.has(form.productCategory);
   const showCondition = !NO_CONDITION_PRODUCTS.has(form.productCategory);
@@ -75,7 +77,7 @@ export default function CreateScreen() {
       setForm({
         type: 'sell', productCategory: 'coffee', title: '', description: '',
         region: '', grade: '', condition: '', transactionType: '',
-        quantity: '', unit: 'kg', price: '', currency: 'ETB',
+        quantity: '', unit: 'kg', price: '', currency: 'ETB', images: [],
       });
     },
     onError: (error: any) => {
@@ -103,6 +105,7 @@ export default function CreateScreen() {
     if (form.unit)           payload.unit           = form.unit;
     if (form.price)          payload.price          = parseFloat(form.price);
     payload.currency = form.currency;
+    if (form.images.length > 0) payload.images = form.images;
 
     mutation.mutate(payload);
   };
@@ -149,6 +152,13 @@ export default function CreateScreen() {
         value={form.title}
         onChangeText={(v) => update('title', v)}
         maxLength={200}
+      />
+
+      {/* Photos */}
+      <Text style={styles.sectionTitle}>{t('listing.photos') || 'Photos'}</Text>
+      <ImagePickerSection
+        images={form.images}
+        onChange={(imgs) => update('images', imgs)}
       />
 
       {/* Region — shown for all products */}

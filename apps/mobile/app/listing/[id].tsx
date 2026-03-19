@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Linking } from 'react-native';
+import { useState } from 'react';
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Linking, Dimensions, FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -11,6 +12,7 @@ import {
   buildLabelMap, TRANSACTION_OPTIONS, prettifyValue,
 } from '../../lib/options';
 
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TRANSACTION_LABELS = buildLabelMap(TRANSACTION_OPTIONS);
 
 const LABEL_MAPS: Record<string, Record<string, { en: string; am: string; om: string }>> = {
@@ -70,9 +72,38 @@ export default function ListingDetailScreen() {
   };
 
   const isBuy = listing.type === 'buy';
+  const images: string[] = listing.images || [];
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      {/* Image gallery */}
+      {images.length > 0 && (
+        <View style={styles.galleryContainer}>
+          <FlatList
+            data={images}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            keyExtractor={(_, i) => String(i)}
+            onMomentumScrollEnd={(e) => {
+              const index = Math.round(e.nativeEvent.contentOffset.x / (SCREEN_WIDTH - 40));
+              setActiveImageIndex(index);
+            }}
+            renderItem={({ item }) => (
+              <Image source={{ uri: item }} style={styles.galleryImage} resizeMode="cover" />
+            )}
+          />
+          {images.length > 1 && (
+            <View style={styles.dots}>
+              {images.map((_, i) => (
+                <View key={i} style={[styles.dot, i === activeImageIndex && styles.dotActive]} />
+              ))}
+            </View>
+          )}
+        </View>
+      )}
+
       <View style={[styles.typeBanner, isBuy ? styles.buyBanner : styles.sellBanner]}>
         <Text style={styles.typeText}>
           {isBuy
@@ -166,6 +197,33 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     paddingBottom: 40,
+  },
+  galleryContainer: {
+    marginHorizontal: -20,
+    marginTop: -20,
+    marginBottom: 16,
+    backgroundColor: '#F0F0F0',
+  },
+  galleryImage: {
+    width: SCREEN_WIDTH,
+    height: 280,
+    backgroundColor: '#E0E0E0',
+  },
+  dots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: '#ccc',
+  },
+  dotActive: {
+    backgroundColor: '#2E7D32',
+    width: 20,
   },
   loader: {
     flex: 1,

@@ -34,3 +34,4 @@ Thumbs.db
 # Telegram
 telegram_messages.json
 telegram_fetch.py
+.vercel
