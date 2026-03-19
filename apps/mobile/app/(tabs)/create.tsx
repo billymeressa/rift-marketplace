@@ -17,10 +17,10 @@ import {
 import ResponsiveContainer from '../../components/ResponsiveContainer';
 
 interface ChipSelectProps {
-  options: { value: string; en: string; am: string }[];
+  options: { value: string; en: string; am: string; om: string }[];
   value: string;
   onChange: (value: string) => void;
-  lang: 'en' | 'am';
+  lang: 'en' | 'am' | 'om';
 }
 
 function ChipSelect({ options, value, onChange, lang }: ChipSelectProps) {
@@ -43,7 +43,7 @@ function ChipSelect({ options, value, onChange, lang }: ChipSelectProps) {
 
 export default function CreateScreen() {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language as 'en' | 'am';
+  const lang = i18n.language as 'en' | 'am' | 'om';
   const queryClient = useQueryClient();
 
   const [form, setForm] = useState({

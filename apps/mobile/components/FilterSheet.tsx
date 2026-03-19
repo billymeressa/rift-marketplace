@@ -17,8 +17,8 @@ interface FilterSheetProps {
 
 const FILTER_OPTIONS = {
   type: [
-    { value: 'buy',  en: 'Buy',  am: 'ግዢ' },
-    { value: 'sell', en: 'Sell', am: 'ሽያጭ' },
+    { value: 'buy',  en: 'Buy',  am: 'ግዢ',   om: 'Bittaa' },
+    { value: 'sell', en: 'Sell', am: 'ሽያጭ', om: 'Gurgurtaa' },
   ],
   productCategory: PRODUCT_OPTIONS,
   region:    REGION_OPTIONS,
@@ -26,17 +26,17 @@ const FILTER_OPTIONS = {
   condition: CONDITION_OPTIONS,
 };
 
-const FILTER_LABELS: Record<string, { en: string; am: string }> = {
-  type:            { en: 'Type',      am: 'ዓይነት' },
-  productCategory: { en: 'Product',   am: 'ምርት' },
-  region:          { en: 'Region',    am: 'ክልል' },
-  grade:           { en: 'Grade',     am: 'ደረጃ' },
-  condition:       { en: 'Condition', am: 'ሁኔታ' },
+const FILTER_LABELS: Record<string, { en: string; am: string; om: string }> = {
+  type:            { en: 'Type',      am: 'ዓይነት',  om: 'Gosa' },
+  productCategory: { en: 'Product',   am: 'ምርት',   om: 'Oomisha' },
+  region:          { en: 'Region',    am: 'ክልል',   om: 'Naannoo' },
+  grade:           { en: 'Grade',     am: 'ደረጃ',   om: 'Sadarkaa' },
+  condition:       { en: 'Condition', am: 'ሁኔታ',   om: 'Haala' },
 };
 
 export default function FilterSheet({ visible, onClose, filters, onApply }: FilterSheetProps) {
   const { t, i18n } = useTranslation();
-  const lang = i18n.language as 'en' | 'am';
+  const lang = i18n.language as 'en' | 'am' | 'om';
   const [localFilters, setLocalFilters] = useState(filters);
 
   const toggleFilter = (key: string, value: string) => {

@@ -7,43 +7,43 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import TrustBadge from '../../components/TrustBadge';
 
-const LABELS: Record<string, Record<string, { en: string; am: string }>> = {
+const LABELS: Record<string, Record<string, { en: string; am: string; om: string }>> = {
   product: {
-    coffee: { en: 'Coffee', am: 'ቡና' },
-    sesame: { en: 'Sesame', am: 'ሰሊጥ' },
-    mung_bean: { en: 'Mung Bean', am: 'ማሾ' },
-    oilseed: { en: 'Oil Seeds', am: 'የቅባት እህሎች' },
-    spice: { en: 'Spices', am: 'ቅመማ ቅመም' },
-    equipment: { en: 'Equipment', am: 'መሣሪያዎች' },
-    other: { en: 'Other', am: 'ሌላ' },
+    coffee: { en: 'Coffee', am: 'ቡና', om: 'Buna' },
+    sesame: { en: 'Sesame', am: 'ሰሊጥ', om: 'Saliixaa' },
+    mung_bean: { en: 'Mung Bean', am: 'ማሾ', om: 'Maashoo' },
+    oilseed: { en: 'Oil Seeds', am: 'የቅባት እህሎች', om: 'Midhaan Zayitaa' },
+    spice: { en: 'Spices', am: 'ቅመማ ቅመም', om: 'Mi\'eessituu' },
+    equipment: { en: 'Equipment', am: 'መሣሪያዎች', om: 'Meeshaalee' },
+    other: { en: 'Other', am: 'ሌላ', om: 'Kan biraa' },
   },
   region: {
-    yirgacheffe: { en: 'Yirgacheffe', am: 'ይርጋጨፌ' },
-    sidama: { en: 'Sidama', am: 'ሲዳማ' },
-    guji: { en: 'Guji', am: 'ጉጂ' },
-    jimma: { en: 'Jimma', am: 'ጅማ' },
-    nekemte: { en: 'Nekemte', am: 'ነቀምት' },
-    limu: { en: 'Limu', am: 'ሊሙ' },
-    kafa: { en: 'Kafa', am: 'ካፋ' },
-    teppi: { en: 'Teppi', am: 'ቴፒ' },
-    illubabur: { en: 'Illubabur', am: 'ኢሉባቡር' },
-    bale: { en: 'Bale', am: 'ባሌ' },
-    harar: { en: 'Harar', am: 'ሀረር' },
-    bench_maji: { en: 'Bench Maji', am: 'ቤንች ማጂ' },
-    west_arsi: { en: 'West Arsi', am: 'ምዕራብ አርሲ' },
+    yirgacheffe: { en: 'Yirgacheffe', am: 'ይርጋጨፌ', om: 'Yirgaacheeffee' },
+    sidama: { en: 'Sidama', am: 'ሲዳማ', om: 'Sidaamaa' },
+    guji: { en: 'Guji', am: 'ጉጂ', om: 'Gujii' },
+    jimma: { en: 'Jimma', am: 'ጅማ', om: 'Jimmaa' },
+    nekemte: { en: 'Nekemte', am: 'ነቀምት', om: 'Naqamtee' },
+    limu: { en: 'Limu', am: 'ሊሙ', om: 'Limu' },
+    kafa: { en: 'Kafa', am: 'ካፋ', om: 'Kafaa' },
+    teppi: { en: 'Teppi', am: 'ቴፒ', om: 'Teppii' },
+    illubabur: { en: 'Illubabur', am: 'ኢሉባቡር', om: 'Iluu Abbaa Booraa' },
+    bale: { en: 'Bale', am: 'ባሌ', om: 'Baalee' },
+    harar: { en: 'Harar', am: 'ሀረር', om: 'Harar' },
+    bench_maji: { en: 'Bench Maji', am: 'ቤንች ማጂ', om: 'Bench Maajii' },
+    west_arsi: { en: 'West Arsi', am: 'ምዕራብ አርሲ', om: 'Arsii Lixaa' },
   },
   process: {
-    washed: { en: 'Washed', am: 'የታጠበ' },
-    natural: { en: 'Natural', am: 'ተፈጥሯዊ' },
-    unwashed: { en: 'Unwashed', am: 'ያልታጠበ' },
+    washed: { en: 'Washed', am: 'የታጠበ', om: 'Dhiqamaa' },
+    natural: { en: 'Natural', am: 'ተፈጥሯዊ', om: 'Uumamaa' },
+    unwashed: { en: 'Unwashed', am: 'ያልታጠበ', om: 'Hin dhiqamne' },
   },
   transaction: {
-    vertical: { en: 'Vertical', am: 'ትስስር' },
-    horizontal: { en: 'Horizontal', am: 'አግድም' },
+    vertical: { en: 'Vertical', am: 'ትስስር', om: 'Ol-gadee' },
+    horizontal: { en: 'Horizontal', am: 'አግድም', om: 'Dalgee' },
   },
 };
 
-function getLabel(category: string, value: string | null, lang: 'en' | 'am'): string | null {
+function getLabel(category: string, value: string | null, lang: 'en' | 'am' | 'om'): string | null {
   if (!value) return null;
   return LABELS[category]?.[value]?.[lang] || value;
 }
@@ -53,7 +53,7 @@ export default function ListingDetailScreen() {
   const { t, i18n } = useTranslation();
   const router = useRouter();
   const { user: currentUser } = useAuth();
-  const lang = i18n.language as 'en' | 'am';
+  const lang = i18n.language as 'en' | 'am' | 'om';
 
   const { data: listing, isLoading } = useQuery({
     queryKey: ['listing', id],
@@ -98,7 +98,9 @@ export default function ListingDetailScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <View style={[styles.typeBanner, isBuy ? styles.buyBanner : styles.sellBanner]}>
         <Text style={styles.typeText}>
-          {isBuy ? (lang === 'am' ? 'ግዢ' : 'BUYING') : (lang === 'am' ? 'ሽያጭ' : 'SELLING')}
+          {isBuy
+            ? (lang === 'am' ? 'ግዢ' : lang === 'om' ? 'BITTAA' : 'BUYING')
+            : (lang === 'am' ? 'ሽያጭ' : lang === 'om' ? 'GURGURTAA' : 'SELLING')}
         </Text>
       </View>
 

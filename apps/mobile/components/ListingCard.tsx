@@ -21,7 +21,7 @@ function timeAgo(dateStr: string): string {
 export default function ListingCard({ listing }: ListingCardProps) {
   const { i18n } = useTranslation();
   const router = useRouter();
-  const lang = i18n.language as 'en' | 'am';
+  const lang = i18n.language as 'en' | 'am' | 'om';
 
   const productLabel   = PRODUCT_LABELS[listing.productCategory]?.[lang]  || listing.productCategory;
   const regionLabel    = listing.region  ? (REGION_LABELS[listing.region]?.[lang]     || listing.region)  : null;
@@ -36,7 +36,9 @@ export default function ListingCard({ listing }: ListingCardProps) {
       <View style={styles.header}>
         <View style={[styles.badge, listing.type === 'buy' ? styles.buyBadge : styles.sellBadge]}>
           <Text style={styles.badgeText}>
-            {listing.type === 'buy' ? (lang === 'am' ? 'ግዢ' : 'BUY') : (lang === 'am' ? 'ሽያጭ' : 'SELL')}
+            {listing.type === 'buy'
+              ? (lang === 'am' ? 'ግዢ' : lang === 'om' ? 'BITTAA' : 'BUY')
+              : (lang === 'am' ? 'ሽያጭ' : lang === 'om' ? 'GURGURTAA' : 'SELL')}
           </Text>
         </View>
         <Text style={styles.productBadge}>{productLabel}</Text>

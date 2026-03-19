@@ -2,19 +2,25 @@ import { TouchableOpacity, Text, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { setLanguage } from '../lib/i18n';
 
+const LANGS = ['en', 'am', 'om'] as const;
+
 export default function LanguageToggle() {
   const { i18n } = useTranslation();
-  const isAmharic = i18n.language === 'am';
+  const current = i18n.language;
 
   const toggle = () => {
-    setLanguage(isAmharic ? 'en' : 'am');
+    const idx = LANGS.indexOf(current as typeof LANGS[number]);
+    const next = LANGS[(idx + 1) % LANGS.length];
+    setLanguage(next);
   };
 
   return (
     <TouchableOpacity style={styles.toggle} onPress={toggle}>
-      <Text style={[styles.lang, !isAmharic && styles.activeLang]}>EN</Text>
+      <Text style={[styles.lang, current === 'en' && styles.activeLang]}>EN</Text>
       <Text style={styles.separator}>|</Text>
-      <Text style={[styles.lang, isAmharic && styles.activeLang]}>አማ</Text>
+      <Text style={[styles.lang, current === 'am' && styles.activeLang]}>አማ</Text>
+      <Text style={styles.separator}>|</Text>
+      <Text style={[styles.lang, current === 'om' && styles.activeLang]}>Afn</Text>
     </TouchableOpacity>
   );
 }

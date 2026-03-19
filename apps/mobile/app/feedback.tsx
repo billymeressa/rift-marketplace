@@ -9,21 +9,21 @@ import { Ionicons } from '@expo/vector-icons';
 import { api } from '../lib/api';
 
 const FEEDBACK_TYPES = [
-  { value: 'bug',        icon: 'bug-outline' as const,         en: 'Bug Report',      am: 'ስህተት ሪፖርት' },
-  { value: 'feature',   icon: 'bulb-outline' as const,        en: 'Feature Request', am: 'አዲስ ባህሪ' },
-  { value: 'general',   icon: 'chatbubble-outline' as const,   en: 'General',         am: 'አጠቃላይ' },
-  { value: 'complaint', icon: 'warning-outline' as const,      en: 'Complaint',       am: 'ቅሬታ' },
+  { value: 'bug',        icon: 'bug-outline' as const,         en: 'Bug Report',      am: 'ስህተት ሪፖርት',  om: 'Gabaasa Dogoggoraa' },
+  { value: 'feature',   icon: 'bulb-outline' as const,        en: 'Feature Request', am: 'አዲስ ባህሪ',     om: 'Gaaffii Tajaajilaa' },
+  { value: 'general',   icon: 'chatbubble-outline' as const,   en: 'General',         am: 'አጠቃላይ',      om: 'Waliigalaa' },
+  { value: 'complaint', icon: 'warning-outline' as const,      en: 'Complaint',       am: 'ቅሬታ',        om: 'Komii' },
 ];
 
-const NPS_LABELS: Record<number, { en: string; am: string }> = {
-  1:  { en: 'Very unlikely', am: 'በጣም ዝቅተኛ' },
-  5:  { en: 'Neutral',       am: 'መካከለኛ' },
-  10: { en: 'Very likely',   am: 'በጣም ከፍተኛ' },
+const NPS_LABELS: Record<number, { en: string; am: string; om: string }> = {
+  1:  { en: 'Very unlikely', am: 'በጣም ዝቅተኛ',  om: 'Baay\'ee xiqqaa' },
+  5:  { en: 'Neutral',       am: 'መካከለኛ',     om: 'Giddu galeessa' },
+  10: { en: 'Very likely',   am: 'በጣም ከፍተኛ',  om: 'Baay\'ee guddaa' },
 };
 
 export default function FeedbackScreen() {
   const { i18n } = useTranslation();
-  const lang = i18n.language as 'en' | 'am';
+  const lang = i18n.language as 'en' | 'am' | 'om';
   const router = useRouter();
 
   const [type, setType]       = useState('general');
@@ -33,7 +33,7 @@ export default function FeedbackScreen() {
 
   const handleSubmit = async () => {
     if (!message.trim() && nps === 0) {
-      Alert.alert('', lang === 'am' ? 'እባክዎ አስተያየት ያስገቡ' : 'Please enter your feedback');
+      Alert.alert('', lang === 'am' ? 'እባክዎ አስተያየት ያስገቡ' : lang === 'om' ? 'Maaloo yaada keessan galchaa' : 'Please enter your feedback');
       return;
     }
 
@@ -47,17 +47,19 @@ export default function FeedbackScreen() {
     } catch {
       setSending(false);
       Alert.alert(
-        lang === 'am' ? 'ስህተት' : 'Error',
-        lang === 'am' ? 'አስተያየት መላክ አልተቻለም። እባክዎ ይሞክሩ።' : 'Failed to send feedback. Please try again.'
+        lang === 'am' ? 'ስህተት' : lang === 'om' ? 'Dogoggora' : 'Error',
+        lang === 'am' ? 'አስተያየት መላክ አልተቻለም። እባክዎ ይሞክሩ።' : lang === 'om' ? 'Yaada erguu hin dandeenye. Maaloo irra deebi\'i yaalaa.' : 'Failed to send feedback. Please try again.'
       );
       return;
     }
     setSending(false);
 
     Alert.alert(
-      lang === 'am' ? 'አመሰግናለሁ!' : 'Thank you!',
+      lang === 'am' ? 'አመሰግናለሁ!' : lang === 'om' ? 'Galatoomaa!' : 'Thank you!',
       lang === 'am'
         ? 'አስተያየትዎ ደርሷል። ለማሻሻል እንጠቀምበታለን።'
+        : lang === 'om'
+        ? 'Yaadni keessan nuuf dhufeera. Rift fooyyessuuf itti fayyadamna.'
         : 'Your feedback has been received. We\'ll use it to improve Rift.',
       [{ text: 'OK', onPress: () => router.back() }]
     );
@@ -72,7 +74,7 @@ export default function FeedbackScreen() {
 
         {/* Type selector */}
         <Text style={styles.label}>
-          {lang === 'am' ? 'የአስተያየት ዓይነት' : 'Feedback type'}
+          {lang === 'am' ? 'የአስተያየት ዓይነት' : lang === 'om' ? 'Gosa yaadaa' : 'Feedback type'}
         </Text>
         <View style={styles.typeRow}>
           {FEEDBACK_TYPES.map((ft) => (
@@ -97,6 +99,8 @@ export default function FeedbackScreen() {
         <Text style={styles.label}>
           {lang === 'am'
             ? 'ሪፍትን ለሌሎች የመምከር ዕድል ምን ያህል ነው? (1-10)'
+            : lang === 'om'
+            ? 'Rift namoota birootti gorsuuf carraan keessan hammam? (1–10)'
             : 'How likely are you to recommend Rift? (1–10)'}
         </Text>
         <View style={styles.npsRow}>
@@ -118,13 +122,15 @@ export default function FeedbackScreen() {
 
         {/* Message */}
         <Text style={styles.label}>
-          {lang === 'am' ? 'አስተያየትዎን ያስገቡ' : 'Your feedback'}
+          {lang === 'am' ? 'አስተያየትዎን ያስገቡ' : lang === 'om' ? 'Yaada keessan' : 'Your feedback'}
         </Text>
         <TextInput
           style={styles.textArea}
           placeholder={
             lang === 'am'
               ? 'ምን ልናሻሽለው ይፈልጋሉ? ምን ጥሩ ነው?'
+              : lang === 'om'
+              ? 'Maal fooyyessuu qabna? Maaltu gaarii?'
               : 'What should we improve? What works well?'
           }
           placeholderTextColor="#aaa"
@@ -145,8 +151,8 @@ export default function FeedbackScreen() {
         >
           <Text style={styles.submitText}>
             {sending
-              ? (lang === 'am' ? 'በመላክ ላይ...' : 'Sending...')
-              : (lang === 'am' ? 'አስተያየት ላክ' : 'Send Feedback')}
+              ? (lang === 'am' ? 'በመላክ ላይ...' : lang === 'om' ? 'Ergaa jira...' : 'Sending...')
+              : (lang === 'am' ? 'አስተያየት ላክ' : lang === 'om' ? 'Yaada Ergi' : 'Send Feedback')}
           </Text>
         </TouchableOpacity>
 

@@ -69,7 +69,9 @@ export default function ProfileScreen() {
   };
 
   const toggleLang = () => {
-    const newLang = i18n.language === 'am' ? 'en' : 'am';
+    const langs = ['en', 'am', 'om'];
+    const idx = langs.indexOf(i18n.language);
+    const newLang = langs[(idx + 1) % langs.length];
     setLanguage(newLang);
   };
 
@@ -160,7 +162,7 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.langBtn} onPress={toggleLang}>
             <Ionicons name="language-outline" size={20} color="#333" />
             <Text style={styles.langText}>{t('profile.language')}</Text>
-            <Text style={styles.langValue}>{i18n.language === 'am' ? 'አማርኛ' : 'English'}</Text>
+            <Text style={styles.langValue}>{i18n.language === 'am' ? 'አማርኛ' : i18n.language === 'om' ? 'Afaan Oromoo' : 'English'}</Text>
             <Ionicons name="swap-horizontal-outline" size={18} color="#2E7D32" />
           </TouchableOpacity>
 
@@ -170,7 +172,7 @@ export default function ProfileScreen() {
           >
             <Ionicons name="chatbubble-ellipses-outline" size={20} color="#333" />
             <Text style={styles.feedbackText}>
-              {i18n.language === 'am' ? 'አስተያየት ላክ' : 'Send Feedback'}
+              {i18n.language === 'am' ? 'አስተያየት ላክ' : i18n.language === 'om' ? 'Yaada Ergi' : 'Send Feedback'}
             </Text>
             <Ionicons name="chevron-forward" size={16} color="#ccc" />
           </TouchableOpacity>
