@@ -20,7 +20,7 @@ export default function LanguageToggle() {
       <Text style={styles.separator}>|</Text>
       <Text style={[styles.lang, current === 'am' && styles.activeLang]}>አማ</Text>
       <Text style={styles.separator}>|</Text>
-      <Text style={[styles.lang, current === 'om' && styles.activeLang]}>Afn</Text>
+      <Text style={[styles.lang, current === 'om' && styles.activeLang]}>ORO</Text>
     </TouchableOpacity>
   );
 }

@@ -22,19 +22,14 @@ export function isValidEthiopianPhone(phone: string): boolean {
 }
 
 export async function createOtp(phone: string): Promise<string> {
-  const code = process.env.NODE_ENV === 'development' ? '123456' : generateOtp();
+  const bypass = process.env.BYPASS_OTP === 'true';
+  const code = bypass ? '123456' : generateOtp();
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-  await db.insert(otpCodes).values({
-    phone,
-    code,
-    expiresAt,
-  });
+  await db.insert(otpCodes).values({ phone, code, expiresAt });
 
-  // In production, send SMS here via Africa's Talking or similar
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`[DEV] OTP for ${phone}: ${code}`);
-  }
+  // Always log — visible in Railway logs so you can relay code to testers manually
+  console.log(`[OTP] ${phone} → ${code}${bypass ? ' (BYPASS)' : ''}`);
 
   return code;
 }

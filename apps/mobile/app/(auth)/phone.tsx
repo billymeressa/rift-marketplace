@@ -19,7 +19,7 @@ export default function PhoneScreen() {
 
     setLoading(true);
     try {
-      const result = await api.sendOtp(phone);
+      const result = await api.sendOtp('0' + phone);
       router.push({ pathname: '/(auth)/otp', params: { phone: result.phone } });
     } catch (error: any) {
       Alert.alert('', error.message || t('common.error'));
@@ -53,7 +53,7 @@ export default function PhoneScreen() {
               placeholder={t('auth.phoneHint')}
               placeholderTextColor="#999"
               keyboardType="phone-pad"
-              maxLength={10}
+              maxLength={9}
               value={phone}
               onChangeText={setPhone}
               autoFocus
