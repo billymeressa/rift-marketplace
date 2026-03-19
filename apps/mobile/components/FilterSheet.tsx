@@ -6,7 +6,9 @@ import {
   REGION_OPTIONS,
   CONDITION_OPTIONS,
   GRADE_OPTIONS,
+  LangOption,
 } from '../lib/options';
+import SuggestInput from './SuggestInput';
 
 interface FilterSheetProps {
   visible: boolean;
@@ -15,16 +17,17 @@ interface FilterSheetProps {
   onApply: (filters: Record<string, string>) => void;
 }
 
-const FILTER_OPTIONS = {
-  type: [
-    { value: 'buy',  en: 'Buy',  am: 'ግዢ',   om: 'Bittaa' },
-    { value: 'sell', en: 'Sell', am: 'ሽያጭ', om: 'Gurgurtaa' },
-  ],
-  productCategory: PRODUCT_OPTIONS,
-  region:    REGION_OPTIONS,
-  grade:     GRADE_OPTIONS,
-  condition: CONDITION_OPTIONS,
-};
+const CHIP_FILTERS: { key: string; options: LangOption[] }[] = [
+  {
+    key: 'type',
+    options: [
+      { value: 'buy', en: 'Buy', am: 'ግዢ', om: 'Bittaa' },
+      { value: 'sell', en: 'Sell', am: 'ሽያጭ', om: 'Gurgurtaa' },
+    ],
+  },
+  { key: 'grade', options: GRADE_OPTIONS },
+  { key: 'condition', options: CONDITION_OPTIONS },
+];
 
 const FILTER_LABELS: Record<string, { en: string; am: string; om: string }> = {
   type:            { en: 'Type',      am: 'ዓይነት',  om: 'Gosa' },
@@ -67,8 +70,9 @@ export default function FilterSheet({ visible, onClose, filters, onApply }: Filt
             </TouchableOpacity>
           </View>
 
-          <ScrollView style={styles.content}>
-            {(Object.entries(FILTER_OPTIONS) as [string, typeof PRODUCT_OPTIONS][]).map(([key, options]) => (
+          <ScrollView style={styles.content} keyboardShouldPersistTaps="handled">
+            {/* Chip-based: type */}
+            {CHIP_FILTERS.slice(0, 1).map(({ key, options }) => (
               <View key={key} style={styles.section}>
                 <Text style={styles.sectionTitle}>
                   {FILTER_LABELS[key]?.[lang] || key}
@@ -77,18 +81,54 @@ export default function FilterSheet({ visible, onClose, filters, onApply }: Filt
                   {options.map((opt) => (
                     <TouchableOpacity
                       key={opt.value}
-                      style={[
-                        styles.chip,
-                        localFilters[key] === opt.value && styles.chipActive,
-                      ]}
+                      style={[styles.chip, localFilters[key] === opt.value && styles.chipActive]}
                       onPress={() => toggleFilter(key, opt.value)}
                     >
-                      <Text
-                        style={[
-                          styles.chipText,
-                          localFilters[key] === opt.value && styles.chipTextActive,
-                        ]}
-                      >
+                      <Text style={[styles.chipText, localFilters[key] === opt.value && styles.chipTextActive]}>
+                        {opt[lang]}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+            ))}
+
+            {/* Searchable: product */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{FILTER_LABELS.productCategory[lang]}</Text>
+              <SuggestInput
+                field="product"
+                value={localFilters.productCategory || ''}
+                onChange={(v) => setLocalFilters((f) => ({ ...f, productCategory: v }))}
+                seedOptions={PRODUCT_OPTIONS}
+              />
+            </View>
+
+            {/* Searchable: region */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>{FILTER_LABELS.region[lang]}</Text>
+              <SuggestInput
+                field="region"
+                value={localFilters.region || ''}
+                onChange={(v) => setLocalFilters((f) => ({ ...f, region: v }))}
+                seedOptions={REGION_OPTIONS}
+              />
+            </View>
+
+            {/* Chip-based: grade, condition */}
+            {CHIP_FILTERS.slice(1).map(({ key, options }) => (
+              <View key={key} style={styles.section}>
+                <Text style={styles.sectionTitle}>
+                  {FILTER_LABELS[key]?.[lang] || key}
+                </Text>
+                <View style={styles.chips}>
+                  {options.map((opt) => (
+                    <TouchableOpacity
+                      key={opt.value}
+                      style={[styles.chip, localFilters[key] === opt.value && styles.chipActive]}
+                      onPress={() => toggleFilter(key, opt.value)}
+                    >
+                      <Text style={[styles.chipText, localFilters[key] === opt.value && styles.chipTextActive]}>
                         {opt[lang]}
                       </Text>
                     </TouchableOpacity>
@@ -136,7 +176,7 @@ const styles = StyleSheet.create({
   sheetTitle:   { fontSize: 18, fontWeight: '700', color: '#1a1a1a' },
   clearText:    { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
   content:      { padding: 20 },
-  section:      { marginBottom: 20 },
+  section:      { marginBottom: 20, zIndex: 1 },
   sectionTitle: { fontSize: 14, fontWeight: '600', color: '#666', marginBottom: 10 },
   chips:        { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {

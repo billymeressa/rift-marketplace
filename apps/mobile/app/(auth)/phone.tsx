@@ -1,37 +1,68 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
+import {
+  View, Text, TextInput, TouchableOpacity, StyleSheet,
+  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
+} from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import LanguageToggle from '../../components/LanguageToggle';
 
-export default function RegisterScreen() {
+type Tab = 'signin' | 'signup';
+
+export default function AuthScreen() {
   const { t } = useTranslation();
   const { signIn } = useAuth();
-  const [phone, setPhone] = useState('');
-  const [name, setName] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<{ phone?: string; name?: string; general?: string }>({});
+  const [tab, setTab] = useState<Tab>('signin');
 
-  const validate = () => {
-    const e: typeof errors = {};
-    if (name.trim().length === 0) e.name = t('auth.nameRequired');
-    if (phone.length < 9) e.phone = t('auth.invalidPhone');
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
+  // Sign in state
+  const [siPhone, setSiPhone] = useState('');
+  const [siLoading, setSiLoading] = useState(false);
+  const [siError, setSiError] = useState('');
 
-  const handleRegister = async () => {
-    if (!validate()) return;
-    setLoading(true);
-    setErrors({});
+  // Sign up state
+  const [suName, setSuName] = useState('');
+  const [suPhone, setSuPhone] = useState('');
+  const [suLoading, setSuLoading] = useState(false);
+  const [suErrors, setSuErrors] = useState<{ name?: string; phone?: string; general?: string }>({});
+
+  const handleSignIn = async () => {
+    setSiError('');
+    if (siPhone.length < 9) {
+      setSiError(t('auth.invalidPhone'));
+      return;
+    }
+    setSiLoading(true);
     try {
-      const result = await api.register('0' + phone, name.trim());
+      const result = await api.login('0' + siPhone);
       await signIn(result.token, result.user);
     } catch (err: any) {
-      setErrors({ general: err.message || t('common.error') });
+      if (err.message === 'account_not_found') {
+        setSiError(t('auth.accountNotFound'));
+      } else {
+        setSiError(err.message || t('common.error'));
+      }
     } finally {
-      setLoading(false);
+      setSiLoading(false);
+    }
+  };
+
+  const handleSignUp = async () => {
+    const e: typeof suErrors = {};
+    if (suName.trim().length === 0) e.name = t('auth.nameRequired');
+    if (suPhone.length < 9) e.phone = t('auth.invalidPhone');
+    setSuErrors(e);
+    if (Object.keys(e).length > 0) return;
+
+    setSuLoading(true);
+    setSuErrors({});
+    try {
+      const result = await api.register('0' + suPhone, suName.trim());
+      await signIn(result.token, result.user);
+    } catch (err: any) {
+      setSuErrors({ general: err.message || t('common.error') });
+    } finally {
+      setSuLoading(false);
     }
   };
 
@@ -47,64 +78,133 @@ export default function RegisterScreen() {
 
         <View style={styles.content}>
           <Text style={styles.logo}>{t('common.appName')}</Text>
-          <Text style={styles.welcome}>{t('auth.welcome')}</Text>
           <Text style={styles.subtitle}>{t('auth.subtitle')}</Text>
 
-          {/* Name */}
-          <View style={styles.field}>
-            <Text style={styles.label}>{t('auth.fullName')}</Text>
-            <TextInput
-              style={[styles.input, errors.name ? styles.inputError : null]}
-              placeholder={t('auth.fullNameHint')}
-              placeholderTextColor="#999"
-              value={name}
-              onChangeText={(v) => { setName(v); setErrors((e) => ({ ...e, name: undefined })); }}
-              returnKeyType="next"
-              autoCapitalize="words"
-              autoFocus
-            />
-            {errors.name ? <Text style={styles.errorText}>{errors.name}</Text> : null}
+          {/* Tab switcher */}
+          <View style={styles.tabBar}>
+            <TouchableOpacity
+              style={[styles.tab, tab === 'signin' && styles.tabActive]}
+              onPress={() => { setTab('signin'); setSiError(''); }}
+            >
+              <Text style={[styles.tabText, tab === 'signin' && styles.tabTextActive]}>
+                {t('auth.signIn')}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.tab, tab === 'signup' && styles.tabActive]}
+              onPress={() => { setTab('signup'); setSuErrors({}); }}
+            >
+              <Text style={[styles.tabText, tab === 'signup' && styles.tabTextActive]}>
+                {t('auth.signUp')}
+              </Text>
+            </TouchableOpacity>
           </View>
 
-          {/* Phone */}
-          <View style={styles.field}>
-            <Text style={styles.label}>{t('auth.enterPhone')}</Text>
-            <View style={[styles.phoneRow, errors.phone ? styles.phoneRowError : null]}>
-              <View style={styles.prefix}>
-                <Text style={styles.prefixText}>+251</Text>
+          {tab === 'signin' ? (
+            <View style={styles.form}>
+              <View style={styles.field}>
+                <Text style={styles.label}>{t('auth.enterPhone')}</Text>
+                <View style={[styles.phoneRow, siError ? styles.inputError : null]}>
+                  <View style={styles.prefix}>
+                    <Text style={styles.prefixText}>+251</Text>
+                  </View>
+                  <TextInput
+                    style={styles.phoneInput}
+                    placeholder={t('auth.phoneHint')}
+                    placeholderTextColor="#999"
+                    keyboardType="phone-pad"
+                    maxLength={9}
+                    value={siPhone}
+                    onChangeText={(v) => { setSiPhone(v); setSiError(''); }}
+                    onSubmitEditing={handleSignIn}
+                    returnKeyType="go"
+                    autoFocus
+                  />
+                </View>
+                {siError ? <Text style={styles.errorText}>{siError}</Text> : null}
               </View>
-              <TextInput
-                style={styles.phoneInput}
-                placeholder={t('auth.phoneHint')}
-                placeholderTextColor="#999"
-                keyboardType="phone-pad"
-                maxLength={9}
-                value={phone}
-                onChangeText={(v) => { setPhone(v); setErrors((e) => ({ ...e, phone: undefined })); }}
-                onSubmitEditing={handleRegister}
-                returnKeyType="go"
-              />
-            </View>
-            {errors.phone ? <Text style={styles.errorText}>{errors.phone}</Text> : null}
-          </View>
 
-          {errors.general ? (
-            <View style={styles.generalError}>
-              <Text style={styles.generalErrorText}>{errors.general}</Text>
-            </View>
-          ) : null}
+              <TouchableOpacity
+                style={[styles.button, siLoading && styles.buttonDisabled]}
+                onPress={handleSignIn}
+                disabled={siLoading}
+              >
+                {siLoading
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.buttonText}>{t('auth.signIn')}</Text>
+                }
+              </TouchableOpacity>
 
-          <TouchableOpacity
-            style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleRegister}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#fff" size="small" />
-            ) : (
-              <Text style={styles.buttonText}>{t('auth.getStarted')}</Text>
-            )}
-          </TouchableOpacity>
+              <TouchableOpacity style={styles.switchLink} onPress={() => setTab('signup')}>
+                <Text style={styles.switchText}>
+                  {t('auth.noAccount')}{' '}
+                  <Text style={styles.switchTextBold}>{t('auth.signUp')}</Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <View style={styles.form}>
+              <View style={styles.field}>
+                <Text style={styles.label}>{t('auth.fullName')}</Text>
+                <TextInput
+                  style={[styles.input, suErrors.name ? styles.inputError : null]}
+                  placeholder={t('auth.fullNameHint')}
+                  placeholderTextColor="#999"
+                  value={suName}
+                  onChangeText={(v) => { setSuName(v); setSuErrors((e) => ({ ...e, name: undefined })); }}
+                  returnKeyType="next"
+                  autoCapitalize="words"
+                  autoFocus
+                />
+                {suErrors.name ? <Text style={styles.errorText}>{suErrors.name}</Text> : null}
+              </View>
+
+              <View style={styles.field}>
+                <Text style={styles.label}>{t('auth.enterPhone')}</Text>
+                <View style={[styles.phoneRow, suErrors.phone ? styles.inputError : null]}>
+                  <View style={styles.prefix}>
+                    <Text style={styles.prefixText}>+251</Text>
+                  </View>
+                  <TextInput
+                    style={styles.phoneInput}
+                    placeholder={t('auth.phoneHint')}
+                    placeholderTextColor="#999"
+                    keyboardType="phone-pad"
+                    maxLength={9}
+                    value={suPhone}
+                    onChangeText={(v) => { setSuPhone(v); setSuErrors((e) => ({ ...e, phone: undefined })); }}
+                    onSubmitEditing={handleSignUp}
+                    returnKeyType="go"
+                  />
+                </View>
+                {suErrors.phone ? <Text style={styles.errorText}>{suErrors.phone}</Text> : null}
+              </View>
+
+              {suErrors.general ? (
+                <View style={styles.generalError}>
+                  <Text style={styles.generalErrorText}>{suErrors.general}</Text>
+                </View>
+              ) : null}
+
+              <TouchableOpacity
+                style={[styles.button, suLoading && styles.buttonDisabled]}
+                onPress={handleSignUp}
+                disabled={suLoading}
+              >
+                {suLoading
+                  ? <ActivityIndicator color="#fff" size="small" />
+                  : <Text style={styles.buttonText}>{t('auth.createAccount')}</Text>
+                }
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.switchLink} onPress={() => setTab('signin')}>
+                <Text style={styles.switchText}>
+                  {t('auth.haveAccount')}{' '}
+                  <Text style={styles.switchTextBold}>{t('auth.signIn')}</Text>
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -112,19 +212,9 @@ export default function RegisterScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-  },
-  scroll: {
-    flexGrow: 1,
-  },
-  langToggle: {
-    position: 'absolute',
-    top: 60,
-    right: 20,
-    zIndex: 10,
-  },
+  container: { flex: 1, backgroundColor: '#fff' },
+  scroll: { flexGrow: 1 },
+  langToggle: { position: 'absolute', top: 60, right: 20, zIndex: 10 },
   content: {
     flex: 1,
     justifyContent: 'center',
@@ -133,28 +223,49 @@ const styles = StyleSheet.create({
     paddingBottom: 48,
   },
   logo: {
-    fontSize: 32,
+    fontSize: 36,
     fontWeight: '800',
     color: '#2E7D32',
     textAlign: 'center',
-    marginBottom: 8,
-  },
-  welcome: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: '#1a1a1a',
-    textAlign: 'center',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   subtitle: {
     fontSize: 14,
-    color: '#666',
+    color: '#888',
     textAlign: 'center',
-    marginBottom: 40,
+    marginBottom: 36,
   },
-  field: {
-    marginBottom: 20,
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#F3F4F6',
+    borderRadius: 12,
+    padding: 4,
+    marginBottom: 28,
   },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 9,
+  },
+  tabActive: {
+    backgroundColor: '#fff',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  tabText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#888',
+  },
+  tabTextActive: {
+    color: '#2E7D32',
+  },
+  form: { gap: 0 },
+  field: { marginBottom: 18 },
   label: {
     fontSize: 14,
     fontWeight: '600',
@@ -170,17 +281,9 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     color: '#1a1a1a',
   },
-  inputError: {
-    borderColor: '#D32F2F',
-  },
   phoneRow: {
     flexDirection: 'row',
     alignItems: 'center',
-  },
-  phoneRowError: {
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#D32F2F',
   },
   prefix: {
     backgroundColor: '#F5F5F5',
@@ -192,11 +295,7 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     borderRightWidth: 0,
   },
-  prefixText: {
-    fontSize: 16,
-    color: '#333',
-    fontWeight: '600',
-  },
+  prefixText: { fontSize: 16, color: '#333', fontWeight: '600' },
   phoneInput: {
     flex: 1,
     fontSize: 16,
@@ -208,22 +307,18 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
     color: '#1a1a1a',
   },
-  errorText: {
-    fontSize: 12,
-    color: '#D32F2F',
-    marginTop: 6,
+  inputError: {
+    borderColor: '#D32F2F',
+    borderRadius: 12,
   },
+  errorText: { fontSize: 12, color: '#D32F2F', marginTop: 6 },
   generalError: {
     backgroundColor: '#FFEBEE',
     borderRadius: 10,
     padding: 12,
     marginBottom: 16,
   },
-  generalErrorText: {
-    fontSize: 13,
-    color: '#C62828',
-    textAlign: 'center',
-  },
+  generalErrorText: { fontSize: 13, color: '#C62828', textAlign: 'center' },
   button: {
     backgroundColor: '#2E7D32',
     paddingVertical: 16,
@@ -231,13 +326,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     minHeight: 52,
     justifyContent: 'center',
+    marginTop: 4,
   },
-  buttonDisabled: {
-    opacity: 0.6,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  buttonDisabled: { opacity: 0.6 },
+  buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  switchLink: { marginTop: 20, alignItems: 'center' },
+  switchText: { fontSize: 14, color: '#666' },
+  switchTextBold: { color: '#2E7D32', fontWeight: '700' },
 });

@@ -3,26 +3,82 @@
 export type LangOption = { value: string; en: string; am: string; om: string };
 
 export const PRODUCT_OPTIONS: LangOption[] = [
-  { value: 'coffee',       en: 'Coffee',        am: 'ቡና',          om: 'Buna' },
-  { value: 'sesame',       en: 'Sesame',         am: 'ሰሊጥ',        om: 'Saliixaa' },
-  { value: 'teff',         en: 'Teff',           am: 'ጤፍ',         om: 'Xaafii' },
-  { value: 'wheat',        en: 'Wheat',          am: 'ስንዴ',        om: 'Qamadii' },
-  { value: 'maize',        en: 'Maize / Corn',   am: 'በቆሎ',        om: 'Boqqolloo' },
-  { value: 'sorghum',      en: 'Sorghum',        am: 'ማሽላ',        om: 'Mishingaa' },
-  { value: 'mung_bean',    en: 'Mung Bean',      am: 'ማሾ',         om: 'Maashoo' },
-  { value: 'chickpea',     en: 'Chickpea',       am: 'ሽምብራ',       om: 'Shumbura' },
-  { value: 'haricot_bean', en: 'Haricot Bean',   am: 'ቦሎቄ',        om: 'Bolooqee' },
-  { value: 'lentils',      en: 'Lentils',        am: 'ምስር',        om: 'Misira' },
-  { value: 'oilseed',      en: 'Oil Seeds',      am: 'የቅባት እህሎች',  om: 'Midhaan Zayitaa' },
-  { value: 'niger_seed',   en: 'Niger Seed',     am: 'ኑግ',         om: 'Nuugii' },
-  { value: 'sunflower',    en: 'Sunflower',      am: 'ሱፍ',         om: 'Suufii' },
-  { value: 'spice',        en: 'Spices',         am: 'ቅመማ ቅመም',    om: 'Mi\'eessituu' },
-  { value: 'vegetables',   en: 'Vegetables',     am: 'አትክልት',      om: 'Kuduraa' },
-  { value: 'fruits',       en: 'Fruits',         am: 'ፍራፍሬ',       om: 'Fuduraa' },
-  { value: 'livestock',    en: 'Livestock',      am: 'እንስሳ',       om: 'Horii' },
-  { value: 'dairy',        en: 'Dairy',          am: 'የወተት ምርቶች',   om: 'Bu\'aa Aananii' },
-  { value: 'equipment',    en: 'Equipment',      am: 'መሣሪያዎች',     om: 'Meeshaalee' },
-  { value: 'other',        en: 'Other',          am: 'ሌላ',         om: 'Kan biraa' },
+  // Coffee
+  { value: 'coffee',         en: 'Coffee',              am: 'ቡና',            om: 'Buna' },
+  { value: 'green_coffee',   en: 'Green Coffee',        am: 'አረንጓዴ ቡና',     om: 'Buna Magariisa' },
+  { value: 'roasted_coffee', en: 'Roasted Coffee',      am: 'የተቆላ ቡና',      om: 'Buna Waadame' },
+  // Grains & cereals
+  { value: 'teff',           en: 'Teff',                am: 'ጤፍ',            om: 'Xaafii' },
+  { value: 'white_teff',     en: 'White Teff',          am: 'ነጭ ጤፍ',        om: 'Xaafii Adii' },
+  { value: 'red_teff',       en: 'Red Teff',            am: 'ቀይ ጤፍ',        om: 'Xaafii Diimaa' },
+  { value: 'wheat',          en: 'Wheat',               am: 'ስንዴ',           om: 'Qamadii' },
+  { value: 'maize',          en: 'Maize / Corn',        am: 'በቆሎ',           om: 'Boqqolloo' },
+  { value: 'sorghum',        en: 'Sorghum',             am: 'ማሽላ',           om: 'Mishingaa' },
+  { value: 'barley',         en: 'Barley',              am: 'ገብስ',           om: 'Garbuu' },
+  { value: 'millet',         en: 'Millet',              am: 'ዳጉሳ',           om: 'Daagujjaa' },
+  { value: 'rice',           en: 'Rice',                am: 'ሩዝ',            om: 'Ruuzii' },
+  // Oilseeds
+  { value: 'sesame',         en: 'Sesame',              am: 'ሰሊጥ',           om: 'Saliixaa' },
+  { value: 'niger_seed',     en: 'Niger Seed',          am: 'ኑግ',            om: 'Nuugii' },
+  { value: 'linseed',        en: 'Linseed / Flax',      am: 'ተልባ',           om: 'Talbaa' },
+  { value: 'sunflower',      en: 'Sunflower',           am: 'ሱፍ',            om: 'Suufii' },
+  { value: 'groundnut',      en: 'Groundnut / Peanut',  am: 'ለውዝ',           om: 'Leeyyoo' },
+  { value: 'soybean',        en: 'Soybean',             am: 'አኩሪ አተር',      om: 'Soyii' },
+  // Pulses & legumes
+  { value: 'chickpea',       en: 'Chickpea',            am: 'ሽምብራ',          om: 'Shumbura' },
+  { value: 'lentils',        en: 'Lentils',             am: 'ምስር',           om: 'Misira' },
+  { value: 'haricot_bean',   en: 'Haricot Bean',        am: 'ቦሎቄ',           om: 'Bolooqee' },
+  { value: 'fava_bean',      en: 'Fava Bean',           am: 'ባቄላ',           om: 'Baaqelaa' },
+  { value: 'field_pea',      en: 'Field Pea',           am: 'አተር',           om: 'Atara' },
+  { value: 'mung_bean',      en: 'Mung Bean',           am: 'ማሾ',            om: 'Maashoo' },
+  { value: 'kidney_bean',    en: 'Kidney Bean',         am: 'ቀይ ቦሎቄ',       om: 'Bolooqee Diimaa' },
+  // Spices
+  { value: 'korarima',       en: 'Korarima',            am: 'ኮረሪማ',          om: 'Korarimaa' },
+  { value: 'black_cumin',    en: 'Black Cumin',         am: 'ጥቁር አዝሙድ',     om: 'Azmudii Gurraacha' },
+  { value: 'fenugreek',      en: 'Fenugreek',           am: 'አብሽ',           om: 'Sunqoo' },
+  { value: 'turmeric',       en: 'Turmeric',            am: 'እርድ',           om: 'Irdii' },
+  { value: 'ginger',         en: 'Ginger',              am: 'ዝንጅብል',         om: 'Jinjibila' },
+  { value: 'berbere',        en: 'Berbere',             am: 'በርበሬ',          om: 'Barbaree' },
+  { value: 'mitmita',        en: 'Mitmita',             am: 'ሚጥሚጣ',          om: 'Mitmixaa' },
+  { value: 'chili_pepper',   en: 'Chili Pepper',        am: 'ቃሪያ',           om: 'Mixmixaa' },
+  // Vegetables
+  { value: 'tomato',         en: 'Tomato',              am: 'ቲማቲም',          om: 'Timaatima' },
+  { value: 'onion',          en: 'Onion',               am: 'ሽንኩርት',         om: 'Shunkurtii' },
+  { value: 'potato',         en: 'Potato',              am: 'ድንች',           om: 'Dinnicha' },
+  { value: 'garlic',         en: 'Garlic',              am: 'ነጭ ሽንኩርት',     om: 'Qullubbii Adii' },
+  { value: 'cabbage',        en: 'Cabbage',             am: 'ጎመን',           om: 'Raafuu' },
+  { value: 'carrot',         en: 'Carrot',              am: 'ካሮት',           om: 'Kaarotii' },
+  { value: 'sweet_potato',   en: 'Sweet Potato',        am: 'ስኳር ድንች',      om: 'Mixaaxissaa' },
+  { value: 'enset',          en: 'Enset / False Banana', am: 'እንሰት',         om: 'Warqee' },
+  { value: 'moringa',        en: 'Moringa',             am: 'ሞሪንጋ',          om: 'Moringaa' },
+  // Fruits
+  { value: 'banana',         en: 'Banana',              am: 'ሙዝ',            om: 'Muuzii' },
+  { value: 'mango',          en: 'Mango',               am: 'ማንጎ',           om: 'Maangoo' },
+  { value: 'avocado',        en: 'Avocado',             am: 'አቮካዶ',          om: 'Avokaadoo' },
+  { value: 'papaya',         en: 'Papaya',              am: 'ፓፓያ',           om: 'Paappayyaa' },
+  { value: 'orange',         en: 'Orange',              am: 'ብርቱካን',         om: 'Burtukaana' },
+  { value: 'sugarcane',      en: 'Sugarcane',           am: 'ሸንኮራ አገዳ',     om: 'Shankoraa' },
+  // Cash crops
+  { value: 'chat',           en: 'Chat / Khat',         am: 'ጫት',            om: 'Jimaa' },
+  { value: 'cotton',         en: 'Cotton',              am: 'ጥጥ',            om: 'Jirbii' },
+  { value: 'tea',            en: 'Tea',                 am: 'ሻይ',            om: 'Shaayii' },
+  // Livestock & animal products
+  { value: 'cattle',         en: 'Cattle',              am: 'ከብት',           om: 'Loon' },
+  { value: 'sheep',          en: 'Sheep',               am: 'በግ',            om: 'Hoolaa' },
+  { value: 'goat',           en: 'Goat',                am: 'ፍየል',           om: 'Re\'ee' },
+  { value: 'poultry',        en: 'Poultry',             am: 'ዶሮ',            om: 'Lukkuu' },
+  { value: 'honey',          en: 'Honey',               am: 'ማር',            om: 'Damma' },
+  { value: 'raw_milk',       en: 'Raw Milk',            am: 'ጥሬ ወተት',       om: 'Aannan Dheedhii' },
+  { value: 'butter',         en: 'Butter',              am: 'ቅቤ',            om: 'Dhadhaa' },
+  { value: 'eggs',           en: 'Eggs',                am: 'እንቁላል',         om: 'Hanqaaquu' },
+  { value: 'hides_skins',    en: 'Hides & Skins',       am: 'ቆዳ',            om: 'Gogaa' },
+  // Other
+  { value: 'frankincense',   en: 'Frankincense',        am: 'እጣን',           om: 'Ixaana' },
+  { value: 'honey_wine',     en: 'Honey Wine (Tej)',    am: 'ጠጅ',            om: 'Daadhi' },
+  { value: 'fertilizer',     en: 'Fertilizer',          am: 'ማዳበሪያ',         om: 'Xaa\'oo' },
+  { value: 'seeds',          en: 'Seeds',               am: 'ዘር',            om: 'Sanyii' },
+  { value: 'farm_tools',     en: 'Farm Tools',          am: 'የእርሻ መሣሪያ',    om: 'Meeshaa Qonnaa' },
+  { value: 'animal_feed',    en: 'Animal Feed',         am: 'የእንስሳ መኖ',     om: 'Nyaata Horii' },
 ];
 
 // Ethiopian administrative regions
@@ -92,6 +148,16 @@ export function buildLabelMap(options: LangOption[]): Record<string, { en: strin
 export const PRODUCT_LABELS  = buildLabelMap(PRODUCT_OPTIONS);
 export const REGION_LABELS   = buildLabelMap(REGION_OPTIONS);
 export const CONDITION_LABELS = buildLabelMap(CONDITION_OPTIONS);
+
+// Normalize user input to a consistent key: lowercase, spaces → underscores, trim
+export function normalizeValue(input: string): string {
+  return input.trim().toLowerCase().replace(/[\s-]+/g, '_').replace(/[^a-z0-9_]/g, '');
+}
+
+// Pretty-print a normalized key for display: coffee_beans → Coffee Beans
+export function prettifyValue(key: string): string {
+  return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
 // Products that support grade
 export const GRADED_PRODUCTS = new Set([

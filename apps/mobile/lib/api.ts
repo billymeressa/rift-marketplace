@@ -34,11 +34,24 @@ export async function apiRequest<T>(
 
 export const api = {
   // Auth
+  login: (phone: string) =>
+    apiRequest<{ token: string; user: any }>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    }),
+
   register: (phone: string, name: string) =>
     apiRequest<{ token: string; user: any }>('/auth/register', {
       method: 'POST',
       body: JSON.stringify({ phone, name }),
     }),
+
+  // Suggestions
+  getSuggestions: (field: string, q?: string) => {
+    const params = new URLSearchParams({ field });
+    if (q) params.set('q', q);
+    return apiRequest<{ value: string; count: number; label?: string }[]>(`/suggestions?${params}`);
+  },
 
   // Listings
   getListings: (params?: Record<string, string>) => {

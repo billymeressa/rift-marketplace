@@ -14,10 +14,10 @@ export const listings = pgTable('listings', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').notNull().references(() => users.id),
   type: varchar('type', { length: 4 }).notNull(), // 'buy' | 'sell'
-  productCategory: varchar('product_category', { length: 20 }).notNull(),
+  productCategory: varchar('product_category', { length: 50 }).notNull(),
   title: varchar('title', { length: 200 }).notNull(),
   description: text('description'),
-  region: varchar('region', { length: 30 }),
+  region: varchar('region', { length: 50 }),
   grade: smallint('grade'),
   process: varchar('process', { length: 10 }),
   transactionType: varchar('transaction_type', { length: 12 }),

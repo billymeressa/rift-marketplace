@@ -9,6 +9,14 @@ import orderRoutes from './routes/orders.js';
 import verificationRoutes from './routes/verification.js';
 import reviewRoutes from './routes/reviews.js';
 import feedbackRoutes from './routes/feedback.js';
+import suggestionRoutes from './routes/suggestions.js';
+
+// Validate JWT_SECRET at startup
+const WEAK_SECRETS = ['dev-secret-change-in-production', 'your-secret-key-change-this', 'secret', 'password'];
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32 || WEAK_SECRETS.includes(process.env.JWT_SECRET)) {
+  console.error('FATAL: JWT_SECRET is missing, too short, or using a known weak value. Set a strong secret (32+ chars) in .env');
+  process.exit(1);
+}
 
 const app = express();
 const port = parseInt(process.env.PORT || '3000');
@@ -35,6 +43,7 @@ app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/verification', verificationRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/feedback', feedbackRoutes);
+app.use('/api/v1/suggestions', suggestionRoutes);
 
 app.listen(port, () => {
   console.log(`API server running on http://localhost:${port}`);

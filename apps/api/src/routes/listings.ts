@@ -9,15 +9,15 @@ const router = Router();
 
 const createListingSchema = z.object({
   type: z.enum(['buy', 'sell']),
-  productCategory: z.enum(['coffee', 'sesame', 'mung_bean', 'oilseed', 'spice', 'equipment', 'other']),
+  productCategory: z.string().min(1).max(50),
   title: z.string().min(1).max(200),
   description: z.string().max(2000).optional(),
-  region: z.string().max(30).optional(),
+  region: z.string().max(50).optional(),
   grade: z.number().int().min(1).max(5).optional(),
-  process: z.enum(['washed', 'natural', 'unwashed']).optional(),
-  transactionType: z.enum(['vertical', 'horizontal']).optional(),
+  process: z.string().max(30).optional(),
+  transactionType: z.string().max(30).optional(),
   quantity: z.number().positive().optional(),
-  unit: z.enum(['bags', 'quintals', 'fcl', 'kg', 'tons']).optional(),
+  unit: z.string().max(20).optional(),
   price: z.number().positive().optional(),
   currency: z.enum(['ETB', 'USD']).optional(),
 });

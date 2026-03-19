@@ -15,6 +15,7 @@ import {
   NO_CONDITION_PRODUCTS,
 } from '../../lib/options';
 import ResponsiveContainer from '../../components/ResponsiveContainer';
+import SuggestInput from '../../components/SuggestInput';
 
 interface ChipSelectProps {
   options: { value: string; en: string; am: string; om: string }[];
@@ -131,11 +132,12 @@ export default function CreateScreen() {
 
       {/* Product */}
       <Text style={styles.sectionTitle}>{t('listing.product')}</Text>
-      <ChipSelect
-        options={PRODUCT_OPTIONS}
+      <SuggestInput
+        field="product"
         value={form.productCategory}
         onChange={(v) => update('productCategory', v)}
-        lang={lang}
+        seedOptions={PRODUCT_OPTIONS}
+        placeholder={t('listing.productHint')}
       />
 
       {/* Title */}
@@ -151,11 +153,12 @@ export default function CreateScreen() {
 
       {/* Region — shown for all products */}
       <Text style={styles.sectionTitle}>{t('listing.region')}</Text>
-      <ChipSelect
-        options={REGION_OPTIONS}
+      <SuggestInput
+        field="region"
         value={form.region}
         onChange={(v) => update('region', v)}
-        lang={lang}
+        seedOptions={REGION_OPTIONS}
+        placeholder={t('listing.regionHint')}
       />
 
       {/* Grade — shown for graded commodities */}
