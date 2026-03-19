@@ -9,6 +9,7 @@ import { setLanguage } from '../../lib/i18n';
 import ListingCard from '../../components/ListingCard';
 import TrustBadge from '../../components/TrustBadge';
 import { useRouter } from 'expo-router';
+import ResponsiveContainer from '../../components/ResponsiveContainer';
 
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation();
@@ -73,8 +74,9 @@ export default function ProfileScreen() {
   };
 
   return (
+    <ResponsiveContainer style={styles.container}>
     <FlatList
-      style={styles.container}
+      style={{ flex: 1 }}
       data={myListings?.data || []}
       keyExtractor={(item) => item.id}
       renderItem={({ item }) => <ListingCard listing={item} />}
@@ -186,6 +188,7 @@ export default function ProfileScreen() {
       }
       contentContainerStyle={styles.listContent}
     />
+    </ResponsiveContainer>
   );
 }
 

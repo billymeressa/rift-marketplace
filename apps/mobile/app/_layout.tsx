@@ -1,5 +1,7 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
+import { Head } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { Platform } from 'react-native';
 import { useEffect, useState, useCallback } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthContext } from '../lib/auth';
@@ -11,7 +13,9 @@ initSentry();
 
 export { ErrorBoundary } from 'expo-router';
 
-SplashScreen.preventAutoHideAsync();
+if (Platform.OS !== 'web') {
+  SplashScreen.preventAutoHideAsync();
+}
 
 const queryClient = new QueryClient();
 
@@ -29,7 +33,9 @@ export default function RootLayout() {
       setToken(savedToken);
       setUser(savedUser);
       setIsLoading(false);
-      SplashScreen.hideAsync();
+      if (Platform.OS !== 'web') {
+        SplashScreen.hideAsync();
+      }
     })();
   }, []);
 
@@ -64,6 +70,16 @@ export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthContext.Provider value={{ token, user, isLoading, signIn, signOut }}>
+        {Platform.OS === 'web' && (
+          <Head>
+            <title>Rift — Ethiopia's Coffee & Agriculture Marketplace</title>
+            <meta name="description" content="Buy and sell coffee, sesame, and agricultural products across Ethiopia. Connect with verified traders on Rift." />
+            <meta name="viewport" content="width=device-width, initial-scale=1" />
+            <meta property="og:title" content="Rift — Ethiopia's Coffee & Agriculture Marketplace" />
+            <meta property="og:description" content="Buy and sell coffee, sesame, and agricultural products across Ethiopia." />
+            <meta property="og:type" content="website" />
+          </Head>
+        )}
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />

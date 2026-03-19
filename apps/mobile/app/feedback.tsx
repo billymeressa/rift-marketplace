@@ -6,6 +6,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Ionicons } from '@expo/vector-icons';
+import { api } from '../lib/api';
 
 const FEEDBACK_TYPES = [
   { value: 'bug',        icon: 'bug-outline' as const,         en: 'Bug Report',      am: 'ስህተት ሪፖርት' },
@@ -37,9 +38,20 @@ export default function FeedbackScreen() {
     }
 
     setSending(true);
-    // TODO: wire to /api/v1/feedback once endpoint is added
-    // For now, simulate success
-    await new Promise((r) => setTimeout(r, 800));
+    try {
+      await api.submitFeedback({
+        type,
+        message: message.trim() || undefined,
+        nps: nps || undefined,
+      });
+    } catch {
+      setSending(false);
+      Alert.alert(
+        lang === 'am' ? 'ስህተት' : 'Error',
+        lang === 'am' ? 'አስተያየት መላክ አልተቻለም። እባክዎ ይሞክሩ።' : 'Failed to send feedback. Please try again.'
+      );
+      return;
+    }
     setSending(false);
 
     Alert.alert(

@@ -8,6 +8,7 @@ import userRoutes from './routes/users.js';
 import orderRoutes from './routes/orders.js';
 import verificationRoutes from './routes/verification.js';
 import reviewRoutes from './routes/reviews.js';
+import feedbackRoutes from './routes/feedback.js';
 
 const app = express();
 const port = parseInt(process.env.PORT || '3000');
@@ -33,10 +34,10 @@ app.use('/api/v1/users', userRoutes);
 app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/verification', verificationRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/feedback', feedbackRoutes);
 
 app.listen(port, () => {
   console.log(`API server running on http://localhost:${port}`);
 });
 
 export default app;
- app;

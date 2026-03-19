@@ -80,3 +80,12 @@ export const reviews = pgTable('reviews', {
 }, (table) => [
   unique('unique_review_per_order').on(table.orderId, table.reviewerId),
 ]);
+
+export const feedback = pgTable('feedback', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').references(() => users.id),
+  type: varchar('type', { length: 20 }).notNull().default('general'),
+  message: text('message'),
+  nps: smallint('nps'),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});

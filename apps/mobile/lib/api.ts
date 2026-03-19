@@ -136,4 +136,11 @@ export const api = {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
     return apiRequest<any>(`/reviews/user/${id}${query}`);
   },
+
+  // Feedback
+  submitFeedback: (data: { type: string; message?: string; nps?: number }) =>
+    apiRequest<{ id: string; message: string }>('/feedback', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }),
 };

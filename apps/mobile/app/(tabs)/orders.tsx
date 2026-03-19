@@ -13,6 +13,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import OrderCard from '../../components/OrderCard';
+import ResponsiveContainer from '../../components/ResponsiveContainer';
 
 type RoleTab = 'buyer' | 'seller';
 
@@ -74,7 +75,7 @@ export default function OrdersScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <ResponsiveContainer style={styles.container}>
       {/* Segmented control */}
       <View style={styles.tabRow}>
         <TouchableOpacity
@@ -115,7 +116,7 @@ export default function OrdersScreen() {
           onRefresh={handleRefresh}
         />
       )}
-    </View>
+    </ResponsiveContainer>
   );
 }
 

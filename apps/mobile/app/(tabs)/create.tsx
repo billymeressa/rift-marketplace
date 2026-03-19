@@ -14,6 +14,7 @@ import {
   GRADED_PRODUCTS,
   NO_CONDITION_PRODUCTS,
 } from '../../lib/options';
+import ResponsiveContainer from '../../components/ResponsiveContainer';
 
 interface ChipSelectProps {
   options: { value: string; en: string; am: string }[];
@@ -106,6 +107,7 @@ export default function CreateScreen() {
   };
 
   return (
+    <ResponsiveContainer>
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
 
       {/* Buy / Sell */}
@@ -262,6 +264,7 @@ export default function CreateScreen() {
         </Text>
       </TouchableOpacity>
     </ScrollView>
+    </ResponsiveContainer>
   );
 }
 

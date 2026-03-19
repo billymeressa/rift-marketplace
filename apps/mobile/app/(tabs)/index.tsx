@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../../lib/api';
 import ListingCard from '../../components/ListingCard';
+import ResponsiveContainer from '../../components/ResponsiveContainer';
 
 export default function HomeScreen() {
   const { t } = useTranslation();
@@ -23,7 +24,7 @@ export default function HomeScreen() {
   }, [refetch]);
 
   return (
-    <View style={styles.container}>
+    <ResponsiveContainer style={styles.container}>
       <FlatList
         data={listings}
         keyExtractor={(item) => item.id}
@@ -52,7 +53,7 @@ export default function HomeScreen() {
           ) : null
         }
       />
-    </View>
+    </ResponsiveContainer>
   );
 }
 

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../lib/api';
 import ListingCard from '../../components/ListingCard';
 import FilterSheet from '../../components/FilterSheet';
+import ResponsiveContainer from '../../components/ResponsiveContainer';
 
 export default function SearchScreen() {
   const { t } = useTranslation();
@@ -31,7 +32,7 @@ export default function SearchScreen() {
   const activeFilterCount = Object.keys(filters).length;
 
   return (
-    <View style={styles.container}>
+    <ResponsiveContainer style={styles.container}>
       <View style={styles.searchRow}>
         <View style={styles.searchBox}>
           <Ionicons name="search-outline" size={18} color="#999" />
@@ -90,7 +91,7 @@ export default function SearchScreen() {
         filters={filters}
         onApply={setFilters}
       />
-    </View>
+    </ResponsiveContainer>
   );
 }
 
