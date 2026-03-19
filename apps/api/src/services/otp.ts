@@ -21,15 +21,39 @@ export function isValidEthiopianPhone(phone: string): boolean {
   return /^\+251[79]\d{8}$/.test(normalized);
 }
 
+async function sendViaSandbox(phone: string, code: string): Promise<void> {
+  const username = process.env.AT_USERNAME ?? 'sandbox';
+  const apiKey = process.env.AT_API_KEY!;
+  const from = process.env.AT_SENDER_ID ?? 'Rift';
+
+  const res = await fetch('https://api.sandbox.africastalking.com/version1/messaging', {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded',
+      'apiKey': apiKey,
+    },
+    body: new URLSearchParams({
+      username,
+      to: phone,
+      message: `Your Rift verification code is: ${code}`,
+      from,
+    }).toString(),
+  });
+
+  const data = await res.json() as any;
+  console.log(`[OTP] AT sandbox response for ${phone}:`, JSON.stringify(data));
+
+  if (!res.ok) throw new Error(`AT sandbox error: ${JSON.stringify(data)}`);
+}
+
 export async function createOtp(phone: string): Promise<string> {
-  const bypass = process.env.BYPASS_OTP === 'true';
-  const code = bypass ? '123456' : generateOtp();
+  const code = generateOtp();
   const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
   await db.insert(otpCodes).values({ phone, code, expiresAt });
 
-  // Always log — visible in Railway logs so you can relay code to testers manually
-  console.log(`[OTP] ${phone} → ${code}${bypass ? ' (BYPASS)' : ''}`);
+  await sendViaSandbox(phone, code);
 
   return code;
 }
