@@ -9,7 +9,6 @@ import orderRoutes from './routes/orders.js';
 import verificationRoutes from './routes/verification.js';
 import reviewRoutes from './routes/reviews.js';
 import feedbackRoutes from './routes/feedback.js';
-import telegramRoutes from './routes/telegram.js';
 
 const app = express();
 const port = parseInt(process.env.PORT || '3000');
@@ -36,7 +35,6 @@ app.use('/api/v1/orders', orderRoutes);
 app.use('/api/v1/verification', verificationRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/feedback', feedbackRoutes);
-app.use('/api/v1/telegram', telegramRoutes);
 
 app.listen(port, () => {
   console.log(`API server running on http://localhost:${port}`);

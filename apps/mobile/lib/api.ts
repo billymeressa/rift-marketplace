@@ -1,13 +1,9 @@
-import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
+import { getToken } from './auth';
 
 // Android emulator routes localhost → 10.0.2.2 (host machine)
-import { Platform } from 'react-native';
 const DEFAULT_HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 const API_URL = process.env.EXPO_PUBLIC_API_URL || `http://${DEFAULT_HOST}:3000/api/v1`;
-
-async function getToken(): Promise<string | null> {
-  return SecureStore.getItemAsync('auth_token');
-}
 
 export async function apiRequest<T>(
   endpoint: string,
@@ -38,16 +34,10 @@ export async function apiRequest<T>(
 
 export const api = {
   // Auth
-  sendOtp: (phone: string) =>
-    apiRequest<{ message: string; phone: string }>('/auth/otp/send', {
+  register: (phone: string, name: string) =>
+    apiRequest<{ token: string; user: any }>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ phone }),
-    }),
-
-  verifyOtp: (phone: string, code: string) =>
-    apiRequest<{ token: string; user: any }>('/auth/otp/verify', {
-      method: 'POST',
-      body: JSON.stringify({ phone, code }),
+      body: JSON.stringify({ phone, name }),
     }),
 
   // Listings
