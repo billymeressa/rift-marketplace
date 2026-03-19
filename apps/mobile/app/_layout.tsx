@@ -1,5 +1,5 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
-import { Head } from 'expo-router';
+import { Head } from 'expo-router/head';
 import * as SplashScreen from 'expo-splash-screen';
 import { Platform } from 'react-native';
 import { useEffect, useState, useCallback } from 'react';
