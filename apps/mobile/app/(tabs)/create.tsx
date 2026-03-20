@@ -51,7 +51,6 @@ export default function CreateScreen() {
   const [form, setForm] = useState({
     type: 'sell',
     productCategory: 'coffee',
-    title: '',
     description: '',
     region: '',
     grade: '',
@@ -75,7 +74,7 @@ export default function CreateScreen() {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
       Alert.alert('', t('listing.postSuccess'));
       setForm({
-        type: 'sell', productCategory: 'coffee', title: '', description: '',
+        type: 'sell', productCategory: 'coffee', description: '',
         region: '', grade: '', condition: '', transactionType: '',
         quantity: '', unit: 'kg', price: '', currency: 'ETB', images: [],
       });
@@ -85,16 +84,29 @@ export default function CreateScreen() {
     },
   });
 
-  const handleSubmit = () => {
-    if (!form.title.trim()) {
-      Alert.alert('', `${t('listing.title')} ${t('common.required')}`);
-      return;
+  const generateTitle = () => {
+    const product = PRODUCT_OPTIONS.find((o) => o.value === form.productCategory)?.en
+      || form.productCategory;
+    const parts: string[] = [];
+    if (form.grade) parts.push(`G${form.grade}`);
+    if (form.condition) {
+      const condLabel = CONDITION_OPTIONS.find((o) => o.value === form.condition)?.en;
+      if (condLabel) parts.push(condLabel);
     }
+    parts.push(product);
+    if (form.region) {
+      const regionLabel = REGION_OPTIONS.find((o) => o.value === form.region)?.en || form.region;
+      parts.push(`– ${regionLabel}`);
+    }
+    const prefix = form.type === 'buy' ? 'Buying ' : '';
+    return `${prefix}${parts.join(' ')}`.trim();
+  };
 
+  const handleSubmit = () => {
     const payload: any = {
       type: form.type,
       productCategory: form.productCategory,
-      title: form.title.trim(),
+      title: generateTitle(),
     };
     if (form.description)    payload.description    = form.description.trim();
     if (form.region)         payload.region         = form.region;
@@ -141,17 +153,6 @@ export default function CreateScreen() {
         onChange={(v) => update('productCategory', v)}
         seedOptions={PRODUCT_OPTIONS}
         placeholder={t('listing.productHint')}
-      />
-
-      {/* Title */}
-      <Text style={styles.sectionTitle}>{t('listing.title')} *</Text>
-      <TextInput
-        style={styles.textInput}
-        placeholder={t('listing.titleHint')}
-        placeholderTextColor="#999"
-        value={form.title}
-        onChangeText={(v) => update('title', v)}
-        maxLength={200}
       />
 
       {/* Photos */}
