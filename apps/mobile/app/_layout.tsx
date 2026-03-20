@@ -91,6 +91,10 @@ export default function RootLayout() {
             options={{ headerShown: true, title: '', presentation: 'card' }}
           />
           <Stack.Screen
+            name="listing/edit/[id]"
+            options={{ headerShown: true, title: 'Edit Listing', presentation: 'card' }}
+          />
+          <Stack.Screen
             name="order/create"
             options={{ headerShown: true, title: '', presentation: 'card' }}
           />

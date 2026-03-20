@@ -176,6 +176,16 @@ export default function ListingDetailScreen() {
           </Text>
         </TouchableOpacity>
       )}
+
+      {currentUser?.id && listing.user?.id && currentUser.id === listing.user.id && (
+        <TouchableOpacity
+          style={styles.editBtn}
+          onPress={() => router.push(`/listing/edit/${listing.id}`)}
+        >
+          <Ionicons name="create-outline" size={20} color="#2E7D32" />
+          <Text style={styles.editBtnText}>{t('common.edit')} {t('listing.listing') || 'Listing'}</Text>
+        </TouchableOpacity>
+      )}
     </ScrollView>
   );
 }
@@ -372,5 +382,22 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
+  },
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#2E7D32',
+    backgroundColor: '#fff',
+    marginTop: 12,
+  },
+  editBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2E7D32',
   },
 });
