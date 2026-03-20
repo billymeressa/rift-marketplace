@@ -1,9 +1,15 @@
 import { Platform } from 'react-native';
-import { getToken } from './auth';
+import { getToken, removeToken, removeUser } from './auth';
 
 // Android emulator routes localhost → 10.0.2.2 (host machine)
 const DEFAULT_HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 const API_URL = process.env.EXPO_PUBLIC_API_URL || `http://${DEFAULT_HOST}:3000/api/v1`;
+
+// Global sign-out callback registered by the auth provider
+let _onUnauthorized: (() => void) | null = null;
+export function setUnauthorizedHandler(handler: () => void) {
+  _onUnauthorized = handler;
+}
 
 export async function apiRequest<T>(
   endpoint: string,
@@ -25,6 +31,12 @@ export async function apiRequest<T>(
   });
 
   if (!response.ok) {
+    // Expired/invalid token — sign out so the app redirects to login
+    if (response.status === 401) {
+      await removeToken();
+      await removeUser();
+      _onUnauthorized?.();
+    }
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
     throw new Error(error.error || `HTTP ${response.status}`);
   }

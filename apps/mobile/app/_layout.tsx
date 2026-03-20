@@ -5,6 +5,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { AuthContext } from '../lib/auth';
 import { getToken, getUser, saveToken, saveUser, removeToken, removeUser } from '../lib/auth';
+import { setUnauthorizedHandler } from '../lib/api';
 import '../lib/i18n';
 import { initSentry } from '../lib/sentry';
 
@@ -63,6 +64,11 @@ export default function RootLayout() {
     setUser(null);
     queryClient.clear();
   }, []);
+
+  // Register global handler so apiRequest can trigger sign-out on 401
+  useEffect(() => {
+    setUnauthorizedHandler(signOut);
+  }, [signOut]);
 
   if (isLoading) return null;
 

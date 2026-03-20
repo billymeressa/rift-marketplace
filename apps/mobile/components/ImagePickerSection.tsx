@@ -42,9 +42,16 @@ export default function ImagePickerSection({ images, onChange, maxImages = 5 }: 
     try {
       const newUrls: string[] = [];
       for (const asset of result.assets) {
-        if (!asset.base64) continue;
-        const base64Uri = `data:image/jpeg;base64,${asset.base64}`;
-        const { url } = await api.uploadImage(base64Uri);
+        let imageData: string;
+        if (asset.base64) {
+          const mimeType = asset.mimeType || 'image/jpeg';
+          imageData = `data:${mimeType};base64,${asset.base64}`;
+        } else if (asset.uri?.startsWith('data:')) {
+          imageData = asset.uri;
+        } else {
+          continue; // Can't upload without base64
+        }
+        const { url } = await api.uploadImage(imageData);
         newUrls.push(url);
       }
       onChange([...images, ...newUrls].slice(0, maxImages));
@@ -76,8 +83,19 @@ export default function ImagePickerSection({ images, onChange, maxImages = 5 }: 
 
     setUploading(true);
     try {
-      const base64Uri = `data:image/jpeg;base64,${result.assets[0].base64}`;
-      const { url } = await api.uploadImage(base64Uri);
+      const asset = result.assets[0];
+      let imageData: string;
+      if (asset.base64) {
+        const mimeType = asset.mimeType || 'image/jpeg';
+        imageData = `data:${mimeType};base64,${asset.base64}`;
+      } else if (asset.uri?.startsWith('data:')) {
+        imageData = asset.uri;
+      } else {
+        Alert.alert('Upload failed', 'Could not read image data');
+        setUploading(false);
+        return;
+      }
+      const { url } = await api.uploadImage(imageData);
       onChange([...images, url].slice(0, maxImages));
     } catch (error: any) {
       Alert.alert('Upload failed', error.message || 'Could not upload image');
