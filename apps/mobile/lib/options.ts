@@ -159,12 +159,98 @@ export function prettifyValue(key: string): string {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
-// Products that support grade
+// ─── Product groups ──────────────────────────────────────────────────────────
+
+export const COFFEE_PRODUCTS   = new Set(['coffee', 'green_coffee', 'roasted_coffee']);
+export const GRAIN_PRODUCTS    = new Set(['teff', 'white_teff', 'red_teff', 'wheat', 'maize', 'sorghum', 'barley', 'millet', 'rice']);
+export const OILSEED_PRODUCTS  = new Set(['sesame', 'niger_seed', 'linseed', 'sunflower', 'groundnut', 'soybean']);
+export const PULSE_PRODUCTS    = new Set(['chickpea', 'lentils', 'haricot_bean', 'fava_bean', 'field_pea', 'mung_bean', 'kidney_bean']);
+export const SPICE_PRODUCTS    = new Set(['korarima', 'black_cumin', 'fenugreek', 'turmeric', 'ginger', 'berbere', 'mitmita', 'chili_pepper']);
+export const VEG_PRODUCTS      = new Set(['tomato', 'onion', 'potato', 'garlic', 'cabbage', 'carrot', 'sweet_potato', 'enset', 'moringa']);
+export const FRUIT_PRODUCTS    = new Set(['banana', 'mango', 'avocado', 'papaya', 'orange', 'sugarcane']);
+export const LIVESTOCK_PRODUCTS= new Set(['cattle', 'sheep', 'goat', 'poultry']);
+export const ANIMAL_PRODUCTS   = new Set(['honey', 'raw_milk', 'butter', 'eggs', 'hides_skins']);
+export const CASH_CROPS        = new Set(['chat', 'cotton', 'tea']);
+
+// Products that support grade (for backwards compat)
 export const GRADED_PRODUCTS = new Set([
-  'coffee', 'sesame', 'teff', 'wheat', 'maize', 'sorghum',
-  'mung_bean', 'chickpea', 'haricot_bean', 'lentils',
-  'oilseed', 'niger_seed', 'sunflower',
+  ...COFFEE_PRODUCTS, 'sesame', 'teff', 'white_teff', 'red_teff', 'wheat', 'maize', 'sorghum',
+  'mung_bean', 'chickpea', 'haricot_bean', 'lentils', 'niger_seed', 'sunflower',
 ]);
 
-// Products that DON'T typically have a processing condition
-export const NO_CONDITION_PRODUCTS = new Set(['equipment', 'livestock', 'other']);
+// Products that DON'T typically have a processing condition (for backwards compat)
+export const NO_CONDITION_PRODUCTS = new Set([...LIVESTOCK_PRODUCTS]);
+
+// ─── Condition subsets per product type ──────────────────────────────────────
+
+export const CONDITIONS_COFFEE: LangOption[] = [
+  { value: 'washed',    en: 'Washed',             am: 'የታጠበ',      om: 'Dhiqamaa' },
+  { value: 'natural',   en: 'Natural / Sun-dried', am: 'ተፈጥሯዊ',     om: 'Uumamaa' },
+  { value: 'honey',     en: 'Honey Process',       am: 'ማር ሂደት',    om: 'Hannaga Damma' },
+  { value: 'organic',   en: 'Organic',             am: 'ኦርጋኒክ',     om: 'Orgaanikii' },
+];
+
+export const CONDITIONS_BULK: LangOption[] = [
+  { value: 'raw',       en: 'Raw / Unprocessed',   am: 'ጥሬ',         om: 'Dheedhii' },
+  { value: 'processed', en: 'Processed / Cleaned', am: 'ሂደት ያለፈ',   om: 'Kan qophaa\'e' },
+  { value: 'organic',   en: 'Organic',             am: 'ኦርጋኒክ',     om: 'Orgaanikii' },
+];
+
+export const CONDITIONS_FRESH: LangOption[] = [
+  { value: 'fresh',     en: 'Fresh',               am: 'ትኩስ',        om: 'Qulqulluu' },
+  { value: 'dried',     en: 'Dried',               am: 'የደረቀ',       om: 'Gogaa' },
+  { value: 'organic',   en: 'Organic',             am: 'ኦርጋኒክ',     om: 'Orgaanikii' },
+];
+
+export const CONDITIONS_SPICE: LangOption[] = [
+  { value: 'raw',       en: 'Raw / Whole',         am: 'ጥሬ',         om: 'Dheedhii' },
+  { value: 'dried',     en: 'Dried',               am: 'የደረቀ',       om: 'Gogaa' },
+  { value: 'processed', en: 'Ground / Blended',    am: 'ሂደት ያለፈ',   om: 'Kan qophaa\'e' },
+  { value: 'organic',   en: 'Organic',             am: 'ኦርጋኒክ',     om: 'Orgaanikii' },
+];
+
+export const CONDITIONS_ANIMAL: LangOption[] = [
+  { value: 'raw',       en: 'Raw',                 am: 'ጥሬ',         om: 'Dheedhii' },
+  { value: 'processed', en: 'Processed',           am: 'ሂደት ያለፈ',   om: 'Kan qophaa\'e' },
+  { value: 'organic',   en: 'Organic',             am: 'ኦርጋኒክ',     om: 'Orgaanikii' },
+];
+
+// ─── Product profile ──────────────────────────────────────────────────────────
+
+export type ProductProfile = {
+  showGrade:       boolean;
+  conditions:      LangOption[]; // empty = hide condition field
+  defaultUnit:     string;
+  units:           LangOption[];
+  showTransaction: boolean;
+  conditionLabel:  string;       // label for the condition selector
+};
+
+export function getProductProfile(category: string): ProductProfile {
+  const bulkUnits   = UNIT_OPTIONS.filter(u => ['kg','quintals','tons','bags','fcl'].includes(u.value));
+  const smallUnits  = UNIT_OPTIONS.filter(u => ['kg','bags','pieces'].includes(u.value));
+  const liquidUnits = UNIT_OPTIONS.filter(u => ['liters','kg','pieces'].includes(u.value));
+  const livestockU  = UNIT_OPTIONS.filter(u => u.value === 'head');
+
+  if (COFFEE_PRODUCTS.has(category))
+    return { showGrade: true,  conditions: CONDITIONS_COFFEE,  defaultUnit: 'kg',       units: bulkUnits,   showTransaction: true,  conditionLabel: 'Process' };
+  if (GRAIN_PRODUCTS.has(category))
+    return { showGrade: GRADED_PRODUCTS.has(category), conditions: CONDITIONS_BULK, defaultUnit: 'quintals', units: bulkUnits, showTransaction: true, conditionLabel: 'Condition' };
+  if (OILSEED_PRODUCTS.has(category))
+    return { showGrade: GRADED_PRODUCTS.has(category), conditions: CONDITIONS_BULK, defaultUnit: 'quintals', units: bulkUnits, showTransaction: true, conditionLabel: 'Condition' };
+  if (PULSE_PRODUCTS.has(category))
+    return { showGrade: GRADED_PRODUCTS.has(category), conditions: CONDITIONS_BULK, defaultUnit: 'quintals', units: bulkUnits, showTransaction: true, conditionLabel: 'Condition' };
+  if (SPICE_PRODUCTS.has(category))
+    return { showGrade: false, conditions: CONDITIONS_SPICE,  defaultUnit: 'kg',       units: smallUnits,  showTransaction: true,  conditionLabel: 'Form' };
+  if (VEG_PRODUCTS.has(category) || FRUIT_PRODUCTS.has(category))
+    return { showGrade: false, conditions: CONDITIONS_FRESH,  defaultUnit: 'kg',       units: bulkUnits,   showTransaction: true,  conditionLabel: 'Condition' };
+  if (LIVESTOCK_PRODUCTS.has(category))
+    return { showGrade: false, conditions: [],                defaultUnit: 'head',     units: livestockU,  showTransaction: false, conditionLabel: '' };
+  if (ANIMAL_PRODUCTS.has(category))
+    return { showGrade: false, conditions: CONDITIONS_ANIMAL, defaultUnit: 'kg',       units: liquidUnits, showTransaction: true,  conditionLabel: 'Condition' };
+  if (CASH_CROPS.has(category))
+    return { showGrade: false, conditions: CONDITIONS_BULK,   defaultUnit: 'quintals', units: bulkUnits,   showTransaction: true,  conditionLabel: 'Condition' };
+
+  // Default
+  return { showGrade: false, conditions: CONDITIONS_BULK, defaultUnit: 'kg', units: UNIT_OPTIONS, showTransaction: true, conditionLabel: 'Condition' };
+}
