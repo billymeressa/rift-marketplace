@@ -35,8 +35,8 @@ export default function ListingCard({ listing }: ListingCardProps) {
   // BUY = poster wants to buy → "WANTED"
   // SELL = poster is selling → "FOR SALE"
   const typeLabel = isBuy
-    ? (lang === 'am' ? '🔍 ፈልጓል' : lang === 'om' ? '🔍 BARBAADA' : '🔍 WANTED')
-    : (lang === 'am' ? '🏷 ለሽያጭ' : lang === 'om' ? '🏷 GURGURAMAA' : '🏷 FOR SALE');
+    ? (lang === 'am' ? 'ፈልጓል' : lang === 'om' ? 'BARBAADA' : 'WANTED')
+    : (lang === 'am' ? 'ለሽያጭ' : lang === 'om' ? 'GURGURAMAA' : 'FOR SALE');
 
   const priceStr = listing.price
     ? `${listing.currency === 'USD' ? '$' : ''}${Number(listing.price).toLocaleString()}${listing.currency === 'ETB' ? ' ETB' : ''}`
