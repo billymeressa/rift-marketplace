@@ -5,7 +5,7 @@ services:
     region: frankfurt
     plan: free
     rootDir: apps/api
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && npm run build && npx drizzle-kit push --force
     startCommand: npm run start
     envVars:
       - key: NODE_ENV
