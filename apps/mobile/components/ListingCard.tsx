@@ -77,12 +77,11 @@ export default function ListingCard({ listing }: ListingCardProps) {
           </Text>
         )}
 
-        {listing.user?.name ? (
+        {listing.user?.id && (
           <View style={styles.posterRow}>
-            <Text style={styles.poster}>{listing.user.name}</Text>
-            {listing.user?.id && <TrustBadge userId={listing.user.id} />}
+            <TrustBadge userId={listing.user.id} />
           </View>
-        ) : null}
+        )}
       </View>
     </TouchableOpacity>
   );
