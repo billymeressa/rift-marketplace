@@ -4,7 +4,8 @@ export const otpCodes = pgTable('otp_codes', {
   id: uuid('id').primaryKey().defaultRandom(),
   phone: varchar('phone', { length: 15 }).notNull(),
   code: varchar('code', { length: 6 }).notNull(),
-  purpose: varchar('purpose', { length: 20 }).notNull(), // 'password_reset'
+  purpose: varchar('purpose', { length: 20 }).notNull(), // 'auth'
+  session: varchar('session', { length: 50 }),
   expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
   usedAt: timestamp('used_at', { withTimezone: true }),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),

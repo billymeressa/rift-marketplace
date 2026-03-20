@@ -45,41 +45,17 @@ export async function apiRequest<T>(
 }
 
 export const api = {
-  // Auth
-  login: (phone: string, password: string) =>
-    apiRequest<{ token: string; user: any; mustSetPassword?: boolean }>('/auth/login', {
+  // Auth — Telegram OTP
+  sendCode: (phone: string, name?: string) =>
+    apiRequest<{ isNewUser: boolean; telegramLink: string | null; session: string; message: string }>('/auth/send-code', {
       method: 'POST',
-      body: JSON.stringify({ phone, password }),
+      body: JSON.stringify({ phone, ...(name ? { name } : {}) }),
     }),
 
-  register: (phone: string, name: string, password: string) =>
-    apiRequest<{ token: string; user: any }>('/auth/register', {
+  verifyCode: (phone: string, code: string, name?: string) =>
+    apiRequest<{ token: string; user: any }>('/auth/verify-code', {
       method: 'POST',
-      body: JSON.stringify({ phone, name, password }),
-    }),
-
-  setPassword: (phone: string, password: string) =>
-    apiRequest<{ token: string; user: any }>('/auth/set-password', {
-      method: 'POST',
-      body: JSON.stringify({ phone, password }),
-    }),
-
-  forgotPassword: (phone: string) =>
-    apiRequest<{ message: string }>('/auth/forgot-password', {
-      method: 'POST',
-      body: JSON.stringify({ phone }),
-    }),
-
-  verifyOTP: (phone: string, code: string) =>
-    apiRequest<{ resetToken: string }>('/auth/verify-otp', {
-      method: 'POST',
-      body: JSON.stringify({ phone, code }),
-    }),
-
-  resetPassword: (resetToken: string, password: string) =>
-    apiRequest<{ token: string; user: any }>('/auth/reset-password', {
-      method: 'POST',
-      body: JSON.stringify({ resetToken, password }),
+      body: JSON.stringify({ phone, code, ...(name ? { name } : {}) }),
     }),
 
   // Suggestions

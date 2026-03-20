@@ -12,6 +12,8 @@ import feedbackRoutes from './routes/feedback.js';
 import suggestionRoutes from './routes/suggestions.js';
 import uploadRoutes from './routes/upload.js';
 import recommendationRoutes from './routes/recommendations.js';
+import telegramRoutes from './routes/telegram.js';
+import { setWebhook } from './lib/telegram.js';
 
 // Validate JWT_SECRET at startup
 const WEAK_SECRETS = ['dev-secret-change-in-production', 'your-secret-key-change-this', 'secret', 'password'];
@@ -29,7 +31,7 @@ app.use(express.json({ limit: '25mb' }));
 
 // Root
 app.get('/', (_req, res) => {
-  res.json({ name: 'Rift API', version: '1.0.0', docs: '/api/v1' });
+  res.json({ name: 'Nile Xport API', version: '1.0.0', docs: '/api/v1' });
 });
 
 // Health check
@@ -48,9 +50,16 @@ app.use('/api/v1/feedback', feedbackRoutes);
 app.use('/api/v1/suggestions', suggestionRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/recommendations', recommendationRoutes);
+app.use('/api/v1/telegram', telegramRoutes);
 
 app.listen(port, () => {
   console.log(`API server running on http://localhost:${port}`);
+
+  // Auto-register Telegram webhook in production
+  if (process.env.RENDER_EXTERNAL_URL && process.env.TELEGRAM_BOT_TOKEN) {
+    const webhookUrl = `${process.env.RENDER_EXTERNAL_URL}/api/v1/telegram/webhook`;
+    setWebhook(webhookUrl);
+  }
 });
 
 export default app;

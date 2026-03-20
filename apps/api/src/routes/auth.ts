@@ -1,14 +1,13 @@
 import { Router } from 'express';
 import jwt from 'jsonwebtoken';
-import bcrypt from 'bcrypt';
+import crypto from 'crypto';
 import { z } from 'zod';
 import { db } from '../db/client.js';
 import { users, otpCodes } from '../db/schema.js';
 import { eq, and, gt, isNull } from 'drizzle-orm';
-import { generateOTP, sendOTP } from '../lib/otp.js';
+import { getBotUsername, getTelegramDeepLink } from '../lib/telegram.js';
 
 const router = Router();
-const SALT_ROUNDS = 12;
 const OTP_EXPIRY_MINUTES = 10;
 const MAX_OTP_ATTEMPTS_PER_HOUR = 5;
 
@@ -25,12 +24,12 @@ function isValidEthiopianPhone(phone: string): boolean {
   return /^\+251[79]\d{8}$/.test(phone);
 }
 
-function makeToken(user: { id: string; phone: string }, expiresIn = '30d') {
-  return jwt.sign({ userId: user.id, phone: user.phone }, process.env.JWT_SECRET!, { expiresIn });
+function generateOTP(): string {
+  return crypto.randomInt(100000, 999999).toString();
 }
 
-function makeResetToken(phone: string) {
-  return jwt.sign({ phone, purpose: 'password_reset' }, process.env.JWT_SECRET!, { expiresIn: '15m' });
+function makeToken(user: { id: string; phone: string }, expiresIn = '30d') {
+  return jwt.sign({ userId: user.id, phone: user.phone }, process.env.JWT_SECRET!, { expiresIn } as jwt.SignOptions);
 }
 
 function publicUser(user: any) {
@@ -43,24 +42,17 @@ function publicUser(user: any) {
   };
 }
 
-// ─── Schemas ─────────────────────────────────────────────────────────────────
+// ─── POST /auth/send-code ───────────────────────────────────────────────────
+// Unified endpoint for sign-in and sign-up.
+// Generates an OTP, stores it with a session ID, returns a Telegram deep link.
 
-const registerSchema = z.object({
-  phone:    z.string().min(1),
-  name:     z.string().min(1, 'Name is required').max(100),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-});
-
-const loginSchema = z.object({
-  phone:    z.string().min(1),
-  password: z.string().min(1, 'Password is required'),
-});
-
-// ─── POST /auth/register ─────────────────────────────────────────────────────
-
-router.post('/register', async (req, res) => {
+router.post('/send-code', async (req, res) => {
   try {
-    const { phone, name, password } = registerSchema.parse(req.body);
+    const { phone, name } = z.object({
+      phone: z.string().min(1),
+      name:  z.string().max(100).optional(),
+    }).parse(req.body);
+
     const normalized = normalizePhone(phone);
 
     if (!isValidEthiopianPhone(normalized)) {
@@ -68,80 +60,7 @@ router.post('/register', async (req, res) => {
       return;
     }
 
-    const [existing] = await db.select().from(users).where(eq(users.phone, normalized)).limit(1);
-    if (existing) {
-      res.status(409).json({ error: 'phone_taken' });
-      return;
-    }
-
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    const [user] = await db.insert(users).values({ phone: normalized, name, passwordHash }).returning();
-
-    res.status(201).json({ token: makeToken(user), user: publicUser(user) });
-  } catch (err) {
-    if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }
-    console.error('Register error:', err);
-    res.status(500).json({ error: 'Registration failed' });
-  }
-});
-
-// ─── POST /auth/login ────────────────────────────────────────────────────────
-
-router.post('/login', async (req, res) => {
-  try {
-    const { phone, password } = loginSchema.parse(req.body);
-    const normalized = normalizePhone(phone);
-
-    if (!isValidEthiopianPhone(normalized)) {
-      res.status(400).json({ error: 'Invalid Ethiopian phone number' });
-      return;
-    }
-
-    const [user] = await db.select().from(users).where(eq(users.phone, normalized)).limit(1);
-    if (!user) {
-      // Constant-time response to prevent phone enumeration
-      await bcrypt.hash('dummy', 1);
-      res.status(401).json({ error: 'invalid_credentials' });
-      return;
-    }
-
-    // Legacy users without password: allow login once, flag to set password
-    if (!user.passwordHash) {
-      res.json({ token: makeToken(user), user: publicUser(user), mustSetPassword: true });
-      return;
-    }
-
-    const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) {
-      res.status(401).json({ error: 'invalid_credentials' });
-      return;
-    }
-
-    res.json({ token: makeToken(user), user: publicUser(user) });
-  } catch (err) {
-    if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }
-    console.error('Login error:', err);
-    res.status(500).json({ error: 'Login failed' });
-  }
-});
-
-// ─── POST /auth/forgot-password ─────────────────────────────────────────────
-// Rate-limited: max 5 OTPs per hour per phone
-
-router.post('/forgot-password', async (req, res) => {
-  try {
-    const { phone } = z.object({ phone: z.string().min(1) }).parse(req.body);
-    const normalized = normalizePhone(phone);
-
-    if (!isValidEthiopianPhone(normalized)) {
-      res.status(400).json({ error: 'Invalid Ethiopian phone number' });
-      return;
-    }
-
-    // Check user exists — but respond generically to prevent enumeration
-    const [user] = await db.select({ id: users.id }).from(users).where(eq(users.phone, normalized)).limit(1);
-
-    // Rate limit: count OTPs in the last hour
+    // Rate limit: max 5 OTPs per hour per phone
     const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
     const recentOtps = await db
       .select({ id: otpCodes.id })
@@ -149,7 +68,7 @@ router.post('/forgot-password', async (req, res) => {
       .where(
         and(
           eq(otpCodes.phone, normalized),
-          eq(otpCodes.purpose, 'password_reset'),
+          eq(otpCodes.purpose, 'auth'),
           gt(otpCodes.createdAt, oneHourAgo),
         )
       );
@@ -159,41 +78,71 @@ router.post('/forgot-password', async (req, res) => {
       return;
     }
 
-    if (user) {
-      const code = generateOTP();
-      const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+    // Check if user exists
+    const [existing] = await db.select().from(users).where(eq(users.phone, normalized)).limit(1);
+    const isNewUser = !existing;
 
-      await db.insert(otpCodes).values({
-        phone: normalized,
-        code,
-        purpose: 'password_reset',
-        expiresAt,
-      });
-
-      await sendOTP(normalized, code);
+    // New user must provide a name
+    if (isNewUser && (!name || !name.trim())) {
+      res.status(400).json({ error: 'name_required', isNewUser: true });
+      return;
     }
 
-    // Always return 200 — don't reveal if the phone is registered
-    res.json({ message: 'If this number is registered, you will receive a code.' });
+    // Generate OTP + unique session ID
+    const code = generateOTP();
+    const session = crypto.randomUUID();
+    const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
+
+    await db.insert(otpCodes).values({
+      phone: normalized,
+      code,
+      purpose: 'auth',
+      session,
+      expiresAt,
+    });
+
+    // Get Telegram bot deep link
+    const botUsername = await getBotUsername();
+    const telegramLink = botUsername
+      ? getTelegramDeepLink(botUsername, session)
+      : null;
+
+    // Dev fallback: log OTP to console
+    if (!botUsername) {
+      console.log(`\n=============================`);
+      console.log(`OTP for ${normalized}: ${code}`);
+      console.log(`Session: ${session}`);
+      console.log(`=============================\n`);
+    }
+
+    res.json({
+      isNewUser,
+      telegramLink,
+      session,
+      message: 'Open Telegram to receive your verification code.',
+    });
   } catch (err) {
     if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }
-    console.error('Forgot password error:', err);
+    console.error('Send code error:', err);
     res.status(500).json({ error: 'Failed to send code' });
   }
 });
 
-// ─── POST /auth/verify-otp ───────────────────────────────────────────────────
+// ─── POST /auth/verify-code ─────────────────────────────────────────────────
+// Verifies the OTP. If user is new, creates the account. Returns JWT.
 
-router.post('/verify-otp', async (req, res) => {
+router.post('/verify-code', async (req, res) => {
   try {
-    const { phone, code } = z.object({
+    const { phone, code, name } = z.object({
       phone: z.string().min(1),
       code:  z.string().length(6),
+      name:  z.string().max(100).optional(),
     }).parse(req.body);
 
     const normalized = normalizePhone(phone);
     const now = new Date();
 
+    // Find valid, unused OTP for this phone
     const [otp] = await db
       .select()
       .from(otpCodes)
@@ -201,7 +150,7 @@ router.post('/verify-otp', async (req, res) => {
         and(
           eq(otpCodes.phone, normalized),
           eq(otpCodes.code, code),
-          eq(otpCodes.purpose, 'password_reset'),
+          eq(otpCodes.purpose, 'auth'),
           gt(otpCodes.expiresAt, now),
           isNull(otpCodes.usedAt),
         )
@@ -217,83 +166,22 @@ router.post('/verify-otp', async (req, res) => {
     // Mark OTP as used
     await db.update(otpCodes).set({ usedAt: now }).where(eq(otpCodes.id, otp.id));
 
-    // Issue a short-lived reset token (15 min)
-    const resetToken = makeResetToken(normalized);
-    res.json({ resetToken });
-  } catch (err) {
-    if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }
-    console.error('Verify OTP error:', err);
-    res.status(500).json({ error: 'Verification failed' });
-  }
-});
+    // Find or create user
+    let [user] = await db.select().from(users).where(eq(users.phone, normalized)).limit(1);
 
-// ─── POST /auth/reset-password ───────────────────────────────────────────────
-
-router.post('/reset-password', async (req, res) => {
-  try {
-    const { resetToken, password } = z.object({
-      resetToken: z.string().min(1),
-      password:   z.string().min(6, 'Password must be at least 6 characters'),
-    }).parse(req.body);
-
-    // Verify reset token
-    let payload: any;
-    try {
-      payload = jwt.verify(resetToken, process.env.JWT_SECRET!);
-    } catch {
-      res.status(400).json({ error: 'Reset link expired. Please request a new code.' });
-      return;
-    }
-
-    if (payload.purpose !== 'password_reset') {
-      res.status(400).json({ error: 'Invalid reset token' });
-      return;
-    }
-
-    const [user] = await db.select().from(users).where(eq(users.phone, payload.phone)).limit(1);
     if (!user) {
-      res.status(404).json({ error: 'User not found' });
-      return;
+      // Create new user
+      [user] = await db.insert(users).values({
+        phone: normalized,
+        name: (name || '').trim(),
+      }).returning();
     }
 
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    const [updated] = await db.update(users).set({ passwordHash }).where(eq(users.id, user.id)).returning();
-
-    res.json({ token: makeToken(updated), user: publicUser(updated) });
+    res.json({ token: makeToken(user), user: publicUser(user) });
   } catch (err) {
     if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }
-    console.error('Reset password error:', err);
-    res.status(500).json({ error: 'Password reset failed' });
-  }
-});
-
-// ─── POST /auth/set-password ─────────────────────────────────────────────────
-// For existing users who never had a password (legacy accounts)
-
-router.post('/set-password', async (req, res) => {
-  try {
-    const { phone, password } = z.object({
-      phone:    z.string().min(1),
-      password: z.string().min(6),
-    }).parse(req.body);
-
-    const normalized = normalizePhone(phone);
-    const [user] = await db.select().from(users).where(eq(users.phone, normalized)).limit(1);
-
-    if (!user || user.passwordHash) {
-      // Don't reveal if account exists; if they already have a password, use forgot-password
-      res.status(400).json({ error: 'Invalid request' });
-      return;
-    }
-
-    const passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
-    const [updated] = await db.update(users).set({ passwordHash }).where(eq(users.id, user.id)).returning();
-
-    res.json({ token: makeToken(updated), user: publicUser(updated) });
-  } catch (err) {
-    if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }
-    console.error('Set password error:', err);
-    res.status(500).json({ error: 'Failed to set password' });
+    console.error('Verify code error:', err);
+    res.status(500).json({ error: 'Verification failed' });
   }
 });
 

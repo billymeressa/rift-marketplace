@@ -1,85 +1,171 @@
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
+  ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView, Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import LanguageToggle from '../../components/LanguageToggle';
 
-type Tab = 'signin' | 'signup';
+type Step = 'phone' | 'name' | 'code';
 
 export default function AuthScreen() {
   const { t } = useTranslation();
   const { signIn } = useAuth();
-  const router = useRouter();
-  const [tab, setTab] = useState<Tab>('signin');
 
-  // Sign in state
-  const [siPhone, setSiPhone]       = useState('');
-  const [siPassword, setSiPassword] = useState('');
-  const [siShowPw, setSiShowPw]     = useState(false);
-  const [siLoading, setSiLoading]   = useState(false);
-  const [siErrors, setSiErrors]     = useState<{ phone?: string; password?: string; general?: string }>({});
+  const [step, setStep]   = useState<Step>('phone');
+  const [phone, setPhone] = useState('');
+  const [name, setName]   = useState('');
+  const [telegramLink, setTelegramLink] = useState<string | null>(null);
+  const [isNewUser, setIsNewUser] = useState(false);
 
-  // Sign up state
-  const [suName, setSuName]         = useState('');
-  const [suPhone, setSuPhone]       = useState('');
-  const [suPassword, setSuPassword] = useState('');
-  const [suConfirm, setSuConfirm]   = useState('');
-  const [suShowPw, setSuShowPw]     = useState(false);
-  const [suLoading, setSuLoading]   = useState(false);
-  const [suErrors, setSuErrors]     = useState<{ name?: string; phone?: string; password?: string; confirm?: string; general?: string }>({});
+  const [loading, setLoading] = useState(false);
+  const [error, setError]     = useState('');
+  const [countdown, setCountdown] = useState(0);
 
-  const handleSignIn = async () => {
-    const e: typeof siErrors = {};
-    if (siPhone.length < 9)     e.phone    = t('auth.invalidPhone');
-    if (!siPassword)            e.password = t('auth.passwordRequired') || 'Password is required';
-    setSiErrors(e);
-    if (Object.keys(e).length > 0) return;
+  // OTP input
+  const otpRefs = [useRef<TextInput>(null), useRef<TextInput>(null), useRef<TextInput>(null),
+                   useRef<TextInput>(null), useRef<TextInput>(null), useRef<TextInput>(null)];
+  const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
 
-    setSiLoading(true);
+  // Countdown timer
+  useEffect(() => {
+    if (countdown <= 0) return;
+    const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [countdown]);
+
+  // ── Step 1: Enter phone ──────────────────────────────────────────────────
+  const handlePhoneSubmit = async () => {
+    if (phone.length < 9) { setError(t('auth.invalidPhone')); return; }
+    setError('');
+    setLoading(true);
     try {
-      const result = await api.login('0' + siPhone, siPassword);
-      await signIn(result.token, result.user);
-    } catch (err: any) {
-      if (err.message === 'invalid_credentials') {
-        setSiErrors({ general: t('auth.invalidCredentials') || 'Incorrect phone or password' });
+      const result = await api.sendCode('0' + phone);
+      setTelegramLink(result.telegramLink);
+      if (result.isNewUser) {
+        setIsNewUser(true);
+        setStep('name');
       } else {
-        setSiErrors({ general: err.message || t('common.error') });
+        setIsNewUser(false);
+        setStep('code');
+        setCountdown(60);
+        // Auto-open Telegram
+        if (result.telegramLink) {
+          Linking.openURL(result.telegramLink).catch(() => {});
+        }
+      }
+    } catch (err: any) {
+      if (err.message === 'name_required') {
+        setIsNewUser(true);
+        setStep('name');
+      } else if (err.message === 'too_many_attempts') {
+        setError('Too many attempts. Please wait an hour.');
+      } else {
+        setError(err.message || t('common.error'));
       }
     } finally {
-      setSiLoading(false);
+      setLoading(false);
     }
   };
 
-  const handleSignUp = async () => {
-    const e: typeof suErrors = {};
-    if (!suName.trim())           e.name     = t('auth.nameRequired');
-    if (suPhone.length < 9)       e.phone    = t('auth.invalidPhone');
-    if (suPassword.length < 6)    e.password = t('auth.passwordTooShort') || 'At least 6 characters';
-    if (suConfirm !== suPassword) e.confirm  = t('auth.passwordMismatch') || 'Passwords do not match';
-    setSuErrors(e);
-    if (Object.keys(e).length > 0) return;
-
-    setSuLoading(true);
-    setSuErrors({});
+  // ── Step 2: Enter name (new users only) ──────────────────────────────────
+  const handleNameSubmit = async () => {
+    if (!name.trim()) { setError(t('auth.nameRequired')); return; }
+    setError('');
+    setLoading(true);
     try {
-      const result = await api.register('0' + suPhone, suName.trim(), suPassword);
-      await signIn(result.token, result.user);
+      const result = await api.sendCode('0' + phone, name.trim());
+      setTelegramLink(result.telegramLink);
+      setStep('code');
+      setCountdown(60);
+      if (result.telegramLink) {
+        Linking.openURL(result.telegramLink).catch(() => {});
+      }
     } catch (err: any) {
-      if (err.message === 'phone_taken') {
-        setSuErrors({ phone: t('auth.phoneTaken') || 'This phone number is already registered' });
+      if (err.message === 'too_many_attempts') {
+        setError('Too many attempts. Please wait an hour.');
       } else {
-        setSuErrors({ general: err.message || t('common.error') });
+        setError(err.message || t('common.error'));
       }
     } finally {
-      setSuLoading(false);
+      setLoading(false);
     }
   };
+
+  // ── Step 3: Verify code ──────────────────────────────────────────────────
+  const handleVerifyCode = async (code: string) => {
+    if (code.length < 6) return;
+    setError('');
+    setLoading(true);
+    try {
+      const result = await api.verifyCode('0' + phone, code, isNewUser ? name.trim() : undefined);
+      await signIn(result.token, result.user);
+    } catch (err: any) {
+      if (err.message === 'invalid_or_expired_code') {
+        setError('Incorrect or expired code. Please try again.');
+      } else {
+        setError(err.message || t('common.error'));
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOtpChange = (text: string, index: number) => {
+    const digit = text.replace(/\D/g, '').slice(-1);
+    const next = [...otpDigits];
+    next[index] = digit;
+    setOtpDigits(next);
+    setError('');
+
+    if (digit && index < 5) {
+      otpRefs[index + 1].current?.focus();
+    }
+
+    const code = next.join('');
+    if (code.length === 6) {
+      handleVerifyCode(code);
+    }
+  };
+
+  const handleOtpKeyPress = (key: string, index: number) => {
+    if (key === 'Backspace' && !otpDigits[index] && index > 0) {
+      otpRefs[index - 1].current?.focus();
+    }
+  };
+
+  const handleResend = async () => {
+    setOtpDigits(['', '', '', '', '', '']);
+    setError('');
+    setLoading(true);
+    try {
+      const result = await api.sendCode('0' + phone, isNewUser ? name.trim() : undefined);
+      setTelegramLink(result.telegramLink);
+      setCountdown(60);
+      if (result.telegramLink) {
+        Linking.openURL(result.telegramLink).catch(() => {});
+      }
+    } catch (err: any) {
+      setError(err.message || t('common.error'));
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenTelegram = () => {
+    if (telegramLink) Linking.openURL(telegramLink).catch(() => {});
+  };
+
+  const stepTitle = step === 'phone'
+    ? t('auth.subtitle')
+    : step === 'name'
+    ? 'What is your name?'
+    : `Code sent via Telegram`;
+
+  const stepSubtitle = step === 'code' ? `+251 ${phone}` : '';
 
   return (
     <KeyboardAvoidingView
@@ -93,34 +179,29 @@ export default function AuthScreen() {
 
         <View style={styles.content}>
           <Text style={styles.logo}>{t('common.appName')}</Text>
-          <Text style={styles.subtitle}>{t('auth.subtitle')}</Text>
 
-          {/* Tab switcher */}
-          <View style={styles.tabBar}>
-            <TouchableOpacity
-              style={[styles.tab, tab === 'signin' && styles.tabActive]}
-              onPress={() => { setTab('signin'); setSiErrors({}); }}
-            >
-              <Text style={[styles.tabText, tab === 'signin' && styles.tabTextActive]}>
-                {t('auth.signIn')}
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tab, tab === 'signup' && styles.tabActive]}
-              onPress={() => { setTab('signup'); setSuErrors({}); }}
-            >
-              <Text style={[styles.tabText, tab === 'signup' && styles.tabTextActive]}>
-                {t('auth.signUp')}
-              </Text>
-            </TouchableOpacity>
+          {/* Progress dots */}
+          <View style={styles.progress}>
+            {(['phone', 'name', 'code'] as Step[]).map((s) => (
+              <View key={s} style={[
+                styles.dot,
+                step === s && styles.dotActive,
+                (s === 'phone' && step !== 'phone') || (s === 'name' && step === 'code') ? styles.dotDone : null,
+                // Hide name dot for returning users
+                s === 'name' && !isNewUser ? styles.dotHidden : null,
+              ]} />
+            ))}
           </View>
 
-          {tab === 'signin' ? (
+          <Text style={styles.title}>{stepTitle}</Text>
+          {stepSubtitle ? <Text style={styles.subtitle}>{stepSubtitle}</Text> : null}
+
+          {/* ── Phone step ── */}
+          {step === 'phone' && (
             <View style={styles.form}>
-              {/* Phone */}
               <View style={styles.field}>
                 <Text style={styles.label}>{t('auth.enterPhone')}</Text>
-                <View style={[styles.phoneRow, siErrors.phone ? styles.inputError : null]}>
+                <View style={[styles.phoneRow, error ? styles.inputError : null]}>
                   <View style={styles.prefix}>
                     <Text style={styles.prefixText}>+251</Text>
                   </View>
@@ -130,163 +211,118 @@ export default function AuthScreen() {
                     placeholderTextColor="#999"
                     keyboardType="phone-pad"
                     maxLength={9}
-                    value={siPhone}
-                    onChangeText={(v) => { setSiPhone(v); setSiErrors(e => ({ ...e, phone: undefined, general: undefined })); }}
-                    returnKeyType="next"
+                    value={phone}
+                    onChangeText={(v) => { setPhone(v); setError(''); }}
+                    onSubmitEditing={handlePhoneSubmit}
+                    returnKeyType="go"
                     autoFocus
                   />
                 </View>
-                {siErrors.phone ? <Text style={styles.errorText}>{siErrors.phone}</Text> : null}
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
               </View>
-
-              {/* Password */}
-              <View style={styles.field}>
-                <Text style={styles.label}>{t('auth.password') || 'Password'}</Text>
-                <View style={[styles.pwRow, siErrors.password ? styles.inputError : null]}>
-                  <TextInput
-                    style={styles.pwInput}
-                    placeholder="••••••"
-                    placeholderTextColor="#999"
-                    secureTextEntry={!siShowPw}
-                    value={siPassword}
-                    onChangeText={(v) => { setSiPassword(v); setSiErrors(e => ({ ...e, password: undefined, general: undefined })); }}
-                    onSubmitEditing={handleSignIn}
-                    returnKeyType="go"
-                  />
-                  <TouchableOpacity onPress={() => setSiShowPw(v => !v)} style={styles.eyeBtn}>
-                    <Ionicons name={siShowPw ? 'eye-off-outline' : 'eye-outline'} size={20} color="#999" />
-                  </TouchableOpacity>
-                </View>
-                {siErrors.password ? <Text style={styles.errorText}>{siErrors.password}</Text> : null}
-              </View>
-
-              {siErrors.general ? (
-                <View style={styles.generalError}>
-                  <Text style={styles.generalErrorText}>{siErrors.general}</Text>
-                </View>
-              ) : null}
 
               <TouchableOpacity
-                style={[styles.button, siLoading && styles.buttonDisabled]}
-                onPress={handleSignIn}
-                disabled={siLoading}
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handlePhoneSubmit}
+                disabled={loading}
               >
-                {siLoading
+                {loading
                   ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.buttonText}>{t('auth.signIn')}</Text>
+                  : <Text style={styles.buttonText}>{t('auth.continue') || 'Continue'}</Text>
                 }
               </TouchableOpacity>
-
-              <TouchableOpacity style={styles.forgotLink} onPress={() => router.push('/(auth)/forgot-password')}>
-                <Text style={styles.forgotText}>Forgot password?</Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity style={styles.switchLink} onPress={() => setTab('signup')}>
-                <Text style={styles.switchText}>
-                  {t('auth.noAccount')}{' '}
-                  <Text style={styles.switchTextBold}>{t('auth.signUp')}</Text>
-                </Text>
-              </TouchableOpacity>
             </View>
-          ) : (
+          )}
+
+          {/* ── Name step (new users) ── */}
+          {step === 'name' && (
             <View style={styles.form}>
-              {/* Name */}
               <View style={styles.field}>
                 <Text style={styles.label}>{t('auth.fullName')}</Text>
                 <TextInput
-                  style={[styles.input, suErrors.name ? styles.inputError : null]}
+                  style={[styles.input, error ? styles.inputError : null]}
                   placeholder={t('auth.fullNameHint')}
                   placeholderTextColor="#999"
-                  value={suName}
-                  onChangeText={(v) => { setSuName(v); setSuErrors(e => ({ ...e, name: undefined })); }}
-                  returnKeyType="next"
+                  value={name}
+                  onChangeText={(v) => { setName(v); setError(''); }}
+                  onSubmitEditing={handleNameSubmit}
+                  returnKeyType="go"
                   autoCapitalize="words"
                   autoFocus
                 />
-                {suErrors.name ? <Text style={styles.errorText}>{suErrors.name}</Text> : null}
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
               </View>
-
-              {/* Phone */}
-              <View style={styles.field}>
-                <Text style={styles.label}>{t('auth.enterPhone')}</Text>
-                <View style={[styles.phoneRow, suErrors.phone ? styles.inputError : null]}>
-                  <View style={styles.prefix}>
-                    <Text style={styles.prefixText}>+251</Text>
-                  </View>
-                  <TextInput
-                    style={styles.phoneInput}
-                    placeholder={t('auth.phoneHint')}
-                    placeholderTextColor="#999"
-                    keyboardType="phone-pad"
-                    maxLength={9}
-                    value={suPhone}
-                    onChangeText={(v) => { setSuPhone(v); setSuErrors(e => ({ ...e, phone: undefined })); }}
-                    returnKeyType="next"
-                  />
-                </View>
-                {suErrors.phone ? <Text style={styles.errorText}>{suErrors.phone}</Text> : null}
-              </View>
-
-              {/* Password */}
-              <View style={styles.field}>
-                <Text style={styles.label}>{t('auth.password') || 'Password'}</Text>
-                <View style={[styles.pwRow, suErrors.password ? styles.inputError : null]}>
-                  <TextInput
-                    style={styles.pwInput}
-                    placeholder="••••••"
-                    placeholderTextColor="#999"
-                    secureTextEntry={!suShowPw}
-                    value={suPassword}
-                    onChangeText={(v) => { setSuPassword(v); setSuErrors(e => ({ ...e, password: undefined })); }}
-                    returnKeyType="next"
-                  />
-                  <TouchableOpacity onPress={() => setSuShowPw(v => !v)} style={styles.eyeBtn}>
-                    <Ionicons name={suShowPw ? 'eye-off-outline' : 'eye-outline'} size={20} color="#999" />
-                  </TouchableOpacity>
-                </View>
-                {suErrors.password ? <Text style={styles.errorText}>{suErrors.password}</Text> : null}
-              </View>
-
-              {/* Confirm Password */}
-              <View style={styles.field}>
-                <Text style={styles.label}>{t('auth.confirmPassword') || 'Confirm Password'}</Text>
-                <View style={[styles.pwRow, suErrors.confirm ? styles.inputError : null]}>
-                  <TextInput
-                    style={styles.pwInput}
-                    placeholder="••••••"
-                    placeholderTextColor="#999"
-                    secureTextEntry={!suShowPw}
-                    value={suConfirm}
-                    onChangeText={(v) => { setSuConfirm(v); setSuErrors(e => ({ ...e, confirm: undefined })); }}
-                    onSubmitEditing={handleSignUp}
-                    returnKeyType="go"
-                  />
-                </View>
-                {suErrors.confirm ? <Text style={styles.errorText}>{suErrors.confirm}</Text> : null}
-              </View>
-
-              {suErrors.general ? (
-                <View style={styles.generalError}>
-                  <Text style={styles.generalErrorText}>{suErrors.general}</Text>
-                </View>
-              ) : null}
 
               <TouchableOpacity
-                style={[styles.button, suLoading && styles.buttonDisabled]}
-                onPress={handleSignUp}
-                disabled={suLoading}
+                style={[styles.button, loading && styles.buttonDisabled]}
+                onPress={handleNameSubmit}
+                disabled={loading}
               >
-                {suLoading
+                {loading
                   ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.buttonText}>{t('auth.createAccount')}</Text>
+                  : <Text style={styles.buttonText}>{t('auth.continue') || 'Continue'}</Text>
                 }
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.switchLink} onPress={() => setTab('signin')}>
-                <Text style={styles.switchText}>
-                  {t('auth.haveAccount')}{' '}
-                  <Text style={styles.switchTextBold}>{t('auth.signIn')}</Text>
+              <TouchableOpacity style={styles.backLink} onPress={() => { setStep('phone'); setError(''); }}>
+                <Ionicons name="arrow-back" size={16} color="#2E7D32" />
+                <Text style={styles.backText}>Change phone number</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* ── Code step ── */}
+          {step === 'code' && (
+            <View style={styles.form}>
+              {/* Open Telegram button */}
+              {telegramLink && (
+                <TouchableOpacity style={styles.telegramBtn} onPress={handleOpenTelegram}>
+                  <Ionicons name="paper-plane" size={20} color="#fff" />
+                  <Text style={styles.telegramBtnText}>Open Telegram to get code</Text>
+                </TouchableOpacity>
+              )}
+
+              <Text style={styles.codeLabel}>Enter the 6-digit code</Text>
+
+              <View style={styles.otpRow}>
+                {otpDigits.map((digit, i) => (
+                  <TextInput
+                    key={i}
+                    ref={otpRefs[i]}
+                    style={[styles.otpBox, digit ? styles.otpBoxFilled : null, error ? styles.otpBoxError : null]}
+                    value={digit}
+                    onChangeText={t => handleOtpChange(t, i)}
+                    onKeyPress={({ nativeEvent }) => handleOtpKeyPress(nativeEvent.key, i)}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    selectTextOnFocus
+                    autoFocus={i === 0}
+                  />
+                ))}
+              </View>
+
+              {loading && (
+                <View style={styles.verifyingRow}>
+                  <ActivityIndicator size="small" color="#2E7D32" />
+                  <Text style={styles.verifyingText}>Verifying...</Text>
+                </View>
+              )}
+
+              {error ? <Text style={styles.errorTextCenter}>{error}</Text> : null}
+
+              <TouchableOpacity
+                style={styles.resendBtn}
+                onPress={handleResend}
+                disabled={countdown > 0 || loading}
+              >
+                <Text style={[styles.resendText, countdown > 0 && styles.resendDisabled]}>
+                  {countdown > 0 ? `Resend code in ${countdown}s` : 'Resend code'}
                 </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.backLink} onPress={() => { setStep('phone'); setError(''); setOtpDigits(['','','','','','']); }}>
+                <Ionicons name="arrow-back" size={16} color="#2E7D32" />
+                <Text style={styles.backText}>Change phone number</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -309,24 +345,27 @@ const styles = StyleSheet.create({
   },
   logo: {
     fontSize: 36, fontWeight: '800', color: '#2E7D32',
-    textAlign: 'center', marginBottom: 6,
+    textAlign: 'center', marginBottom: 8,
+  },
+  progress: {
+    flexDirection: 'row', gap: 8, justifyContent: 'center',
+    marginBottom: 24,
+  },
+  dot: {
+    width: 8, height: 8, borderRadius: 4,
+    backgroundColor: '#E0E0E0',
+  },
+  dotActive: { backgroundColor: '#2E7D32', width: 24 },
+  dotDone:   { backgroundColor: '#A5D6A7' },
+  dotHidden: { display: 'none' },
+  title: {
+    fontSize: 16, color: '#555', textAlign: 'center', marginBottom: 8,
   },
   subtitle: {
-    fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 36,
+    fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 24,
+    fontWeight: '600',
   },
-  tabBar: {
-    flexDirection: 'row', backgroundColor: '#F3F4F6',
-    borderRadius: 12, padding: 4, marginBottom: 28,
-  },
-  tab: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 9 },
-  tabActive: {
-    backgroundColor: '#fff',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08, shadowRadius: 4, elevation: 2,
-  },
-  tabText: { fontSize: 14, fontWeight: '600', color: '#888' },
-  tabTextActive: { color: '#2E7D32' },
-  form: { gap: 0 },
+  form: { marginTop: 12 },
   field: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
   input: {
@@ -345,28 +384,42 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 12, borderBottomRightRadius: 12,
     borderWidth: 1, borderColor: '#E0E0E0', color: '#1a1a1a',
   },
-  pwRow: {
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12,
-    backgroundColor: '#fff',
-  },
-  pwInput: {
-    flex: 1, fontSize: 16, paddingHorizontal: 16, paddingVertical: 14, color: '#1a1a1a',
-  },
-  eyeBtn: { paddingHorizontal: 14 },
   inputError: { borderColor: '#D32F2F', borderRadius: 12 },
   errorText: { fontSize: 12, color: '#D32F2F', marginTop: 6 },
-  generalError: { backgroundColor: '#FFEBEE', borderRadius: 10, padding: 12, marginBottom: 16 },
-  generalErrorText: { fontSize: 13, color: '#C62828', textAlign: 'center' },
+  errorTextCenter: { fontSize: 13, color: '#D32F2F', marginBottom: 12, textAlign: 'center' },
   button: {
     backgroundColor: '#2E7D32', paddingVertical: 16, borderRadius: 12,
     alignItems: 'center', minHeight: 52, justifyContent: 'center', marginTop: 4,
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  forgotLink: { alignItems: 'center', marginTop: 14 },
-  forgotText: { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
-  switchLink: { marginTop: 16, alignItems: 'center' },
-  switchText: { fontSize: 14, color: '#666' },
-  switchTextBold: { color: '#2E7D32', fontWeight: '700' },
+  // Telegram button
+  telegramBtn: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
+    backgroundColor: '#0088cc', paddingVertical: 14, borderRadius: 12,
+    marginBottom: 24,
+  },
+  telegramBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  // OTP
+  codeLabel: { fontSize: 14, color: '#555', textAlign: 'center', marginBottom: 16 },
+  otpRow:  { flexDirection: 'row', gap: 10, justifyContent: 'center', marginBottom: 24 },
+  otpBox: {
+    width: 48, height: 58, borderRadius: 12,
+    borderWidth: 1.5, borderColor: '#E0E0E0',
+    textAlign: 'center', fontSize: 24, fontWeight: '700', color: '#1a1a1a',
+    backgroundColor: '#FAFAFA',
+  },
+  otpBoxFilled:  { borderColor: '#2E7D32', backgroundColor: '#F1F8E9' },
+  otpBoxError:   { borderColor: '#D32F2F', backgroundColor: '#FFF5F5' },
+  verifyingRow:  { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 },
+  verifyingText: { fontSize: 14, color: '#2E7D32' },
+  resendBtn:  { alignItems: 'center', marginTop: 4 },
+  resendText: { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
+  resendDisabled: { color: '#aaa' },
+  // Back link
+  backLink: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 6, marginTop: 20,
+  },
+  backText: { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
 });
