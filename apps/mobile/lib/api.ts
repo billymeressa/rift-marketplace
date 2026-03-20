@@ -72,6 +72,10 @@ export const api = {
       body: JSON.stringify({ image: base64 }),
     }),
 
+  // Recommendations
+  getRecommendations: () =>
+    apiRequest<{ data: any[] }>('/recommendations'),
+
   // Listings
   getListings: (params?: Record<string, string>) => {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';

@@ -11,6 +11,7 @@ import reviewRoutes from './routes/reviews.js';
 import feedbackRoutes from './routes/feedback.js';
 import suggestionRoutes from './routes/suggestions.js';
 import uploadRoutes from './routes/upload.js';
+import recommendationRoutes from './routes/recommendations.js';
 
 // Validate JWT_SECRET at startup
 const WEAK_SECRETS = ['dev-secret-change-in-production', 'your-secret-key-change-this', 'secret', 'password'];
@@ -46,6 +47,7 @@ app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/feedback', feedbackRoutes);
 app.use('/api/v1/suggestions', suggestionRoutes);
 app.use('/api/v1/upload', uploadRoutes);
+app.use('/api/v1/recommendations', recommendationRoutes);
 
 app.listen(port, () => {
   console.log(`API server running on http://localhost:${port}`);
