@@ -158,7 +158,8 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   list: {
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: 80,
   },
   loader: {
     marginTop: 60,

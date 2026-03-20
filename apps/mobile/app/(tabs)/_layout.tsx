@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import LanguageToggle from '../../components/LanguageToggle';
 
@@ -13,7 +14,8 @@ export default function TabLayout() {
         tabBarInactiveTintColor: '#999',
         tabBarStyle: {
           borderTopColor: '#eee',
-          paddingBottom: 4,
+          paddingBottom: Platform.OS === 'web' ? 8 : 4,
+          height: Platform.OS === 'web' ? 60 : undefined,
         },
         headerRight: () => <LanguageToggle />,
         headerRightContainerStyle: { paddingRight: 16 },

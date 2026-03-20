@@ -299,7 +299,7 @@ export default function CreateScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
-  content:   { padding: 20, paddingBottom: 40 },
+  content:   { padding: 20, paddingBottom: 100 },
   sectionTitle: {
     fontSize: 14, fontWeight: '600', color: '#555',
     marginBottom: 8, marginTop: 16,

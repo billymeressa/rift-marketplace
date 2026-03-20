@@ -200,11 +200,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9F9F9',
   },
   listContent: {
-    paddingBottom: 20,
+    paddingBottom: 80,
   },
   header: {
     alignItems: 'center',
-    paddingTop: 20,
+    paddingTop: 32,
     paddingHorizontal: 16,
   },
   avatar: {

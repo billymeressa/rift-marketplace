@@ -63,7 +63,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#F9F9F9',
   },
   list: {
-    paddingVertical: 8,
+    paddingTop: 8,
+    paddingBottom: 80,
   },
   loader: {
     marginTop: 60,
