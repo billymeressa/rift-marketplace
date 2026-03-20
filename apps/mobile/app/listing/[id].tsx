@@ -106,10 +106,10 @@ export default function ListingDetailScreen() {
       )}
 
       <View style={[styles.typeBanner, isBuy ? styles.buyBanner : styles.sellBanner]}>
-        <Text style={styles.typeText}>
+        <Text style={[styles.typeText, isBuy ? styles.buyText : styles.sellText]}>
           {isBuy
-            ? (lang === 'am' ? 'ግዢ' : lang === 'om' ? 'BITTAA' : 'BUYING')
-            : (lang === 'am' ? 'ሽያጭ' : lang === 'om' ? 'GURGURTAA' : 'SELLING')}
+            ? (lang === 'am' ? 'ፈልጓል' : lang === 'om' ? 'BARBAADA' : 'WANTED')
+            : (lang === 'am' ? 'ለሽያጭ' : lang === 'om' ? 'GURGURAMAA' : 'FOR SALE')}
         </Text>
       </View>
 
@@ -247,22 +247,17 @@ const styles = StyleSheet.create({
   },
   typeBanner: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 6,
     marginBottom: 12,
+    borderWidth: 1,
   },
-  buyBanner: {
-    backgroundColor: '#E8F5E9',
-  },
-  sellBanner: {
-    backgroundColor: '#FFF3E0',
-  },
-  typeText: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#333',
-  },
+  buyBanner:  { backgroundColor: '#FFF8E1', borderColor: '#FFD54F' },
+  sellBanner: { backgroundColor: '#E8F5E9', borderColor: '#81C784' },
+  typeText:   { fontSize: 12, fontWeight: '700', letterSpacing: 0.2 },
+  buyText:    { color: '#F57F17' },
+  sellText:   { color: '#2E7D32' },
   title: {
     fontSize: 22,
     fontWeight: '700',
