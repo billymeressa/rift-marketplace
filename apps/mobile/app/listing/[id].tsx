@@ -40,6 +40,8 @@ export default function ListingDetailScreen() {
     enabled: !!id,
   });
 
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
   if (isLoading) {
     return (
       <View style={styles.loader}>
@@ -73,7 +75,6 @@ export default function ListingDetailScreen() {
 
   const isBuy = listing.type === 'buy';
   const images: string[] = listing.images || [];
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
