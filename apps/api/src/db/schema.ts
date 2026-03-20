@@ -6,6 +6,7 @@ export const users = pgTable('users', {
   name: varchar('name', { length: 100 }).notNull().default(''),
   telegramUsername: varchar('telegram_username', { length: 50 }),
   preferredLanguage: varchar('preferred_language', { length: 2 }).notNull().default('am'),
+  passwordHash: text('password_hash'),
   pushToken: text('push_token'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });

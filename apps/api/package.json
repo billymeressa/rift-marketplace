@@ -12,11 +12,13 @@
     "db:push": "drizzle-kit push"
   },
   "dependencies": {
+    "@types/bcrypt": "^6.0.0",
     "@types/cors": "^2.8.17",
     "@types/express": "^5.0.0",
     "@types/jsonwebtoken": "^9.0.7",
     "@types/multer": "^2.1.0",
     "@types/pg": "^8.11.10",
+    "bcrypt": "^6.0.0",
     "cloudinary": "^2.9.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",

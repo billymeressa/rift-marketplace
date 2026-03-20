@@ -46,16 +46,22 @@ export async function apiRequest<T>(
 
 export const api = {
   // Auth
-  login: (phone: string) =>
-    apiRequest<{ token: string; user: any }>('/auth/login', {
+  login: (phone: string, password: string) =>
+    apiRequest<{ token: string; user: any; mustSetPassword?: boolean }>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ phone }),
+      body: JSON.stringify({ phone, password }),
     }),
 
-  register: (phone: string, name: string) =>
+  register: (phone: string, name: string, password: string) =>
     apiRequest<{ token: string; user: any }>('/auth/register', {
       method: 'POST',
-      body: JSON.stringify({ phone, name }),
+      body: JSON.stringify({ phone, name, password }),
+    }),
+
+  setPassword: (phone: string, password: string) =>
+    apiRequest<{ token: string; user: any }>('/auth/set-password', {
+      method: 'POST',
+      body: JSON.stringify({ phone, password }),
     }),
 
   // Suggestions
