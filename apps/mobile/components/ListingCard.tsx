@@ -2,7 +2,6 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import TrustBadge from './TrustBadge';
 import { PRODUCT_LABELS, REGION_LABELS, CONDITION_LABELS } from '../lib/options';
 
 interface ListingCardProps {
@@ -92,12 +91,6 @@ export default function ListingCard({ listing }: ListingCardProps) {
           </View>
         )}
 
-        {/* Trust badge */}
-        {listing.user?.id && (
-          <View style={styles.footer}>
-            <TrustBadge userId={listing.user.id} />
-          </View>
-        )}
       </View>
     </TouchableOpacity>
   );
@@ -177,10 +170,5 @@ const styles = StyleSheet.create({
   tagText: {
     fontSize: 12,
     color: '#555',
-  },
-  footer: {
-    marginTop: 10,
-    flexDirection: 'row',
-    alignItems: 'center',
   },
 });
