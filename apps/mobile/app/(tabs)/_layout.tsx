@@ -1,22 +1,22 @@
 import { Tabs } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Platform } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import LanguageToggle from '../../components/LanguageToggle';
 
 export default function TabLayout() {
   const { t } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#2E7D32',
         tabBarInactiveTintColor: '#999',
-        tabBarStyle: {
-          borderTopColor: '#eee',
-          paddingBottom: Platform.OS === 'web' ? 8 : 4,
-          height: Platform.OS === 'web' ? 60 : undefined,
-        },
+        tabBarStyle: Platform.OS === 'web'
+          ? { borderTopColor: '#eee', paddingBottom: 8, height: 60 }
+          : { borderTopColor: '#eee', paddingBottom: Math.max(insets.bottom, 8), height: 54 + Math.max(insets.bottom, 8) },
         headerRight: () => <LanguageToggle />,
         headerRightContainerStyle: { paddingRight: 16 },
       }}

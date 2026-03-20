@@ -24,7 +24,7 @@ const port = parseInt(process.env.PORT || '3000');
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
-app.use(express.json({ limit: '10mb' }));
+app.use(express.json({ limit: '25mb' }));
 
 // Root
 app.get('/', (_req, res) => {

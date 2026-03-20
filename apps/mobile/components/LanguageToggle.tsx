@@ -2,23 +2,34 @@ import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { setLanguage } from '../lib/i18n';
 
+const LANGS = [
+  { code: 'en', label: 'EN' },
+  { code: 'am', label: 'አማ' },
+  { code: 'om', label: 'ORO' },
+] as const;
+
 export default function LanguageToggle() {
   const { i18n } = useTranslation();
   const current = i18n.language;
 
   return (
     <View style={styles.toggle}>
-      <TouchableOpacity onPress={() => setLanguage('en')}>
-        <Text style={[styles.lang, current === 'en' && styles.activeLang]}>EN</Text>
-      </TouchableOpacity>
-      <Text style={styles.separator}>|</Text>
-      <TouchableOpacity onPress={() => setLanguage('am')}>
-        <Text style={[styles.lang, current === 'am' && styles.activeLang]}>አማ</Text>
-      </TouchableOpacity>
-      <Text style={styles.separator}>|</Text>
-      <TouchableOpacity onPress={() => setLanguage('om')}>
-        <Text style={[styles.lang, current === 'om' && styles.activeLang]}>ORO</Text>
-      </TouchableOpacity>
+      {LANGS.map(({ code, label }, index) => (
+        <TouchableOpacity
+          key={code}
+          style={[
+            styles.btn,
+            current === code && styles.btnActive,
+            index < LANGS.length - 1 && styles.btnBorder,
+          ]}
+          onPress={() => setLanguage(code)}
+          hitSlop={{ top: 8, bottom: 8, left: 4, right: 4 }}
+        >
+          <Text style={[styles.lang, current === code && styles.activeLang]}>
+            {label}
+          </Text>
+        </TouchableOpacity>
+      ))}
     </View>
   );
 }
@@ -28,9 +39,24 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#F5F5F5',
+    borderRadius: 8,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E0E0E0',
+  },
+  btn: {
     paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 16,
+    paddingVertical: 6,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minWidth: 38,
+  },
+  btnActive: {
+    backgroundColor: '#E8F5E9',
+  },
+  btnBorder: {
+    borderRightWidth: 1,
+    borderRightColor: '#E0E0E0',
   },
   lang: {
     fontSize: 13,
@@ -40,9 +66,5 @@ const styles = StyleSheet.create({
   activeLang: {
     color: '#2E7D32',
     fontWeight: '700',
-  },
-  separator: {
-    marginHorizontal: 4,
-    color: '#ccc',
   },
 });

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -50,6 +50,7 @@ export default function CreateScreen() {
   const lang = i18n.language as 'en' | 'am' | 'om';
   const queryClient = useQueryClient();
   const router = useRouter();
+  const scrollRef = useRef<ScrollView>(null);
   const [posted, setPosted] = useState(false);
 
   const [form, setForm] = useState({
@@ -77,6 +78,7 @@ export default function CreateScreen() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
       setPosted(true);
+      scrollRef.current?.scrollTo({ y: 0, animated: true });
       setForm({
         type: 'sell', productCategory: 'coffee', description: '',
         region: '', grade: '', condition: '', transactionType: '',
@@ -132,7 +134,15 @@ export default function CreateScreen() {
 
   return (
     <ResponsiveContainer>
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={styles.content}>
+
+      {/* Success banner */}
+      {posted && (
+        <View style={styles.successBanner}>
+          <Ionicons name="checkmark-circle" size={22} color="#2E7D32" />
+          <Text style={styles.successText}>{t('listing.postSuccess')}</Text>
+        </View>
+      )}
 
       {/* Buy / Sell */}
       <Text style={styles.sectionTitle}>{t('listing.type')}</Text>
@@ -275,13 +285,6 @@ export default function CreateScreen() {
         onChangeText={(v) => update('description', v)}
         maxLength={2000}
       />
-
-      {posted && (
-        <View style={styles.successBanner}>
-          <Ionicons name="checkmark-circle" size={22} color="#2E7D32" />
-          <Text style={styles.successText}>{t('listing.postSuccess')}</Text>
-        </View>
-      )}
 
       <TouchableOpacity
         style={[styles.submitBtn, (mutation.isPending || posted) && styles.submitDisabled]}
