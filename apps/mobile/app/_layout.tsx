@@ -85,6 +85,10 @@ export default function RootLayout() {
       <AuthContext.Provider value={{ token, user, isLoading, signIn, signOut }}>
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="(auth)" />
+          <Stack.Screen
+            name="(auth)/forgot-password"
+            options={{ headerShown: true, title: '', presentation: 'card' }}
+          />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
             name="listing/[id]"

@@ -4,6 +4,7 @@ import {
   ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
@@ -14,6 +15,7 @@ type Tab = 'signin' | 'signup';
 export default function AuthScreen() {
   const { t } = useTranslation();
   const { signIn } = useAuth();
+  const router = useRouter();
   const [tab, setTab] = useState<Tab>('signin');
 
   // Sign in state
@@ -173,6 +175,10 @@ export default function AuthScreen() {
                   ? <ActivityIndicator color="#fff" size="small" />
                   : <Text style={styles.buttonText}>{t('auth.signIn')}</Text>
                 }
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.forgotLink} onPress={() => router.push('/(auth)/forgot-password')}>
+                <Text style={styles.forgotText}>Forgot password?</Text>
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.switchLink} onPress={() => setTab('signup')}>
@@ -358,7 +364,9 @@ const styles = StyleSheet.create({
   },
   buttonDisabled: { opacity: 0.6 },
   buttonText: { color: '#fff', fontSize: 16, fontWeight: '700' },
-  switchLink: { marginTop: 20, alignItems: 'center' },
+  forgotLink: { alignItems: 'center', marginTop: 14 },
+  forgotText: { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
+  switchLink: { marginTop: 16, alignItems: 'center' },
   switchText: { fontSize: 14, color: '#666' },
   switchTextBold: { color: '#2E7D32', fontWeight: '700' },
 });

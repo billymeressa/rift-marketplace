@@ -1,5 +1,15 @@
 import { pgTable, uuid, varchar, text, smallint, decimal, timestamp, jsonb, unique } from 'drizzle-orm/pg-core';
 
+export const otpCodes = pgTable('otp_codes', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  phone: varchar('phone', { length: 15 }).notNull(),
+  code: varchar('code', { length: 6 }).notNull(),
+  purpose: varchar('purpose', { length: 20 }).notNull(), // 'password_reset'
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  usedAt: timestamp('used_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
   phone: varchar('phone', { length: 15 }).notNull().unique(),

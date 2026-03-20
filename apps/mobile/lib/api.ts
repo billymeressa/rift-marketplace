@@ -64,6 +64,24 @@ export const api = {
       body: JSON.stringify({ phone, password }),
     }),
 
+  forgotPassword: (phone: string) =>
+    apiRequest<{ message: string }>('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ phone }),
+    }),
+
+  verifyOTP: (phone: string, code: string) =>
+    apiRequest<{ resetToken: string }>('/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ phone, code }),
+    }),
+
+  resetPassword: (resetToken: string, password: string) =>
+    apiRequest<{ token: string; user: any }>('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ resetToken, password }),
+    }),
+
   // Suggestions
   getSuggestions: (field: string, q?: string) => {
     const params = new URLSearchParams({ field });
