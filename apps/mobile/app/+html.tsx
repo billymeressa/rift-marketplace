@@ -7,10 +7,10 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta charSet="utf-8" />
         <meta httpEquiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no, viewport-fit=cover" />
-        <title>Nile Xchange — Ethiopia's Coffee & Agriculture Marketplace</title>
-        <meta name="description" content="Buy and sell coffee, sesame, and agricultural products across Ethiopia. Connect with verified traders on Nile Xchange." />
-        <meta property="og:title" content="Nile Xchange — Ethiopia's Coffee & Agriculture Marketplace" />
-        <meta property="og:description" content="Buy and sell coffee, sesame, and agricultural products across Ethiopia." />
+        <title>Nile Xport — Ethiopia's Agricultural Export Marketplace</title>
+        <meta name="description" content="Connecting Ethiopian producers to global buyers. Trade coffee, sesame, teff and more. Verified sellers, secure transactions." />
+        <meta property="og:title" content="Nile Xport — Ethiopia's Agricultural Export Marketplace" />
+        <meta property="og:description" content="Connecting Ethiopian producers to global buyers. Trade coffee, sesame, teff and more." />
         <meta property="og:type" content="website" />
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />

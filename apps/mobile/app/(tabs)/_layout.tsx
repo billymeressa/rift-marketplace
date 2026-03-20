@@ -17,7 +17,7 @@ export default function TabLayout() {
         tabBarStyle: Platform.OS === 'web'
           ? { borderTopColor: '#eee', paddingBottom: 8, height: 60 }
           : { borderTopColor: '#eee', paddingBottom: Math.max(insets.bottom, 8), height: 54 + Math.max(insets.bottom, 8) },
-        headerTitle: 'Nile Xchange',
+        headerTitle: 'Nile Xport',
         headerTitleStyle: { fontWeight: '700', fontSize: 18 },
         headerRight: () => <LanguageToggle />,
         headerRightContainerStyle: { paddingRight: 16 },

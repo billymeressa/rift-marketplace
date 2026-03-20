@@ -31,7 +31,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
   // Android needs a notification channel
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
-      name: 'Nile Xchange',
+      name: 'Nile Xport',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
       lightColor: '#2E7D32',

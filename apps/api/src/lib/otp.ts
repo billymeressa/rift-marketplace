@@ -5,7 +5,7 @@ export function generateOTP(): string {
 }
 
 export async function sendOTP(phone: string, code: string): Promise<void> {
-  const message = `Your Nile Xchange code: ${code}. Valid for 10 minutes. Never share this code.`;
+  const message = `Your Nile Xport code: ${code}. Valid for 10 minutes. Never share this code.`;
 
   if (process.env.AT_API_KEY && process.env.AT_USERNAME) {
     // Africa's Talking SMS (widely used in Ethiopia, free sandbox)
