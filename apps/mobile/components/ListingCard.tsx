@@ -32,9 +32,11 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const hasImage = images.length > 0;
 
   const isBuy = listing.type === 'buy';
+  // BUY = poster wants to buy → "WANTED"
+  // SELL = poster is selling → "FOR SALE"
   const typeLabel = isBuy
-    ? (lang === 'am' ? 'ግዢ' : lang === 'om' ? 'BITTAA' : 'BUY')
-    : (lang === 'am' ? 'ሽያጭ' : lang === 'om' ? 'GURGURTAA' : 'SELL');
+    ? (lang === 'am' ? '🔍 ፈልጓል' : lang === 'om' ? '🔍 BARBAADA' : '🔍 WANTED')
+    : (lang === 'am' ? '🏷 ለሽያጭ' : lang === 'om' ? '🏷 GURGURAMAA' : '🏷 FOR SALE');
 
   const priceStr = listing.price
     ? `${listing.currency === 'USD' ? '$' : ''}${Number(listing.price).toLocaleString()}${listing.currency === 'ETB' ? ' ETB' : ''}`
@@ -136,15 +138,15 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   typeBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 6,
   },
-  buyBadge:  { backgroundColor: '#E3F2FD' },
-  sellBadge: { backgroundColor: '#FFF3E0' },
-  typeBadgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.3 },
-  buyText:   { color: '#1565C0' },
-  sellText:  { color: '#E65100' },
+  buyBadge:  { backgroundColor: '#FFF8E1', borderWidth: 1, borderColor: '#FFD54F' },
+  sellBadge: { backgroundColor: '#E8F5E9', borderWidth: 1, borderColor: '#81C784' },
+  typeBadgeText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.2 },
+  buyText:   { color: '#F57F17' },
+  sellText:  { color: '#2E7D32' },
   product: {
     flex: 1,
     fontSize: 14,
