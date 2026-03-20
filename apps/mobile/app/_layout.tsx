@@ -1,11 +1,13 @@
 import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { Platform } from 'react-native';
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import * as Notifications from 'expo-notifications';
 import { AuthContext } from '../lib/auth';
 import { getToken, getUser, saveToken, saveUser, removeToken, removeUser } from '../lib/auth';
-import { setUnauthorizedHandler } from '../lib/api';
+import { setUnauthorizedHandler, api } from '../lib/api';
+import { registerForPushNotifications } from '../lib/notifications';
 import '../lib/i18n';
 import { initSentry } from '../lib/sentry';
 
@@ -55,6 +57,12 @@ export default function RootLayout() {
     await saveUser(newUser);
     setToken(newToken);
     setUser(newUser);
+    // Register for push notifications after login
+    registerForPushNotifications()
+      .then(pushToken => {
+        if (pushToken) api.savePushToken(pushToken).catch(() => {});
+      })
+      .catch(() => {});
   }, []);
 
   const signOut = useCallback(async () => {

@@ -99,6 +99,13 @@ export const api = {
   deleteListing: (id: string) =>
     apiRequest<any>(`/listings/${id}`, { method: 'DELETE' }),
 
+  // Push notifications
+  savePushToken: (token: string) =>
+    apiRequest<{ ok: boolean }>('/users/push-token', {
+      method: 'PUT',
+      body: JSON.stringify({ token }),
+    }),
+
   // Users
   getProfile: () => apiRequest<any>('/users/me'),
 

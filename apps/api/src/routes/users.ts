@@ -165,4 +165,23 @@ router.get('/:id/trust', async (req, res) => {
   }
 });
 
+// PUT /users/push-token
+router.put('/push-token', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const { token } = req.body;
+    if (!token || typeof token !== 'string') {
+      res.status(400).json({ error: 'Token required' });
+      return;
+    }
+    await db
+      .update(users)
+      .set({ pushToken: token })
+      .where(eq(users.id, req.userId!));
+    res.json({ ok: true });
+  } catch (error) {
+    console.error('Save push token error:', error);
+    res.status(500).json({ error: 'Failed to save push token' });
+  }
+});
+
 export default router;

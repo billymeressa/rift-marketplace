@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/client.js';
 import { listings, users } from '../db/schema.js';
-import { eq, and, desc, ilike, or, sql, SQL } from 'drizzle-orm';
+import { eq, and, desc, ilike, or, sql, ne, SQL } from 'drizzle-orm';
+import { sendPushNotifications } from '../lib/notify.js';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
@@ -10,7 +11,7 @@ const router = Router();
 const createListingSchema = z.object({
   type: z.enum(['buy', 'sell']),
   productCategory: z.string().min(1).max(50),
-  title: z.string().min(1).max(200),
+  title: z.string().max(200).optional(),
   description: z.string().max(2000).optional(),
   region: z.string().max(50).optional(),
   grade: z.number().int().min(1).max(5).optional(),
@@ -194,13 +195,22 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const data = createListingSchema.parse(req.body);
 
+    const autoTitle = data.title || (() => {
+      const parts: string[] = [];
+      if (data.grade) parts.push(`G${data.grade}`);
+      parts.push(data.productCategory);
+      if (data.quantity && data.unit) parts.push(`${data.quantity} ${data.unit}`);
+      if (data.region) parts.push(data.region);
+      return (data.type === 'sell' ? 'Selling: ' : 'Buying: ') + parts.join(' · ');
+    })();
+
     const [listing] = await db
       .insert(listings)
       .values({
         userId: req.userId!,
         type: data.type,
         productCategory: data.productCategory,
-        title: data.title,
+        title: autoTitle,
         description: data.description,
         region: data.region,
         grade: data.grade,
@@ -221,6 +231,36 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
       createdAt: listing.createdAt.toISOString(),
       updatedAt: listing.updatedAt.toISOString(),
     });
+
+    // Fire-and-forget: notify users with matching opposite listings
+    const oppositeType = data.type === 'sell' ? 'buy' : 'sell';
+    db.select({ pushToken: users.pushToken, id: users.id })
+      .from(listings)
+      .leftJoin(users, eq(listings.userId, users.id))
+      .where(and(
+        eq(listings.type, oppositeType),
+        eq(listings.productCategory, data.productCategory),
+        eq(listings.status, 'active'),
+        ne(listings.userId, req.userId!),
+        sql`${users.pushToken} is not null`,
+        sql`${listings.createdAt} > now() - interval '30 days'`,
+      ))
+      .then(matchingUsers => {
+        const messages = matchingUsers
+          .filter(u => u.pushToken)
+          .map(u => ({
+            to: u.pushToken!,
+            title: data.type === 'sell'
+              ? `New ${data.productCategory} available`
+              : `New buyer for ${data.productCategory}`,
+            body: data.type === 'sell'
+              ? `${data.quantity ? data.quantity + ' ' + (data.unit || '') + ' for sale' : 'Now available'}${data.region ? ' · ' + data.region : ''}`
+              : `Looking to buy ${data.productCategory}${data.region ? ' · ' + data.region : ''}`,
+            data: { listingId: listing.id, screen: 'listing' },
+          }));
+        return sendPushNotifications(messages);
+      })
+      .catch(err => console.error('Notification trigger error:', err));
   } catch (error) {
     if (error instanceof z.ZodError) {
       res.status(400).json({ error: 'Invalid input', details: error.errors });
