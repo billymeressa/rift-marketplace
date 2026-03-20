@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Alert } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../lib/api';
 import {
   PRODUCT_OPTIONS,
@@ -47,6 +49,8 @@ export default function CreateScreen() {
   const { t, i18n } = useTranslation();
   const lang = i18n.language as 'en' | 'am' | 'om';
   const queryClient = useQueryClient();
+  const router = useRouter();
+  const [posted, setPosted] = useState(false);
 
   const [form, setForm] = useState({
     type: 'sell',
@@ -72,12 +76,16 @@ export default function CreateScreen() {
     mutationFn: (data: any) => api.createListing(data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['listings'] });
-      Alert.alert('', t('listing.postSuccess'));
+      setPosted(true);
       setForm({
         type: 'sell', productCategory: 'coffee', description: '',
         region: '', grade: '', condition: '', transactionType: '',
         quantity: '', unit: 'kg', price: '', currency: 'ETB', images: [],
       });
+      setTimeout(() => {
+        setPosted(false);
+        router.push('/(tabs)');
+      }, 2000);
     },
     onError: (error: any) => {
       Alert.alert('', error.message || t('common.error'));
@@ -268,10 +276,17 @@ export default function CreateScreen() {
         maxLength={2000}
       />
 
+      {posted && (
+        <View style={styles.successBanner}>
+          <Ionicons name="checkmark-circle" size={22} color="#2E7D32" />
+          <Text style={styles.successText}>{t('listing.postSuccess')}</Text>
+        </View>
+      )}
+
       <TouchableOpacity
-        style={[styles.submitBtn, mutation.isPending && styles.submitDisabled]}
+        style={[styles.submitBtn, (mutation.isPending || posted) && styles.submitDisabled]}
         onPress={handleSubmit}
-        disabled={mutation.isPending}
+        disabled={mutation.isPending || posted}
       >
         <Text style={styles.submitText}>
           {mutation.isPending ? t('common.loading') : t('common.post')}
@@ -316,9 +331,16 @@ const styles = StyleSheet.create({
   textArea:   { minHeight: 80, textAlignVertical: 'top' },
   row:        { flexDirection: 'row', gap: 12 },
   half:       { flex: 1 },
+  successBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#E8F5E9', borderRadius: 12,
+    paddingHorizontal: 16, paddingVertical: 14, marginTop: 24,
+    borderWidth: 1, borderColor: '#A5D6A7',
+  },
+  successText: { fontSize: 15, fontWeight: '600', color: '#2E7D32', flex: 1 },
   submitBtn:  {
     backgroundColor: '#2E7D32', paddingVertical: 16,
-    borderRadius: 12, alignItems: 'center', marginTop: 24,
+    borderRadius: 12, alignItems: 'center', marginTop: 12,
   },
   submitDisabled: { opacity: 0.6 },
   submitText: { color: '#fff', fontSize: 16, fontWeight: '700' },
