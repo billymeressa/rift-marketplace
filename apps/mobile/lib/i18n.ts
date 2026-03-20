@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const en = {
   common: {
-    appName: 'Rift Xchange',
+    appName: 'Nile Xchange',
     buy: 'Buy',
     sell: 'Sell',
     search: 'Search',
@@ -150,7 +150,7 @@ const en = {
 
 const am = {
   common: {
-    appName: 'Rift Xchange',
+    appName: 'Nile Xchange',
     buy: 'ግዢ',
     sell: 'ሽያጭ',
     search: 'ፈልግ',
@@ -295,7 +295,7 @@ const am = {
 
 const om = {
   common: {
-    appName: 'Rift Xchange',
+    appName: 'Nile Xchange',
     buy: 'Bittaa',
     sell: 'Gurgurtaa',
     search: 'Barbaadi',

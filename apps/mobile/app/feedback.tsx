@@ -59,8 +59,8 @@ export default function FeedbackScreen() {
       lang === 'am'
         ? 'አስተያየትዎ ደርሷል። ለማሻሻል እንጠቀምበታለን።'
         : lang === 'om'
-        ? 'Yaadni keessan nuuf dhufeera. Rift fooyyessuuf itti fayyadamna.'
-        : 'Your feedback has been received. We\'ll use it to improve Rift.',
+        ? 'Yaadni keessan nuuf dhufeera. Nile Xchange fooyyessuuf itti fayyadamna.'
+        : 'Your feedback has been received. We\'ll use it to improve Nile Xchange.',
       [{ text: 'OK', onPress: () => router.back() }]
     );
   };
@@ -98,10 +98,10 @@ export default function FeedbackScreen() {
         {/* NPS */}
         <Text style={styles.label}>
           {lang === 'am'
-            ? 'ሪፍትን ለሌሎች የመምከር ዕድል ምን ያህል ነው? (1-10)'
+            ? 'Nile Xchangeን ለሌሎች የመምከር ዕድል ምን ያህል ነው? (1-10)'
             : lang === 'om'
             ? 'Rift namoota birootti gorsuuf carraan keessan hammam? (1–10)'
-            : 'How likely are you to recommend Rift? (1–10)'}
+            : 'How likely are you to recommend Nile Xchange? (1–10)'}
         </Text>
         <View style={styles.npsRow}>
           {[1,2,3,4,5,6,7,8,9,10].map((n) => (
