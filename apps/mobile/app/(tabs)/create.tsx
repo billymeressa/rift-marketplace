@@ -112,7 +112,23 @@ export default function CreateScreen() {
     return `${prefix}${parts.join(' ')}`.trim();
   };
 
+  const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const validate = () => {
+    const e: Record<string, string> = {};
+    if (!form.productCategory) e.productCategory = t('common.required');
+    if (!form.region)          e.region          = t('common.required');
+    if (!form.quantity || isNaN(parseFloat(form.quantity)) || parseFloat(form.quantity) <= 0)
+                               e.quantity        = t('common.required');
+    if (!form.price || isNaN(parseFloat(form.price)) || parseFloat(form.price) <= 0)
+                               e.price           = t('common.required');
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
+
   const handleSubmit = () => {
+    if (!validate()) return;
+
     const payload: any = {
       type: form.type,
       productCategory: form.productCategory,
@@ -164,14 +180,15 @@ export default function CreateScreen() {
       </View>
 
       {/* Product */}
-      <Text style={styles.sectionTitle}>{t('listing.product')}</Text>
+      <Text style={styles.sectionTitle}>{t('listing.product')} <Text style={styles.required}>*</Text></Text>
       <SuggestInput
         field="product"
         value={form.productCategory}
-        onChange={(v) => update('productCategory', v)}
+        onChange={(v) => { update('productCategory', v); setErrors(e => ({ ...e, productCategory: '' })); }}
         seedOptions={PRODUCT_OPTIONS}
         placeholder={t('listing.productHint')}
       />
+      {!!errors.productCategory && <Text style={styles.errorText}>{errors.productCategory}</Text>}
 
       {/* Photos */}
       <Text style={styles.sectionTitle}>{t('listing.photos') || 'Photos'}</Text>
@@ -181,14 +198,15 @@ export default function CreateScreen() {
       />
 
       {/* Region — shown for all products */}
-      <Text style={styles.sectionTitle}>{t('listing.region')}</Text>
+      <Text style={styles.sectionTitle}>{t('listing.region')} <Text style={styles.required}>*</Text></Text>
       <SuggestInput
         field="region"
         value={form.region}
-        onChange={(v) => update('region', v)}
+        onChange={(v) => { update('region', v); setErrors(e => ({ ...e, region: '' })); }}
         seedOptions={REGION_OPTIONS}
         placeholder={t('listing.regionHint')}
       />
+      {!!errors.region && <Text style={styles.errorText}>{errors.region}</Text>}
 
       {/* Grade — shown for graded commodities */}
       {showGrade && (
@@ -228,15 +246,16 @@ export default function CreateScreen() {
       {/* Quantity + Unit */}
       <View style={styles.row}>
         <View style={styles.half}>
-          <Text style={styles.sectionTitle}>{t('listing.quantity')}</Text>
+          <Text style={styles.sectionTitle}>{t('listing.quantity')} <Text style={styles.required}>*</Text></Text>
           <TextInput
-            style={styles.textInput}
+            style={[styles.textInput, !!errors.quantity && styles.inputError]}
             placeholder="0"
             placeholderTextColor="#999"
             keyboardType="numeric"
             value={form.quantity}
-            onChangeText={(v) => update('quantity', v)}
+            onChangeText={(v) => { update('quantity', v); setErrors(e => ({ ...e, quantity: '' })); }}
           />
+          {!!errors.quantity && <Text style={styles.errorText}>{errors.quantity}</Text>}
         </View>
         <View style={styles.half}>
           <Text style={styles.sectionTitle}>{t('listing.unit')}</Text>
@@ -252,15 +271,16 @@ export default function CreateScreen() {
       {/* Price + Currency */}
       <View style={styles.row}>
         <View style={styles.half}>
-          <Text style={styles.sectionTitle}>{t('listing.price')}</Text>
+          <Text style={styles.sectionTitle}>{t('listing.price')} <Text style={styles.required}>*</Text></Text>
           <TextInput
-            style={styles.textInput}
+            style={[styles.textInput, !!errors.price && styles.inputError]}
             placeholder="0"
             placeholderTextColor="#999"
             keyboardType="numeric"
             value={form.price}
-            onChangeText={(v) => update('price', v)}
+            onChangeText={(v) => { update('price', v); setErrors(e => ({ ...e, price: '' })); }}
           />
+          {!!errors.price && <Text style={styles.errorText}>{errors.price}</Text>}
         </View>
         <View style={styles.half}>
           <Text style={styles.sectionTitle}>{t('listing.currency')}</Text>
@@ -347,4 +367,7 @@ const styles = StyleSheet.create({
   },
   submitDisabled: { opacity: 0.6 },
   submitText: { color: '#fff', fontSize: 16, fontWeight: '700' },
+  required:  { color: '#D32F2F', fontSize: 14 },
+  errorText: { color: '#D32F2F', fontSize: 12, marginTop: 4, marginLeft: 2 },
+  inputError: { borderColor: '#D32F2F', backgroundColor: '#FFF5F5' },
 });
