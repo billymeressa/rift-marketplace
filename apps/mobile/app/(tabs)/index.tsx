@@ -77,7 +77,7 @@ function RecommendedSection() {
 export default function HomeScreen() {
   const { t } = useTranslation();
   const { token } = useAuth();
-  const { numColumns, isMobile } = useResponsive();
+  const { numColumns, isMobile, cardGutter } = useResponsive();
 
   const [search, setSearch] = useState('');
   const [submittedSearch, setSubmittedSearch] = useState('');
@@ -176,12 +176,12 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id}
         numColumns={numColumns}
         renderItem={({ item }) => (
-          <View style={numColumns > 1 ? { flex: 1 / numColumns, maxWidth: `${100 / numColumns}%` as any } : undefined}>
+          <View style={{ flex: 1, margin: cardGutter / 2 }}>
             <ListingCard listing={item} />
           </View>
         )}
-        contentContainerStyle={[styles.list, !isMobile && { paddingHorizontal: 10 }]}
-        columnWrapperStyle={numColumns > 1 ? { gap: 0 } : undefined}
+        contentContainerStyle={[styles.list, { paddingHorizontal: cardGutter / 2 }]}
+        columnWrapperStyle={{ paddingHorizontal: cardGutter / 2 }}
         ListHeaderComponent={ListHeader}
         refreshControl={
           !isSearching
@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
   filterBadgeText: { fontSize: 10, color: '#fff', fontWeight: '700' },
   resultCount: { fontSize: 13, color: '#666', paddingHorizontal: 16, paddingTop: 8 },
   // Feed
-  list: { paddingTop: 8, paddingBottom: 80 },
+  list: { paddingTop: 4, paddingBottom: 80 },
   loader: { marginTop: 60 },
   empty: { alignItems: 'center', marginTop: 60, gap: 12, paddingHorizontal: 24 },
   emptyText: { fontSize: 16, color: '#999' },
