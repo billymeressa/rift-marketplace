@@ -15,10 +15,14 @@ const MAX_OTP_ATTEMPTS_PER_HOUR = 5;
 
 function normalizePhone(phone: string): string {
   let p = phone.replace(/[\s\-()]/g, '');
-  // Ethiopian shorthand: 09xxxxxxxx → +25109xxxxxxxx
-  if (p.startsWith('0') && !p.startsWith('00')) p = '+251' + p.slice(1);
+  // Ethiopian shorthand without country code: 09xxxxxxxx → +2519xxxxxxxx
+  if (p.startsWith('0') && !p.startsWith('00') && !p.startsWith('+')) {
+    p = '+251' + p.slice(1);
+  }
   // Add leading + if missing
-  else if (!p.startsWith('+')) p = '+' + p;
+  else if (!p.startsWith('+')) {
+    p = '+' + p;
+  }
   return p;
 }
 
@@ -59,7 +63,7 @@ router.post('/send-code', async (req, res) => {
     const normalized = normalizePhone(phone);
 
     if (!isValidInternationalPhone(normalized)) {
-      res.status(400).json({ error: 'Invalid Ethiopian phone number' });
+      res.status(400).json({ error: 'Invalid phone number' });
       return;
     }
 
