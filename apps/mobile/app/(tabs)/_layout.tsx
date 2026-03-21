@@ -121,14 +121,10 @@ export default function TabLayout() {
           ),
         }}
       />
+      {/* search.tsx kept for compatibility but hidden — search is now inline on home */}
       <Tabs.Screen
         name="search"
-        options={{
-          title: t('tabs.search'),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="search-outline" size={size} color={color} />
-          ),
-        }}
+        options={{ href: null }}
       />
       <Tabs.Screen
         name="create"
