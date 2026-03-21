@@ -8,6 +8,7 @@ import { AuthContext } from '../lib/auth';
 import { getToken, getUser, saveToken, saveUser, removeToken, removeUser } from '../lib/auth';
 import { setUnauthorizedHandler, api } from '../lib/api';
 import { registerForPushNotifications } from '../lib/notifications';
+import { isTelegramMiniApp, getTelegramInitData, telegramReady } from '../lib/telegram-webapp';
 import '../lib/i18n';
 import { initSentry } from '../lib/sentry';
 
@@ -30,6 +31,25 @@ export default function RootLayout() {
 
   useEffect(() => {
     (async () => {
+      // ── Telegram Mini App: auto-login via initData ──────────────────────────
+      if (Platform.OS === 'web' && isTelegramMiniApp()) {
+        telegramReady(); // tell Telegram the app is ready
+        try {
+          const initData = getTelegramInitData();
+          const { token: tmaToken, user: tmaUser } = await api.telegramMiniAppLogin(initData);
+          await saveToken(tmaToken);
+          await saveUser(tmaUser);
+          setToken(tmaToken);
+          setUser(tmaUser);
+          setIsLoading(false);
+          return; // skip reading from storage — we just logged in
+        } catch (err) {
+          console.warn('TMA auto-login failed, falling back to normal auth:', err);
+          // Fall through to normal token restore below
+        }
+      }
+
+      // ── Normal flow: restore token from storage ─────────────────────────────
       const savedToken = await getToken();
       const savedUser = await getUser();
       setToken(savedToken);

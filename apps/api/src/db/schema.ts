@@ -13,7 +13,8 @@ export const otpCodes = pgTable('otp_codes', {
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
-  phone: varchar('phone', { length: 15 }).notNull().unique(),
+  phone: varchar('phone', { length: 15 }).unique(),                // nullable — TMA users may have no phone
+  telegramId: varchar('telegram_id', { length: 30 }).unique(),     // Telegram user ID (TMA auth)
   name: varchar('name', { length: 100 }).notNull().default(''),
   telegramUsername: varchar('telegram_username', { length: 50 }),
   preferredLanguage: varchar('preferred_language', { length: 2 }).notNull().default('am'),

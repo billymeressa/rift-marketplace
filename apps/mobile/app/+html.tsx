@@ -15,6 +15,8 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        {/* Telegram Mini App SDK — must load before the app bundle */}
+        <script src="https://telegram.org/js/telegram-web-app.js" />
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{
           __html: `

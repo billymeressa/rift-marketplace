@@ -85,6 +85,13 @@ export const api = {
       body: JSON.stringify({ phone, code, ...(name ? { name } : {}) }),
     }),
 
+  /** Telegram Mini App login — exchanges Telegram initData for a JWT. */
+  telegramMiniAppLogin: (initData: string) =>
+    apiRequest<{ token: string; user: any }>('/auth/telegram-mini-app', {
+      method: 'POST',
+      body: JSON.stringify({ initData }),
+    }),
+
   deleteAccount: () =>
     apiRequest<{ message: string }>('/auth/account', { method: 'DELETE' }),
 

@@ -40,14 +40,16 @@ function generateOTP(): string {
   return crypto.randomInt(100000, 999999).toString();
 }
 
-function makeToken(user: { id: string; phone: string }, expiresIn = '30d') {
-  return jwt.sign({ userId: user.id, phone: user.phone }, process.env.JWT_SECRET!, { expiresIn } as jwt.SignOptions);
+function makeToken(user: { id: string; phone?: string | null }, expiresIn = '30d') {
+  return jwt.sign({ userId: user.id, phone: user.phone ?? null }, process.env.JWT_SECRET!, { expiresIn } as jwt.SignOptions);
 }
 
 function publicUser(user: any) {
   return {
     id: user.id,
-    phone: user.phone,
+    phone: user.phone ?? null,
+    telegramId: user.telegramId ?? null,
+    telegramUsername: user.telegramUsername ?? null,
     name: user.name,
     preferredLanguage: user.preferredLanguage,
     createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
@@ -203,6 +205,109 @@ router.post('/verify-code', async (req, res) => {
   }
 });
 
+// ─── POST /auth/telegram-mini-app ───────────────────────────────────────────
+// Authenticates a Telegram Mini App user via initData HMAC-SHA256 verification.
+// On success: finds or creates a user by telegramId, returns JWT.
+
+router.post('/telegram-mini-app', async (req, res) => {
+  try {
+    const { initData } = z.object({ initData: z.string().min(1) }).parse(req.body);
+
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
+    if (!botToken) {
+      res.status(503).json({ error: 'Telegram bot not configured' });
+      return;
+    }
+
+    // ── 1. Parse the URL-encoded initData string ─────────────────────────────
+    const params = new URLSearchParams(initData);
+    const receivedHash = params.get('hash');
+    if (!receivedHash) {
+      res.status(400).json({ error: 'Missing hash in initData' });
+      return;
+    }
+
+    // ── 2. Build the data-check string (all fields except hash, sorted) ───────
+    const entries: string[] = [];
+    for (const [key, value] of params.entries()) {
+      if (key !== 'hash') entries.push(`${key}=${value}`);
+    }
+    entries.sort();
+    const dataCheckString = entries.join('\n');
+
+    // ── 3. Verify HMAC-SHA256 ─────────────────────────────────────────────────
+    const secretKey = crypto
+      .createHmac('sha256', 'WebAppData')
+      .update(botToken)
+      .digest();
+
+    const expectedHash = crypto
+      .createHmac('sha256', secretKey)
+      .update(dataCheckString)
+      .digest('hex');
+
+    if (expectedHash !== receivedHash) {
+      res.status(401).json({ error: 'initData verification failed' });
+      return;
+    }
+
+    // ── 4. Check auth_date is fresh (within 1 hour) ───────────────────────────
+    const authDate = Number(params.get('auth_date') || 0);
+    if (Date.now() / 1000 - authDate > 3600) {
+      res.status(401).json({ error: 'initData has expired' });
+      return;
+    }
+
+    // ── 5. Extract Telegram user ──────────────────────────────────────────────
+    const tgUserRaw = params.get('user');
+    if (!tgUserRaw) {
+      res.status(400).json({ error: 'No user field in initData' });
+      return;
+    }
+    const tgUser = JSON.parse(tgUserRaw) as {
+      id: number;
+      first_name: string;
+      last_name?: string;
+      username?: string;
+      language_code?: string;
+    };
+
+    const telegramId = String(tgUser.id);
+    const derivedName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'User';
+
+    // ── 6. Find or create user by telegramId ──────────────────────────────────
+    let [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.telegramId, telegramId))
+      .limit(1);
+
+    if (!user) {
+      // New user — create with Telegram info, no phone
+      [user] = await db.insert(users).values({
+        telegramId,
+        name: derivedName,
+        telegramUsername: tgUser.username ?? null,
+        preferredLanguage: tgUser.language_code?.startsWith('am') ? 'am'
+          : tgUser.language_code?.startsWith('om') ? 'om' : 'en',
+      }).returning();
+    } else if (!user.telegramUsername && tgUser.username) {
+      // Update username if it changed
+      [user] = await db
+        .update(users)
+        .set({ telegramUsername: tgUser.username })
+        .where(eq(users.id, user.id))
+        .returning();
+    }
+
+    res.json({ token: makeToken(user), user: publicUser(user) });
+  } catch (err) {
+    if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }
+    console.error('Telegram Mini App auth error:', err);
+    res.status(500).json({ error: 'Authentication failed' });
+  }
+});
+
 // ─── DELETE /auth/account ────────────────────────────────────────────────────
 // Permanently deletes the authenticated user and all their data.
 
@@ -210,7 +315,7 @@ router.delete('/account', authMiddleware, async (req: AuthRequest, res) => {
   try {
     const userId = req.userId!;
 
-    // Fetch user to get phone (needed to purge OTP codes)
+    // Fetch user to get phone (needed to purge OTP codes, may be null for TMA-only users)
     const [user] = await db.select({ phone: users.phone })
       .from(users).where(eq(users.id, userId)).limit(1);
 
@@ -250,7 +355,9 @@ router.delete('/account', authMiddleware, async (req: AuthRequest, res) => {
     await db.delete(depositVerifications).where(eq(depositVerifications.userId, userId));
     await db.delete(sellerVerifications).where(eq(sellerVerifications.userId, userId));
     await db.delete(feedback).where(eq(feedback.userId, userId));
-    await db.delete(otpCodes).where(eq(otpCodes.phone, user.phone));
+    if (user.phone) {
+      await db.delete(otpCodes).where(eq(otpCodes.phone, user.phone));
+    }
 
     // 6. Finally, the user row itself
     await db.delete(users).where(eq(users.id, userId));

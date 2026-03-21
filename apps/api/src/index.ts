@@ -16,7 +16,7 @@ import uploadRoutes from './routes/upload.js';
 import recommendationRoutes from './routes/recommendations.js';
 import telegramRoutes from './routes/telegram.js';
 import adminRoutes from './routes/admin.js';
-import { setWebhook } from './lib/telegram.js';
+import { setWebhook, setChatMenuButton } from './lib/telegram.js';
 
 // Validate JWT_SECRET at startup
 const WEAK_SECRETS = ['dev-secret-change-in-production', 'your-secret-key-change-this', 'secret', 'password'];
@@ -65,6 +65,11 @@ app.listen(port, () => {
   if (process.env.RENDER_EXTERNAL_URL && process.env.TELEGRAM_BOT_TOKEN) {
     const webhookUrl = `${process.env.RENDER_EXTERNAL_URL}/api/v1/telegram/webhook`;
     setWebhook(webhookUrl);
+  }
+
+  // Register Mini App as the bot menu button
+  if (process.env.TELEGRAM_MINI_APP_URL && process.env.TELEGRAM_BOT_TOKEN) {
+    setChatMenuButton(process.env.TELEGRAM_MINI_APP_URL);
   }
 });
 

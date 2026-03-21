@@ -48,3 +48,34 @@ export async function getBotUsername(): Promise<string> {
 export function getTelegramDeepLink(botUsername: string, session: string): string {
   return `https://t.me/${botUsername}?start=${session}`;
 }
+
+/**
+ * Registers the Mini App URL as the bot's menu button so users see an
+ * "Open App" button in every chat with the bot.
+ *
+ * Call once at server startup when TELEGRAM_MINI_APP_URL is set.
+ */
+export async function setChatMenuButton(webAppUrl: string): Promise<void> {
+  if (!process.env.TELEGRAM_BOT_TOKEN) return;
+  try {
+    const res = await fetch(`${api()}/setChatMenuButton`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        menu_button: {
+          type: 'web_app',
+          text: 'Open Nile Xport',
+          web_app: { url: webAppUrl },
+        },
+      }),
+    });
+    const data = await res.json();
+    if (data.ok) {
+      console.log('✅ Telegram menu button registered:', webAppUrl);
+    } else {
+      console.warn('⚠️  setChatMenuButton failed:', data.description);
+    }
+  } catch (err) {
+    console.error('setChatMenuButton error:', err);
+  }
+}
