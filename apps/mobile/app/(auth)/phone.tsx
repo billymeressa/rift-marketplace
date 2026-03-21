@@ -180,21 +180,21 @@ export default function AuthScreen() {
         <View style={styles.content}>
           <Text style={styles.logo}>{t('common.appName')}</Text>
 
-          {/* Progress dots */}
-          <View style={styles.progress}>
-            {(['phone', 'name', 'code'] as Step[]).map((s) => (
-              <View key={s} style={[
-                styles.dot,
-                step === s && styles.dotActive,
-                (s === 'phone' && step !== 'phone') || (s === 'name' && step === 'code') ? styles.dotDone : null,
-                // Hide name dot for returning users
-                s === 'name' && !isNewUser ? styles.dotHidden : null,
-              ]} />
-            ))}
-          </View>
+          {/* Progress dots — only show after phone step */}
+          {step !== 'phone' && (
+            <View style={styles.progress}>
+              {(isNewUser ? ['name', 'code'] as const : ['code'] as const).map((s) => (
+                <View key={s} style={[
+                  styles.dot,
+                  step === s && styles.dotActive,
+                  (s === 'name' && step === 'code') ? styles.dotDone : null,
+                ]} />
+              ))}
+            </View>
+          )}
 
-          <Text style={styles.title}>{stepTitle}</Text>
-          {stepSubtitle ? <Text style={styles.subtitle}>{stepSubtitle}</Text> : null}
+          <Text style={step === 'phone' ? styles.subtitle : styles.title}>{stepTitle}</Text>
+          {stepSubtitle ? <Text style={styles.stepSubtitle}>{stepSubtitle}</Text> : null}
 
           {/* ── Phone step ── */}
           {step === 'phone' && (
@@ -228,7 +228,7 @@ export default function AuthScreen() {
               >
                 {loading
                   ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.buttonText}>{t('auth.continue') || 'Continue'}</Text>
+                  : <Text style={styles.buttonText}>{t('auth.continue')}</Text>
                 }
               </TouchableOpacity>
             </View>
@@ -260,7 +260,7 @@ export default function AuthScreen() {
               >
                 {loading
                   ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.buttonText}>{t('auth.continue') || 'Continue'}</Text>
+                  : <Text style={styles.buttonText}>{t('auth.continue')}</Text>
                 }
               </TouchableOpacity>
 
@@ -358,10 +358,14 @@ const styles = StyleSheet.create({
   dotActive: { backgroundColor: '#2E7D32', width: 24 },
   dotDone:   { backgroundColor: '#A5D6A7' },
   dotHidden: { display: 'none' },
+  subtitle: {
+    fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 28,
+  },
   title: {
     fontSize: 16, color: '#555', textAlign: 'center', marginBottom: 8,
+    fontWeight: '600',
   },
-  subtitle: {
+  stepSubtitle: {
     fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 24,
     fontWeight: '600',
   },
