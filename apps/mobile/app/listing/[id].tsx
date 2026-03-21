@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Linking, useWindowDimensions, FlatList } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, useWindowDimensions, FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -63,20 +63,6 @@ export default function ListingDetailScreen() {
       </View>
     );
   }
-
-  const handleCall = () => {
-    if (listing.user?.phone) {
-      Linking.openURL(`tel:${listing.user.phone}`);
-    }
-  };
-
-  const handleTelegram = () => {
-    if (listing.user?.telegramUsername) {
-      Linking.openURL(`https://t.me/${listing.user.telegramUsername}`);
-    } else if (listing.user?.phone) {
-      Linking.openURL(`https://t.me/${listing.user.phone.replace('+', '')}`);
-    }
-  };
 
   const isBuy = listing.type === 'buy';
   const images: string[] = listing.images || [];
@@ -168,23 +154,12 @@ export default function ListingDetailScreen() {
             </View>
           </View>
 
-          <View style={styles.contactRow}>
-            <TouchableOpacity style={styles.callBtn} onPress={handleCall}>
-              <Ionicons name="call-outline" size={20} color="#fff" />
-              <Text style={styles.callText}>{t('common.call')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.telegramBtn} onPress={handleTelegram}>
-              <Ionicons name="send-outline" size={20} color="#fff" />
-              <Text style={styles.telegramText}>{t('common.telegram')}</Text>
-            </TouchableOpacity>
-          </View>
-
           {currentUser?.id && listing.user?.id && currentUser.id !== listing.user.id && (
             <TouchableOpacity
               style={styles.messageBtn}
               onPress={() => router.push(`/message-compose?listingId=${listing.id}&sellerId=${listing.user.id}`)}
             >
-              <Ionicons name="chatbubble-outline" size={20} color="#2E7D32" />
+              <Ionicons name="chatbubble-ellipses-outline" size={20} color="#fff" />
               <Text style={styles.messageBtnText}>{t('messages.sendMessage')}</Text>
             </TouchableOpacity>
           )}
@@ -354,40 +329,6 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#999',
   },
-  contactRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  callBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
-    backgroundColor: '#2E7D32',
-  },
-  callText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-  },
-  telegramBtn: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
-    borderRadius: 12,
-    backgroundColor: '#0088cc',
-  },
-  telegramText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#fff',
-  },
   orderBtn: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -408,17 +349,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    paddingVertical: 14,
+    paddingVertical: 16,
     borderRadius: 12,
-    borderWidth: 1.5,
-    borderColor: '#2E7D32',
-    backgroundColor: '#fff',
-    marginTop: 12,
+    backgroundColor: '#2E7D32',
+    marginBottom: 12,
   },
   messageBtnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#fff',
   },
   editBtn: {
     flexDirection: 'row',

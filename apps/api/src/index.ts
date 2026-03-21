@@ -15,6 +15,7 @@ import suggestionRoutes from './routes/suggestions.js';
 import uploadRoutes from './routes/upload.js';
 import recommendationRoutes from './routes/recommendations.js';
 import telegramRoutes from './routes/telegram.js';
+import adminRoutes from './routes/admin.js';
 import { setWebhook } from './lib/telegram.js';
 
 // Validate JWT_SECRET at startup
@@ -55,6 +56,7 @@ app.use('/api/v1/suggestions', suggestionRoutes);
 app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/recommendations', recommendationRoutes);
 app.use('/api/v1/telegram', telegramRoutes);
+app.use('/api/v1/admin', adminRoutes);
 
 app.listen(port, () => {
   console.log(`API server running on http://localhost:${port}`);
