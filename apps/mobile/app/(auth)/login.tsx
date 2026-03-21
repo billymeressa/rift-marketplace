@@ -339,7 +339,28 @@ export default function AuthScreen() {
   };
 
   const handleOtpChange = (text: string, index: number) => {
-    const digit = text.replace(/\D/g, '').slice(-1);
+    const digits = text.replace(/\D/g, '');
+
+    // ── Paste / multi-digit input ──────────────────────────────────────────
+    if (digits.length > 1) {
+      // Fill boxes starting from current index (or always from 0 if full code)
+      const startAt = digits.length >= 6 ? 0 : index;
+      const next = [...otpDigits];
+      for (let i = 0; i < digits.length && startAt + i < 6; i++) {
+        next[startAt + i] = digits[i];
+      }
+      setOtpDigits(next);
+      setError('');
+      // Focus the box after the last filled one (or last box)
+      const nextFocus = Math.min(startAt + digits.length, 5);
+      otpRefs[nextFocus].current?.focus();
+      const code = next.join('');
+      if (code.length === 6 && !next.includes('')) handleVerifyCode(code);
+      return;
+    }
+
+    // ── Single digit (normal typing) ───────────────────────────────────────
+    const digit = digits;
     const next = [...otpDigits];
     next[index] = digit;
     setOtpDigits(next);
@@ -565,10 +586,10 @@ export default function AuthScreen() {
                     ref={otpRefs[i]}
                     style={[styles.otpBox, digit ? styles.otpBoxFilled : null, error ? styles.otpBoxError : null]}
                     value={digit}
-                    onChangeText={t => handleOtpChange(t, i)}
+                    onChangeText={text => handleOtpChange(text, i)}
                     onKeyPress={({ nativeEvent }) => handleOtpKeyPress(nativeEvent.key, i)}
                     keyboardType="number-pad"
-                    maxLength={1}
+                    maxLength={i === 0 ? 6 : 1}
                     selectTextOnFocus
                     autoFocus={i === 0}
                   />
