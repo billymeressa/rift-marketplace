@@ -199,6 +199,14 @@ export default function AuthScreen() {
           {/* ── Phone step ── */}
           {step === 'phone' && (
             <View style={styles.form}>
+              {/* Telegram branding banner */}
+              <View style={styles.telegramBadge}>
+                <Ionicons name="paper-plane" size={18} color="#0088cc" />
+                <Text style={styles.telegramBadgeText}>
+                  You'll receive your code on <Text style={styles.telegramBadgeBold}>Telegram</Text>
+                </Text>
+              </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>{t('auth.enterPhone')}</Text>
                 <View style={[styles.phoneRow, error ? styles.inputError : null]}>
@@ -237,6 +245,13 @@ export default function AuthScreen() {
           {/* ── Name step (new users) ── */}
           {step === 'name' && (
             <View style={styles.form}>
+              <View style={styles.telegramBadge}>
+                <Ionicons name="paper-plane" size={18} color="#0088cc" />
+                <Text style={styles.telegramBadgeText}>
+                  You'll receive your code on <Text style={styles.telegramBadgeBold}>Telegram</Text>
+                </Text>
+              </View>
+
               <View style={styles.field}>
                 <Text style={styles.label}>{t('auth.fullName')}</Text>
                 <TextInput
@@ -369,7 +384,14 @@ const styles = StyleSheet.create({
     fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 24,
     fontWeight: '600',
   },
-  form: { marginTop: 12 },
+  form: { marginTop: 16 },
+  telegramBadge: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
+    gap: 8, backgroundColor: '#E8F4FB', borderRadius: 10,
+    paddingVertical: 10, paddingHorizontal: 16, marginBottom: 20,
+  },
+  telegramBadgeText: { fontSize: 13, color: '#333' },
+  telegramBadgeBold: { fontWeight: '700', color: '#0088cc' },
   field: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
   input: {
