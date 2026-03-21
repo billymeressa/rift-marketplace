@@ -5,6 +5,33 @@ import { getToken, removeToken, removeUser } from './auth';
 const DEFAULT_HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 const API_URL = process.env.EXPO_PUBLIC_API_URL || `http://${DEFAULT_HOST}:3000/api/v1`;
 
+// ─── Admin API ────────────────────────────────────────────────────────────────
+const ADMIN_KEY = process.env.EXPO_PUBLIC_ADMIN_KEY || '';
+
+async function adminRequest<T>(endpoint: string): Promise<T> {
+  const res = await fetch(`${API_URL}${endpoint}`, {
+    headers: { 'X-Admin-Key': ADMIN_KEY, 'Content-Type': 'application/json' },
+  });
+  if (!res.ok) throw new Error(`Admin request failed: ${res.status}`);
+  return res.json();
+}
+
+export const adminApi = {
+  getConversations: (page = 1, limit = 50) =>
+    adminRequest<{ data: any[]; page: number; limit: number }>(
+      `/admin/conversations?page=${page}&limit=${limit}`
+    ),
+  getConversation: (id: string) =>
+    adminRequest<{ conversation: any; messages: any[] }>(
+      `/admin/conversations/${id}`
+    ),
+  getUsers: (page = 1, limit = 50) =>
+    adminRequest<{ data: any[]; page: number; limit: number }>(
+      `/admin/users?page=${page}&limit=${limit}`
+    ),
+};
+
+// ─── User-facing API ──────────────────────────────────────────────────────────
 // Global sign-out callback registered by the auth provider
 let _onUnauthorized: (() => void) | null = null;
 export function setUnauthorizedHandler(handler: () => void) {

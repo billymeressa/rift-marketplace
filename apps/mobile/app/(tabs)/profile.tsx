@@ -61,6 +61,8 @@ export default function ProfileScreen() {
     });
   };
 
+  const isAdmin = user?.phone === process.env.EXPO_PUBLIC_ADMIN_PHONE;
+
   const handleLogout = () => {
     if (Platform.OS === 'web') {
       if (window.confirm(t('profile.logoutConfirm'))) signOut();
@@ -215,6 +217,17 @@ export default function ProfileScreen() {
             <Text style={styles.langValue}>{i18n.language === 'am' ? 'አማርኛ' : i18n.language === 'om' ? 'Afaan Oromoo' : 'English'}</Text>
             <Ionicons name="swap-horizontal-outline" size={18} color="#2E7D32" />
           </TouchableOpacity>
+
+          {isAdmin && (
+            <TouchableOpacity
+              style={styles.adminBtn}
+              onPress={() => router.push('/admin')}
+            >
+              <Ionicons name="shield-checkmark" size={20} color="#fff" />
+              <Text style={styles.adminBtnText}>Admin Panel</Text>
+              <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.6)" />
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={styles.feedbackBtn}
@@ -413,6 +426,23 @@ const styles = StyleSheet.create({
   feedbackText: {
     fontSize: 15,
     color: '#333',
+    flex: 1,
+  },
+  adminBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    marginTop: 20,
+    gap: 10,
+  },
+  adminBtnText: {
+    fontSize: 15,
+    color: '#fff',
+    fontWeight: '700',
     flex: 1,
   },
   logoutBtn: {
