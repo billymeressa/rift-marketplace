@@ -435,7 +435,7 @@ export default function AuthScreen() {
           {step === 'phone' && (
             <View style={styles.form}>
 
-              {/* ── Primary CTA: Telegram social button ── */}
+              {/* ── Primary CTA: Sign in with Telegram ── */}
               <TouchableOpacity
                 style={[styles.telegramSocialBtn, loading && styles.buttonDisabled]}
                 onPress={handlePhoneSubmit}
@@ -447,9 +447,9 @@ export default function AuthScreen() {
                 ) : (
                   <>
                     <View style={styles.telegramSocialIcon}>
-                      <Ionicons name="paper-plane" size={20} color="#0088cc" />
+                      <Ionicons name="paper-plane" size={19} color="#fff" />
                     </View>
-                    <Text style={styles.telegramSocialText}>Continue with Telegram</Text>
+                    <Text style={styles.telegramSocialText}>Sign in with Telegram</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -535,9 +535,9 @@ export default function AuthScreen() {
                 ) : (
                   <>
                     <View style={styles.telegramSocialIcon}>
-                      <Ionicons name="paper-plane" size={20} color="#0088cc" />
+                      <Ionicons name="paper-plane" size={19} color="#fff" />
                     </View>
-                    <Text style={styles.telegramSocialText}>Continue with Telegram</Text>
+                    <Text style={styles.telegramSocialText}>Sign up with Telegram</Text>
                   </>
                 )}
               </TouchableOpacity>
@@ -648,29 +648,27 @@ const styles = StyleSheet.create({
   title: { fontSize: 16, color: '#555', textAlign: 'center', marginBottom: 8, fontWeight: '600' },
   stepSubtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 24, fontWeight: '600' },
   form: { marginTop: 16 },
-  // Social login button — Telegram
+  // Social login button — Telegram (filled, matches Facebook/Google social login style)
   telegramSocialBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#fff',
-    borderWidth: 1.5,
-    borderColor: '#0088cc',
+    backgroundColor: '#2AABEE',   // official Telegram blue
     borderRadius: 12,
-    paddingVertical: 14,
+    paddingVertical: 15,
     paddingHorizontal: 20,
     marginBottom: 20,
-    shadowColor: '#0088cc',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
+    shadowColor: '#2AABEE',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.30,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 4,
   },
   telegramSocialIcon: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: '#E8F4FB',
+    backgroundColor: 'rgba(255,255,255,0.20)',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -678,10 +676,10 @@ const styles = StyleSheet.create({
   telegramSocialText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#0088cc',
+    color: '#fff',
     flex: 1,
     textAlign: 'center',
-    marginRight: 44, // offset for the icon so text is truly centered
+    marginRight: 44, // offset for the icon so text is visually centred
   },
   // "or enter your phone number" divider
   dividerRow: {
