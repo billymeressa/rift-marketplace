@@ -8,12 +8,14 @@ import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import LanguageToggle from '../../components/LanguageToggle';
+import { useResponsive } from '../../hooks/useResponsive';
 
 type Step = 'phone' | 'name' | 'code';
 
 export default function AuthScreen() {
   const { t } = useTranslation();
   const { signIn } = useAuth();
+  const { isMobile, formMaxWidth } = useResponsive();
 
   const [step, setStep]   = useState<Step>('phone');
   const [phone, setPhone] = useState('');
@@ -172,12 +174,28 @@ export default function AuthScreen() {
       style={styles.container}
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <ScrollView contentContainerStyle={styles.scroll} keyboardShouldPersistTaps="handled">
+      <ScrollView contentContainerStyle={[styles.scroll, !isMobile && styles.scrollDesktop]} keyboardShouldPersistTaps="handled">
         <View style={styles.langToggle}>
           <LanguageToggle />
         </View>
 
-        <View style={styles.content}>
+        <View style={[
+          styles.content,
+          !isMobile && {
+            maxWidth: formMaxWidth,
+            alignSelf: 'center' as const,
+            width: '100%' as any,
+            backgroundColor: '#fff',
+            borderRadius: 20,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 16,
+            elevation: 4,
+            paddingVertical: 48,
+            marginVertical: 40,
+          },
+        ]}>
           <Text style={styles.logo}>{t('common.appName')}</Text>
 
           {/* Progress dots — only show after phone step */}
@@ -350,6 +368,7 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { flexGrow: 1 },
+  scrollDesktop: { backgroundColor: '#F5F5F5', justifyContent: 'center' },
   langToggle: { position: 'absolute', top: 60, right: 20, zIndex: 10 },
   content: {
     flex: 1,

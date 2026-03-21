@@ -10,6 +10,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import ListingCard from '../../components/ListingCard';
 import ResponsiveContainer from '../../components/ResponsiveContainer';
+import { useResponsive } from '../../hooks/useResponsive';
 import { PRODUCT_LABELS } from '../../lib/options';
 
 function RecommendedSection() {
@@ -71,6 +72,7 @@ export default function HomeScreen() {
   const { t } = useTranslation();
   const { token } = useAuth();
   const [page, setPage] = useState(1);
+  const { numColumns, isMobile } = useResponsive();
 
   const { data, isLoading, isRefetching, refetch } = useQuery({
     queryKey: ['listings', 'feed', page],
@@ -88,12 +90,19 @@ export default function HomeScreen() {
   const header = token ? <RecommendedSection /> : null;
 
   return (
-    <ResponsiveContainer style={styles.container}>
+    <ResponsiveContainer style={styles.container} size="feed">
       <FlatList
+        key={`cols-${numColumns}`}
         data={listings}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ListingCard listing={item} />}
-        contentContainerStyle={styles.list}
+        numColumns={numColumns}
+        renderItem={({ item }) => (
+          <View style={numColumns > 1 ? { flex: 1 / numColumns, maxWidth: `${100 / numColumns}%` as any } : undefined}>
+            <ListingCard listing={item} />
+          </View>
+        )}
+        contentContainerStyle={[styles.list, !isMobile && { paddingHorizontal: 10 }]}
+        columnWrapperStyle={numColumns > 1 ? { gap: 0 } : undefined}
         ListHeaderComponent={header}
         refreshControl={
           <RefreshControl refreshing={isRefetching} onRefresh={onRefresh} tintColor="#2E7D32" />

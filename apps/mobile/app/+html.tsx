@@ -18,8 +18,44 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{
           __html: `
-            html, body, #root { height: 100dvh; overflow: hidden; }
+            html, body, #root {
+              height: 100dvh;
+              overflow: hidden;
+              background-color: #F5F5F5;
+            }
             * { box-sizing: border-box; }
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+              -webkit-font-smoothing: antialiased;
+              -moz-osx-font-smoothing: grayscale;
+            }
+            /* Better scrollbars on desktop */
+            ::-webkit-scrollbar {
+              width: 8px;
+              height: 8px;
+            }
+            ::-webkit-scrollbar-track {
+              background: transparent;
+            }
+            ::-webkit-scrollbar-thumb {
+              background: #ccc;
+              border-radius: 4px;
+            }
+            ::-webkit-scrollbar-thumb:hover {
+              background: #aaa;
+            }
+            /* Smooth transitions */
+            a, button { transition: opacity 0.15s ease; }
+            /* Remove blue highlight on mobile web taps */
+            * { -webkit-tap-highlight-color: transparent; }
+            /* Ensure inputs look right on desktop */
+            input, textarea {
+              outline: none;
+              -webkit-appearance: none;
+            }
+            input:focus, textarea:focus {
+              outline: none;
+            }
           `
         }} />
       </head>

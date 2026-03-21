@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { PRODUCT_LABELS, REGION_LABELS, CONDITION_LABELS } from '../lib/options';
+import { useResponsive } from '../hooks/useResponsive';
 
 interface ListingCardProps {
   listing: any;
@@ -22,6 +23,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const { i18n } = useTranslation();
   const router = useRouter();
   const lang = i18n.language as 'en' | 'am' | 'om';
+  const { numColumns } = useResponsive();
 
   const productLabel   = PRODUCT_LABELS[listing.productCategory]?.[lang] || listing.productCategory;
   const regionLabel    = listing.region  ? (REGION_LABELS[listing.region]?.[lang]     || listing.region)  : null;
@@ -31,8 +33,6 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const hasImage = images.length > 0;
 
   const isBuy = listing.type === 'buy';
-  // BUY = poster wants to buy → "WANTED"
-  // SELL = poster is selling → "FOR SALE"
   const typeLabel = isBuy
     ? (lang === 'am' ? 'ፈልጓል' : lang === 'om' ? 'BARBAADA' : 'WANTED')
     : (lang === 'am' ? 'ለሽያጭ' : lang === 'om' ? 'GURGURAMAA' : 'FOR SALE');
@@ -47,9 +47,19 @@ export default function ListingCard({ listing }: ListingCardProps) {
   if (conditionLabel) tags.push(conditionLabel);
   if (listing.quantity && listing.unit) tags.push(`${Number(listing.quantity).toLocaleString()} ${listing.unit}`);
 
+  // Grid: when multi-column, each card takes a fraction of the width
+  const isGrid = numColumns > 1;
+
   return (
     <TouchableOpacity
-      style={styles.card}
+      style={[
+        styles.card,
+        isGrid && {
+          marginHorizontal: 6,
+          marginVertical: 6,
+          flex: 1,
+        },
+      ]}
       onPress={() => router.push(`/listing/${listing.id}`)}
       activeOpacity={0.75}
     >

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Linking, Dimensions, FlatList } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, Linking, useWindowDimensions, FlatList } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -7,12 +7,12 @@ import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import TrustBadge from '../../components/TrustBadge';
+import { useResponsive } from '../../hooks/useResponsive';
 import {
   PRODUCT_LABELS, REGION_LABELS, CONDITION_LABELS,
   buildLabelMap, TRANSACTION_OPTIONS, prettifyValue,
 } from '../../lib/options';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const TRANSACTION_LABELS = buildLabelMap(TRANSACTION_OPTIONS);
 
 const LABEL_MAPS: Record<string, Record<string, { en: string; am: string; om: string }>> = {
@@ -33,6 +33,12 @@ export default function ListingDetailScreen() {
   const router = useRouter();
   const { user: currentUser } = useAuth();
   const lang = i18n.language as 'en' | 'am' | 'om';
+  const { width: screenWidth } = useWindowDimensions();
+  const { isMobile, detailMaxWidth } = useResponsive();
+
+  // Image gallery width: cap at content max-width on desktop
+  const contentWidth = isMobile ? screenWidth : Math.min(screenWidth, detailMaxWidth);
+  const galleryImageWidth = contentWidth - (isMobile ? 0 : 0);
 
   const { data: listing, isLoading } = useQuery({
     queryKey: ['listing', id],
@@ -68,7 +74,6 @@ export default function ListingDetailScreen() {
     if (listing.user?.telegramUsername) {
       Linking.openURL(`https://t.me/${listing.user.telegramUsername}`);
     } else if (listing.user?.phone) {
-      // Try opening Telegram with phone number
       Linking.openURL(`https://t.me/${listing.user.phone.replace('+', '')}`);
     }
   };
@@ -77,115 +82,126 @@ export default function ListingDetailScreen() {
   const images: string[] = listing.images || [];
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      {/* Image gallery */}
-      {images.length > 0 && (
-        <View style={styles.galleryContainer}>
-          <FlatList
-            data={images}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            keyExtractor={(_, i) => String(i)}
-            onMomentumScrollEnd={(e) => {
-              const index = Math.round(e.nativeEvent.contentOffset.x / (SCREEN_WIDTH - 40));
-              setActiveImageIndex(index);
-            }}
-            renderItem={({ item }) => (
-              <Image source={{ uri: item }} style={styles.galleryImage} resizeMode="cover" />
+    <ScrollView style={styles.container}>
+      <View style={[
+        styles.contentWrapper,
+        !isMobile && { maxWidth: detailMaxWidth, alignSelf: 'center' as const, width: '100%' as any },
+      ]}>
+        {/* Image gallery */}
+        {images.length > 0 && (
+          <View style={[styles.galleryContainer, !isMobile && { borderRadius: 14, overflow: 'hidden', marginTop: 16 }]}>
+            <FlatList
+              data={images}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(_, i) => String(i)}
+              onMomentumScrollEnd={(e) => {
+                const index = Math.round(e.nativeEvent.contentOffset.x / galleryImageWidth);
+                setActiveImageIndex(index);
+              }}
+              renderItem={({ item }) => (
+                <Image
+                  source={{ uri: item }}
+                  style={[styles.galleryImage, { width: galleryImageWidth }]}
+                  resizeMode="cover"
+                />
+              )}
+            />
+            {images.length > 1 && (
+              <View style={styles.dots}>
+                {images.map((_, i) => (
+                  <View key={i} style={[styles.dot, i === activeImageIndex && styles.dotActive]} />
+                ))}
+              </View>
             )}
-          />
-          {images.length > 1 && (
-            <View style={styles.dots}>
-              {images.map((_, i) => (
-                <View key={i} style={[styles.dot, i === activeImageIndex && styles.dotActive]} />
-              ))}
+          </View>
+        )}
+
+        <View style={styles.content}>
+          <View style={[styles.typeBanner, isBuy ? styles.buyBanner : styles.sellBanner]}>
+            <Text style={[styles.typeText, isBuy ? styles.buyText : styles.sellText]}>
+              {isBuy
+                ? (lang === 'am' ? 'ፈልጓል' : lang === 'om' ? 'BARBAADA' : 'WANTED')
+                : (lang === 'am' ? 'ለሽያጭ' : lang === 'om' ? 'GURGURAMAA' : 'FOR SALE')}
+            </Text>
+          </View>
+
+          <Text style={styles.title}>{listing.title}</Text>
+
+          <View style={styles.metaGrid}>
+            <DetailRow label={t('listing.product')} value={getLabel('product', listing.productCategory, lang)} />
+            {listing.region && <DetailRow label={t('listing.region')} value={getLabel('region', listing.region, lang)} />}
+            {listing.grade && <DetailRow label={t('listing.grade')} value={`Grade ${listing.grade}`} />}
+            {listing.process && <DetailRow label={t('listing.process')} value={getLabel('process', listing.process, lang)} />}
+            {listing.transactionType && <DetailRow label={t('listing.transactionType')} value={getLabel('transaction', listing.transactionType, lang)} />}
+            {listing.quantity && <DetailRow label={t('listing.quantity')} value={`${listing.quantity} ${listing.unit || ''}`} />}
+            {listing.price && (
+              <DetailRow
+                label={t('listing.price')}
+                value={`${listing.currency === 'USD' ? '$' : ''}${Number(listing.price).toLocaleString()} ${listing.currency === 'ETB' ? 'ETB' : ''}`}
+              />
+            )}
+          </View>
+
+          {listing.description && (
+            <View style={styles.descSection}>
+              <Text style={styles.descLabel}>{t('listing.description')}</Text>
+              <Text style={styles.descText}>{listing.description}</Text>
             </View>
           )}
-        </View>
-      )}
 
-      <View style={[styles.typeBanner, isBuy ? styles.buyBanner : styles.sellBanner]}>
-        <Text style={[styles.typeText, isBuy ? styles.buyText : styles.sellText]}>
-          {isBuy
-            ? (lang === 'am' ? 'ፈልጓል' : lang === 'om' ? 'BARBAADA' : 'WANTED')
-            : (lang === 'am' ? 'ለሽያጭ' : lang === 'om' ? 'GURGURAMAA' : 'FOR SALE')}
-        </Text>
-      </View>
-
-      <Text style={styles.title}>{listing.title}</Text>
-
-      <View style={styles.metaGrid}>
-        <DetailRow label={t('listing.product')} value={getLabel('product', listing.productCategory, lang)} />
-        {listing.region && <DetailRow label={t('listing.region')} value={getLabel('region', listing.region, lang)} />}
-        {listing.grade && <DetailRow label={t('listing.grade')} value={`Grade ${listing.grade}`} />}
-        {listing.process && <DetailRow label={t('listing.process')} value={getLabel('process', listing.process, lang)} />}
-        {listing.transactionType && <DetailRow label={t('listing.transactionType')} value={getLabel('transaction', listing.transactionType, lang)} />}
-        {listing.quantity && <DetailRow label={t('listing.quantity')} value={`${listing.quantity} ${listing.unit || ''}`} />}
-        {listing.price && (
-          <DetailRow
-            label={t('listing.price')}
-            value={`${listing.currency === 'USD' ? '$' : ''}${Number(listing.price).toLocaleString()} ${listing.currency === 'ETB' ? 'ETB' : ''}`}
-          />
-        )}
-      </View>
-
-      {listing.description && (
-        <View style={styles.descSection}>
-          <Text style={styles.descLabel}>{t('listing.description')}</Text>
-          <Text style={styles.descText}>{listing.description}</Text>
-        </View>
-      )}
-
-      <View style={styles.posterSection}>
-        <View style={styles.posterAvatar}>
-          <Text style={styles.posterAvatarText}>
-            {(listing.user?.name || '?')[0].toUpperCase()}
-          </Text>
-        </View>
-        <View style={{ flex: 1 }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <Text style={styles.posterName}>{listing.user?.name || t('listing.postedBy')}</Text>
-            {listing.user?.id && <TrustBadge userId={listing.user.id} />}
+          <View style={styles.posterSection}>
+            <View style={styles.posterAvatar}>
+              <Text style={styles.posterAvatarText}>
+                {(listing.user?.name || '?')[0].toUpperCase()}
+              </Text>
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={styles.posterName}>{listing.user?.name || t('listing.postedBy')}</Text>
+                {listing.user?.id && <TrustBadge userId={listing.user.id} />}
+              </View>
+              <Text style={styles.posterDate}>
+                {new Date(listing.createdAt).toLocaleDateString()}
+              </Text>
+            </View>
           </View>
-          <Text style={styles.posterDate}>
-            {new Date(listing.createdAt).toLocaleDateString()}
-          </Text>
+
+          <View style={styles.contactRow}>
+            <TouchableOpacity style={styles.callBtn} onPress={handleCall}>
+              <Ionicons name="call-outline" size={20} color="#fff" />
+              <Text style={styles.callText}>{t('common.call')}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.telegramBtn} onPress={handleTelegram}>
+              <Ionicons name="send-outline" size={20} color="#fff" />
+              <Text style={styles.telegramText}>{t('common.telegram')}</Text>
+            </TouchableOpacity>
+          </View>
+
+          {currentUser?.id && listing.user?.id && currentUser.id !== listing.user.id && (
+            <TouchableOpacity
+              style={styles.orderBtn}
+              onPress={() => router.push(`/order/create?listingId=${listing.id}`)}
+            >
+              <Ionicons name="cart-outline" size={20} color="#fff" />
+              <Text style={styles.orderBtnText}>
+                {isBuy ? t('order.makeOffer') : t('order.createOrder')}
+              </Text>
+            </TouchableOpacity>
+          )}
+
+          {currentUser?.id && listing.user?.id && currentUser.id === listing.user.id && (
+            <TouchableOpacity
+              style={styles.editBtn}
+              onPress={() => router.push(`/listing/edit/${listing.id}`)}
+            >
+              <Ionicons name="create-outline" size={20} color="#2E7D32" />
+              <Text style={styles.editBtnText}>{t('common.edit')} {t('listing.listing') || 'Listing'}</Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
-
-      <View style={styles.contactRow}>
-        <TouchableOpacity style={styles.callBtn} onPress={handleCall}>
-          <Ionicons name="call-outline" size={20} color="#fff" />
-          <Text style={styles.callText}>{t('common.call')}</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.telegramBtn} onPress={handleTelegram}>
-          <Ionicons name="send-outline" size={20} color="#fff" />
-          <Text style={styles.telegramText}>{t('common.telegram')}</Text>
-        </TouchableOpacity>
-      </View>
-
-      {currentUser?.id && listing.user?.id && currentUser.id !== listing.user.id && (
-        <TouchableOpacity
-          style={styles.orderBtn}
-          onPress={() => router.push(`/order/create?listingId=${listing.id}`)}
-        >
-          <Ionicons name="cart-outline" size={20} color="#fff" />
-          <Text style={styles.orderBtnText}>
-            {isBuy ? t('order.makeOffer') : t('order.createOrder')}
-          </Text>
-        </TouchableOpacity>
-      )}
-
-      {currentUser?.id && listing.user?.id && currentUser.id === listing.user.id && (
-        <TouchableOpacity
-          style={styles.editBtn}
-          onPress={() => router.push(`/listing/edit/${listing.id}`)}
-        >
-          <Ionicons name="create-outline" size={20} color="#2E7D32" />
-          <Text style={styles.editBtnText}>{t('common.edit')} {t('listing.listing') || 'Listing'}</Text>
-        </TouchableOpacity>
-      )}
     </ScrollView>
   );
 }
@@ -203,6 +219,9 @@ function DetailRow({ label, value }: { label: string; value: string | null }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F9F9F9',
+  },
+  contentWrapper: {
     backgroundColor: '#fff',
   },
   content: {
@@ -210,14 +229,10 @@ const styles = StyleSheet.create({
     paddingBottom: 40,
   },
   galleryContainer: {
-    marginHorizontal: -20,
-    marginTop: -20,
-    marginBottom: 16,
     backgroundColor: '#F0F0F0',
   },
   galleryImage: {
-    width: SCREEN_WIDTH,
-    height: 280,
+    height: 320,
     backgroundColor: '#E0E0E0',
   },
   dots: {

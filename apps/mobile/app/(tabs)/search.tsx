@@ -7,6 +7,7 @@ import { api } from '../../lib/api';
 import ListingCard from '../../components/ListingCard';
 import FilterSheet from '../../components/FilterSheet';
 import ResponsiveContainer from '../../components/ResponsiveContainer';
+import { useResponsive } from '../../hooks/useResponsive';
 
 export default function SearchScreen() {
   const { t } = useTranslation();
@@ -14,6 +15,7 @@ export default function SearchScreen() {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [showFilters, setShowFilters] = useState(false);
   const [submittedSearch, setSubmittedSearch] = useState('');
+  const { numColumns, isMobile } = useResponsive();
 
   const queryParams = {
     ...filters,
@@ -32,7 +34,7 @@ export default function SearchScreen() {
   const activeFilterCount = Object.keys(filters).length;
 
   return (
-    <ResponsiveContainer style={styles.container}>
+    <ResponsiveContainer style={styles.container} size="feed">
       <View style={styles.searchRow}>
         <View style={styles.searchBox}>
           <Ionicons name="search-outline" size={18} color="#999" />
@@ -69,10 +71,17 @@ export default function SearchScreen() {
       )}
 
       <FlatList
+        key={`search-cols-${numColumns}`}
         data={listings}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <ListingCard listing={item} />}
-        contentContainerStyle={styles.list}
+        numColumns={numColumns}
+        renderItem={({ item }) => (
+          <View style={numColumns > 1 ? { flex: 1 / numColumns, maxWidth: `${100 / numColumns}%` as any } : undefined}>
+            <ListingCard listing={item} />
+          </View>
+        )}
+        contentContainerStyle={[styles.list, !isMobile && { paddingHorizontal: 10 }]}
+        columnWrapperStyle={numColumns > 1 ? { gap: 0 } : undefined}
         ListEmptyComponent={
           isLoading ? (
             <ActivityIndicator size="large" color="#2E7D32" style={styles.loader} />

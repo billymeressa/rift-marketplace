@@ -126,7 +126,7 @@ export default function CreateScreen() {
   };
 
   return (
-    <ResponsiveContainer>
+    <ResponsiveContainer size="form">
     <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={styles.content}>
 
       {/* Success banner */}

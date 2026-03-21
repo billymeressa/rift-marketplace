@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../../lib/api';
+import ResponsiveContainer from '../../../components/ResponsiveContainer';
 import {
   PRODUCT_OPTIONS, REGION_OPTIONS, CONDITION_OPTIONS, GRADE_OPTIONS,
   TRANSACTION_OPTIONS, UNIT_OPTIONS, CURRENCY_OPTIONS,
@@ -166,6 +167,7 @@ export default function EditListingScreen() {
   }
 
   return (
+    <ResponsiveContainer size="form">
     <ScrollView ref={scrollRef} style={styles.container} contentContainerStyle={styles.content}>
 
       {/* Buy / Sell */}
@@ -307,6 +309,7 @@ export default function EditListingScreen() {
       </TouchableOpacity>
 
     </ScrollView>
+    </ResponsiveContainer>
   );
 }
 
