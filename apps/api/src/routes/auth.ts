@@ -14,14 +14,17 @@ const MAX_OTP_ATTEMPTS_PER_HOUR = 5;
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
 function normalizePhone(phone: string): string {
-  let p = phone.replace(/\s+/g, '');
-  if (p.startsWith('0'))                          p = '+251' + p.slice(1);
-  else if (p.startsWith('251') && !p.startsWith('+')) p = '+' + p;
+  let p = phone.replace(/[\s\-()]/g, '');
+  // Ethiopian shorthand: 09xxxxxxxx → +25109xxxxxxxx
+  if (p.startsWith('0') && !p.startsWith('00')) p = '+251' + p.slice(1);
+  // Add leading + if missing
+  else if (!p.startsWith('+')) p = '+' + p;
   return p;
 }
 
-function isValidEthiopianPhone(phone: string): boolean {
-  return /^\+251[79]\d{8}$/.test(phone);
+function isValidInternationalPhone(phone: string): boolean {
+  // E.164: + followed by 7–15 digits
+  return /^\+[1-9]\d{6,14}$/.test(phone);
 }
 
 function generateOTP(): string {
@@ -55,7 +58,7 @@ router.post('/send-code', async (req, res) => {
 
     const normalized = normalizePhone(phone);
 
-    if (!isValidEthiopianPhone(normalized)) {
+    if (!isValidInternationalPhone(normalized)) {
       res.status(400).json({ error: 'Invalid Ethiopian phone number' });
       return;
     }
