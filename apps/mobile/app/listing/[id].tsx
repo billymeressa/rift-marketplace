@@ -181,6 +181,16 @@ export default function ListingDetailScreen() {
 
           {currentUser?.id && listing.user?.id && currentUser.id !== listing.user.id && (
             <TouchableOpacity
+              style={styles.messageBtn}
+              onPress={() => router.push(`/message-compose?listingId=${listing.id}&sellerId=${listing.user.id}`)}
+            >
+              <Ionicons name="chatbubble-outline" size={20} color="#2E7D32" />
+              <Text style={styles.messageBtnText}>{t('messages.sendMessage')}</Text>
+            </TouchableOpacity>
+          )}
+
+          {currentUser?.id && listing.user?.id && currentUser.id !== listing.user.id && (
+            <TouchableOpacity
               style={styles.orderBtn}
               onPress={() => router.push(`/order/create?listingId=${listing.id}`)}
             >
@@ -392,6 +402,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#fff',
+  },
+  messageBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#2E7D32',
+    backgroundColor: '#fff',
+    marginTop: 12,
+  },
+  messageBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#2E7D32',
   },
   editBtn: {
     flexDirection: 'row',

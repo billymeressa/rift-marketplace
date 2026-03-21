@@ -3,8 +3,11 @@ import { useTranslation } from 'react-i18next';
 import { Platform, View, Text, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
+import { useQuery } from '@tanstack/react-query';
 import LanguageToggle from '../../components/LanguageToggle';
 import { useResponsive } from '../../hooks/useResponsive';
+import { api } from '../../lib/api';
+import { useAuth } from '../../lib/auth';
 
 function HeaderTitle() {
   return (
@@ -31,10 +34,48 @@ const headerStyles = StyleSheet.create({
   },
 });
 
+function UnreadBadge({ count }: { count: number }) {
+  if (count <= 0) return null;
+  return (
+    <View style={badgeStyles.badge}>
+      <Text style={badgeStyles.text}>{count > 99 ? '99+' : count}</Text>
+    </View>
+  );
+}
+
+const badgeStyles = StyleSheet.create({
+  badge: {
+    position: 'absolute',
+    top: -4,
+    right: -8,
+    backgroundColor: '#D32F2F',
+    borderRadius: 8,
+    minWidth: 16,
+    height: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 4,
+  },
+  text: {
+    color: '#fff',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+});
+
 export default function TabLayout() {
   const { t } = useTranslation();
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsive();
+  const { token } = useAuth();
+
+  const { data: unreadData } = useQuery({
+    queryKey: ['unreadCount'],
+    queryFn: () => api.getUnreadCount(),
+    refetchInterval: 15000,
+    enabled: !!token,
+  });
+  const unreadCount = unreadData?.count ?? 0;
 
   return (
     <Tabs
@@ -104,6 +145,18 @@ export default function TabLayout() {
           title: t('tabs.orders'),
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="receipt-outline" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="messages"
+        options={{
+          title: t('messages.title'),
+          tabBarIcon: ({ color, size }) => (
+            <View>
+              <Ionicons name="chatbubble-outline" size={size} color={color} />
+              <UnreadBadge count={unreadCount} />
+            </View>
           ),
         }}
       />

@@ -47,7 +47,7 @@ export async function apiRequest<T>(
 export const api = {
   // Auth — Telegram OTP
   sendCode: (phone: string, name?: string) =>
-    apiRequest<{ isNewUser: boolean; telegramLink: string | null; session: string; message: string }>('/auth/send-code', {
+    apiRequest<{ isNewUser: boolean; telegramLink: string | null; session: string; message: string; devCode?: string }>('/auth/send-code', {
       method: 'POST',
       body: JSON.stringify({ phone, ...(name ? { name } : {}) }),
     }),
@@ -169,6 +169,46 @@ export const api = {
     const query = params ? '?' + new URLSearchParams(params).toString() : '';
     return apiRequest<any>(`/reviews/user/${id}${query}`);
   },
+
+  // Messages
+  getConversations: () =>
+    apiRequest<{ data: any[] }>('/messages/conversations'),
+
+  getMessages: (conversationId: string, before?: string) => {
+    const params = before ? `?before=${before}` : '';
+    return apiRequest<{ data: any[] }>(`/messages/conversations/${conversationId}${params}`);
+  },
+
+  startConversation: (listingId: string, message: string) =>
+    apiRequest<{ conversationId: string; message: any }>('/messages/conversations', {
+      method: 'POST',
+      body: JSON.stringify({ listingId, message }),
+    }),
+
+  sendMessage: (conversationId: string, body: string, type: string = 'text') =>
+    apiRequest<any>(`/messages/conversations/${conversationId}`, {
+      method: 'POST',
+      body: JSON.stringify({ body, type }),
+    }),
+
+  getUnreadCount: () =>
+    apiRequest<{ count: number }>('/messages/unread-count'),
+
+  // Deposit Verification
+  getDepositBanks: () =>
+    apiRequest<{ banks: string[] }>('/deposit-verification/banks'),
+
+  getMyDepositVerification: () =>
+    apiRequest<any>('/deposit-verification/me'),
+
+  initiateDepositVerification: (data: { accountHolder: string; accountNumber: string; bankName: string }) =>
+    apiRequest<any>('/deposit-verification', { method: 'POST', body: JSON.stringify(data) }),
+
+  confirmDepositVerification: (amount1: number, amount2: number) =>
+    apiRequest<any>('/deposit-verification/confirm', {
+      method: 'POST',
+      body: JSON.stringify({ amount1, amount2 }),
+    }),
 
   // Feedback
   submitFeedback: (data: { type: string; message?: string; nps?: number }) =>

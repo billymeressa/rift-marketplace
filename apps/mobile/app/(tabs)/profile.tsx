@@ -172,6 +172,15 @@ export default function ProfileScreen() {
 
           <TouchableOpacity
             style={styles.feedbackBtn}
+            onPress={() => router.push('/deposit-verification')}
+          >
+            <Ionicons name="wallet-outline" size={20} color="#333" />
+            <Text style={styles.feedbackText}>{t('depositVerification.title')}</Text>
+            <Ionicons name="chevron-forward" size={16} color="#ccc" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.feedbackBtn}
             onPress={() => router.push('/feedback')}
           >
             <Ionicons name="chatbubble-ellipses-outline" size={20} color="#333" />

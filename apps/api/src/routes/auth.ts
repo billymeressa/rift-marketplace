@@ -114,8 +114,10 @@ router.post('/send-code', async (req, res) => {
       ? getTelegramDeepLink(botUsername, session)
       : null;
 
-    // Dev fallback: log OTP to console
-    if (!botUsername) {
+    // Dev fallback: no bot token configured — surface the code directly so local
+    // development works without a live Telegram bot.
+    const isDev = !botUsername && process.env.NODE_ENV !== 'production';
+    if (isDev) {
       console.log(`\n=============================`);
       console.log(`OTP for ${normalized}: ${code}`);
       console.log(`Session: ${session}`);
@@ -126,7 +128,11 @@ router.post('/send-code', async (req, res) => {
       isNewUser,
       telegramLink,
       session,
-      message: 'Open Telegram to receive your verification code.',
+      // Only included in non-production when no bot is configured
+      devCode: isDev ? code : undefined,
+      message: isDev
+        ? 'Dev mode: no Telegram bot configured. Use the code shown in the app.'
+        : 'Open Telegram to receive your verification code.',
     });
   } catch (err) {
     if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }

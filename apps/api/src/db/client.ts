@@ -9,4 +9,9 @@ const pool = new pg.Pool({
   ssl: isProduction ? { rejectUnauthorized: false } : false,
 });
 
+// Warm up the connection pool on startup so the first request never fails
+pool.connect()
+  .then(client => { client.release(); console.log('Database connected'); })
+  .catch(err => console.error('Database connection failed:', err.message));
+
 export const db = drizzle(pool, { schema });

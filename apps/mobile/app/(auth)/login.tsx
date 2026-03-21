@@ -218,6 +218,7 @@ export default function AuthScreen() {
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
   const [telegramLink, setTelegramLink] = useState<string | null>(null);
+  const [devCode, setDevCode] = useState<string | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
 
   const [loading, setLoading] = useState(false);
@@ -241,6 +242,25 @@ export default function AuthScreen() {
   const localNumber = phone.replace(/^0+/, '');
   const fullPhone = country.dial + localNumber;
 
+  // Helper: clean a raw input value into a pure local number for the current country.
+  // Handles paste of full international numbers (e.g. "+447911123456" → "7911123456")
+  // without accidentally stripping digits from local numbers that start with the same
+  // digits as the country code (the classic +1 / US problem).
+  const cleanPhoneInput = (raw: string, selectedCountry: Country): string => {
+    // Keep only digits
+    let digits = raw.replace(/\D/g, '');
+    const dialDigits = selectedCountry.dial.replace(/\D/g, ''); // e.g. "44" for "+44"
+    // Only strip country-code prefix when the pasted string is clearly longer than a
+    // local number alone (i.e. its length equals local + dial digits). Using the example
+    // number length as a proxy for the expected local-number length avoids stripping a
+    // leading "1" from a genuine US local number like "1512345678".
+    const expectedFullLen = dialDigits.length + selectedCountry.example.length;
+    if (digits.startsWith(dialDigits) && digits.length >= expectedFullLen) {
+      digits = digits.slice(dialDigits.length);
+    }
+    return digits.slice(0, 15);
+  };
+
   // ── Step 1: Enter phone ──────────────────────────────────────────────────
   const handlePhoneSubmit = async () => {
     if (localNumber.length < 5 || localNumber.length > 14) {
@@ -252,6 +272,7 @@ export default function AuthScreen() {
     try {
       const result = await api.sendCode(fullPhone);
       setTelegramLink(result.telegramLink);
+      setDevCode(result.devCode ?? null);
       if (result.isNewUser) {
         setIsNewUser(true);
         setStep('name');
@@ -283,6 +304,7 @@ export default function AuthScreen() {
     try {
       const result = await api.sendCode(fullPhone, name.trim());
       setTelegramLink(result.telegramLink);
+      setDevCode(result.devCode ?? null);
       setStep('code');
       setCountdown(60);
       if (result.telegramLink) Linking.openURL(result.telegramLink).catch(() => {});
@@ -340,6 +362,7 @@ export default function AuthScreen() {
     try {
       const result = await api.sendCode(fullPhone, isNewUser ? name.trim() : undefined);
       setTelegramLink(result.telegramLink);
+      setDevCode(result.devCode ?? null);
       setCountdown(60);
       if (result.telegramLink) Linking.openURL(result.telegramLink).catch(() => {});
     } catch (err: any) {
@@ -411,17 +434,37 @@ export default function AuthScreen() {
           {/* ── Phone step ── */}
           {step === 'phone' && (
             <View style={styles.form}>
-              <View style={styles.telegramBadge}>
-                <Ionicons name="paper-plane" size={18} color="#0088cc" />
-                <Text style={styles.telegramBadgeText}>
-                  You'll receive your code on <Text style={styles.telegramBadgeBold}>Telegram</Text>
-                </Text>
+
+              {/* ── Primary CTA: Telegram social button ── */}
+              <TouchableOpacity
+                style={[styles.telegramSocialBtn, loading && styles.buttonDisabled]}
+                onPress={handlePhoneSubmit}
+                disabled={loading}
+                activeOpacity={0.85}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <View style={styles.telegramSocialIcon}>
+                      <Ionicons name="paper-plane" size={20} color="#0088cc" />
+                    </View>
+                    <Text style={styles.telegramSocialText}>Continue with Telegram</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              {/* ── Divider ── */}
+              <View style={styles.dividerRow}>
+                <View style={styles.dividerLine} />
+                <Text style={styles.dividerText}>or enter your phone number</Text>
+                <View style={styles.dividerLine} />
               </View>
 
+              {/* ── Phone input ── */}
               <View style={styles.field}>
                 <Text style={styles.label}>{t('auth.enterPhone')}</Text>
                 <View style={[styles.phoneRow, error ? styles.inputError : null]}>
-                  {/* Country picker trigger */}
                   <TouchableOpacity
                     style={styles.countryBtn}
                     onPress={() => setShowPicker(true)}
@@ -439,14 +482,11 @@ export default function AuthScreen() {
                     keyboardType="phone-pad"
                     value={phone}
                     onChangeText={(v) => {
-                      // Strip everything except digits, keep up to 15
-                      const digits = v.replace(/\D/g, '').slice(0, 15);
-                      setPhone(digits);
+                      setPhone(cleanPhoneInput(v, country));
                       setError('');
                     }}
                     onSubmitEditing={handlePhoneSubmit}
                     returnKeyType="go"
-                    autoFocus
                   />
                 </View>
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -468,13 +508,6 @@ export default function AuthScreen() {
           {/* ── Name step (new users) ── */}
           {step === 'name' && (
             <View style={styles.form}>
-              <View style={styles.telegramBadge}>
-                <Ionicons name="paper-plane" size={18} color="#0088cc" />
-                <Text style={styles.telegramBadgeText}>
-                  You'll receive your code on <Text style={styles.telegramBadgeBold}>Telegram</Text>
-                </Text>
-              </View>
-
               <View style={styles.field}>
                 <Text style={styles.label}>{t('auth.fullName')}</Text>
                 <TextInput
@@ -492,14 +525,21 @@ export default function AuthScreen() {
               </View>
 
               <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
+                style={[styles.telegramSocialBtn, (!name.trim() || loading) && styles.buttonDisabled]}
                 onPress={handleNameSubmit}
-                disabled={loading}
+                disabled={!name.trim() || loading}
+                activeOpacity={0.85}
               >
-                {loading
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.buttonText}>{t('auth.continue')}</Text>
-                }
+                {loading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <View style={styles.telegramSocialIcon}>
+                      <Ionicons name="paper-plane" size={20} color="#0088cc" />
+                    </View>
+                    <Text style={styles.telegramSocialText}>Continue with Telegram</Text>
+                  </>
+                )}
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.backLink} onPress={handleBack}>
@@ -517,6 +557,17 @@ export default function AuthScreen() {
                   <Ionicons name="paper-plane" size={20} color="#fff" />
                   <Text style={styles.telegramBtnText}>Open Telegram to get code</Text>
                 </TouchableOpacity>
+              )}
+
+              {/* Dev mode: show OTP directly when no Telegram bot is configured */}
+              {devCode && (
+                <View style={styles.devCodeBanner}>
+                  <Ionicons name="code-slash-outline" size={16} color="#b45309" />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.devCodeLabel}>Dev mode — no Telegram bot configured</Text>
+                    <Text style={styles.devCodeValue}>{devCode}</Text>
+                  </View>
+                </View>
               )}
 
               <Text style={styles.codeLabel}>Enter the 6-digit code</Text>
@@ -569,7 +620,7 @@ export default function AuthScreen() {
       <CountryPicker
         visible={showPicker}
         selected={country}
-        onSelect={(c) => { setCountry(c); setPhone(''); }}
+        onSelect={(c) => { setCountry(c); setPhone(''); setError(''); }}
         onClose={() => setShowPicker(false)}
       />
     </KeyboardAvoidingView>
@@ -597,13 +648,50 @@ const styles = StyleSheet.create({
   title: { fontSize: 16, color: '#555', textAlign: 'center', marginBottom: 8, fontWeight: '600' },
   stepSubtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 24, fontWeight: '600' },
   form: { marginTop: 16 },
-  telegramBadge: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 8, backgroundColor: '#E8F4FB', borderRadius: 10,
-    paddingVertical: 10, paddingHorizontal: 16, marginBottom: 20,
+  // Social login button — Telegram
+  telegramSocialBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#fff',
+    borderWidth: 1.5,
+    borderColor: '#0088cc',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+    shadowColor: '#0088cc',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.08,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  telegramBadgeText: { fontSize: 13, color: '#333' },
-  telegramBadgeBold: { fontWeight: '700', color: '#0088cc' },
+  telegramSocialIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#E8F4FB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  telegramSocialText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#0088cc',
+    flex: 1,
+    textAlign: 'center',
+    marginRight: 44, // offset for the icon so text is truly centered
+  },
+  // "or enter your phone number" divider
+  dividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+    gap: 10,
+  },
+  dividerLine: { flex: 1, height: 1, backgroundColor: '#E8E8E8' },
+  dividerText: { fontSize: 12, color: '#aaa', fontWeight: '500' },
   field: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
   input: {
@@ -641,6 +729,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#0088cc', paddingVertical: 14, borderRadius: 12, marginBottom: 24,
   },
   telegramBtnText: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  devCodeBanner: {
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+    backgroundColor: '#fef3c7', borderWidth: 1, borderColor: '#fcd34d',
+    borderRadius: 12, padding: 14, marginBottom: 16,
+  },
+  devCodeLabel: { fontSize: 11, color: '#92400e', fontWeight: '600', marginBottom: 4 },
+  devCodeValue: { fontSize: 28, fontWeight: '800', color: '#b45309', letterSpacing: 6 },
   codeLabel: { fontSize: 14, color: '#555', textAlign: 'center', marginBottom: 16 },
   otpRow: { flexDirection: 'row', gap: 10, justifyContent: 'center', marginBottom: 24 },
   otpBox: {

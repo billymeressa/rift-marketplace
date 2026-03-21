@@ -46,7 +46,7 @@ export default function RootLayout() {
 
     const inAuthGroup = segments[0] === '(auth)';
     if (!token && !inAuthGroup) {
-      router.replace('/(auth)/phone');
+      router.replace('/(auth)/login');
     } else if (token && inAuthGroup) {
       router.replace('/(tabs)');
     }
@@ -107,11 +107,23 @@ export default function RootLayout() {
             options={{ headerShown: true, title: '', presentation: 'card' }}
           />
           <Stack.Screen
+            name="deposit-verification"
+            options={{ headerShown: true, title: '', presentation: 'card' }}
+          />
+          <Stack.Screen
             name="user/[id]"
             options={{ headerShown: true, title: '', presentation: 'card' }}
           />
           <Stack.Screen
             name="review/create"
+            options={{ headerShown: true, title: '', presentation: 'card' }}
+          />
+          <Stack.Screen
+            name="chat/[id]"
+            options={{ headerShown: true, title: '', presentation: 'card' }}
+          />
+          <Stack.Screen
+            name="message-compose"
             options={{ headerShown: true, title: '', presentation: 'card' }}
           />
           <Stack.Screen

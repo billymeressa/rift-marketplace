@@ -1,10 +1,10 @@
-const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '';
-
-const API = `https://api.telegram.org/bot${BOT_TOKEN}`;
+// Read token lazily so it's always picked up from the current process.env
+// (avoids the cached-empty-string problem when .env is updated after first load)
+const api = () => `https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN || ''}`;
 
 export async function sendTelegramMessage(chatId: number | string, text: string): Promise<boolean> {
   try {
-    const res = await fetch(`${API}/sendMessage`, {
+    const res = await fetch(`${api()}/sendMessage`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
@@ -22,7 +22,7 @@ export async function sendTelegramMessage(chatId: number | string, text: string)
 
 export async function setWebhook(url: string): Promise<void> {
   try {
-    const res = await fetch(`${API}/setWebhook`, {
+    const res = await fetch(`${api()}/setWebhook`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ url, allowed_updates: ['message'] }),
@@ -35,8 +35,9 @@ export async function setWebhook(url: string): Promise<void> {
 }
 
 export async function getBotUsername(): Promise<string> {
+  if (!process.env.TELEGRAM_BOT_TOKEN) return '';
   try {
-    const res = await fetch(`${API}/getMe`);
+    const res = await fetch(`${api()}/getMe`);
     const data = await res.json();
     return data.result?.username || '';
   } catch {

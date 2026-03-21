@@ -87,6 +87,42 @@ export const reviews = pgTable('reviews', {
   unique('unique_review_per_order').on(table.orderId, table.reviewerId),
 ]);
 
+export const depositVerifications = pgTable('deposit_verifications', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  userId: uuid('user_id').notNull().references(() => users.id),
+  accountHolder: varchar('account_holder', { length: 200 }).notNull(),
+  accountNumber: varchar('account_number', { length: 50 }).notNull(),
+  bankName: varchar('bank_name', { length: 100 }).notNull(),
+  amount1: decimal('amount_1').notNull(), // small random amount e.g. 0.12
+  amount2: decimal('amount_2').notNull(), // small random amount e.g. 0.34
+  attemptsLeft: smallint('attempts_left').notNull().default(3),
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | verified | failed | expired
+  expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+  verifiedAt: timestamp('verified_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const conversations = pgTable('conversations', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  buyerId: uuid('buyer_id').notNull().references(() => users.id),
+  sellerId: uuid('seller_id').notNull().references(() => users.id),
+  listingId: uuid('listing_id').notNull().references(() => listings.id),
+  lastMessageAt: timestamp('last_message_at', { withTimezone: true }).notNull().defaultNow(),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  unique('unique_conversation').on(table.buyerId, table.sellerId, table.listingId),
+]);
+
+export const messages = pgTable('messages', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  conversationId: uuid('conversation_id').notNull().references(() => conversations.id),
+  senderId: uuid('sender_id').notNull().references(() => users.id),
+  body: text('body').notNull(),
+  type: varchar('type', { length: 10 }).notNull().default('text'), // text | image
+  readAt: timestamp('read_at', { withTimezone: true }),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const feedback = pgTable('feedback', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id),
