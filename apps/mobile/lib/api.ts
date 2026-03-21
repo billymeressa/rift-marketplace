@@ -58,6 +58,9 @@ export const api = {
       body: JSON.stringify({ phone, code, ...(name ? { name } : {}) }),
     }),
 
+  deleteAccount: () =>
+    apiRequest<{ message: string }>('/auth/account', { method: 'DELETE' }),
+
   // Suggestions
   getSuggestions: (field: string, q?: string) => {
     const params = new URLSearchParams({ field });

@@ -3,9 +3,14 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { z } from 'zod';
 import { db } from '../db/client.js';
-import { users, otpCodes } from '../db/schema.js';
-import { eq, and, gt, isNull } from 'drizzle-orm';
+import {
+  users, otpCodes, listings, orders, reviews,
+  sellerVerifications, depositVerifications,
+  conversations, messages, feedback,
+} from '../db/schema.js';
+import { eq, and, gt, isNull, or, inArray } from 'drizzle-orm';
 import { getBotUsername, getTelegramDeepLink } from '../lib/telegram.js';
+import { authMiddleware, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 const OTP_EXPIRY_MINUTES = 10;
@@ -195,6 +200,65 @@ router.post('/verify-code', async (req, res) => {
     if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }
     console.error('Verify code error:', err);
     res.status(500).json({ error: 'Verification failed' });
+  }
+});
+
+// ─── DELETE /auth/account ────────────────────────────────────────────────────
+// Permanently deletes the authenticated user and all their data.
+
+router.delete('/account', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const userId = req.userId!;
+
+    // Fetch user to get phone (needed to purge OTP codes)
+    const [user] = await db.select({ phone: users.phone })
+      .from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Delete in FK-safe order:
+
+    // 1. Messages in conversations the user is part of
+    const userConversations = await db
+      .select({ id: conversations.id })
+      .from(conversations)
+      .where(or(eq(conversations.buyerId, userId), eq(conversations.sellerId, userId)));
+
+    if (userConversations.length > 0) {
+      const convIds = userConversations.map((c) => c.id);
+      await db.delete(messages).where(inArray(messages.conversationId, convIds));
+      await db.delete(conversations).where(inArray(conversations.id, convIds));
+    }
+
+    // 2. Reviews written by or about the user
+    await db.delete(reviews).where(
+      or(eq(reviews.reviewerId, userId), eq(reviews.revieweeId, userId))
+    );
+
+    // 3. Orders as buyer or seller
+    await db.delete(orders).where(
+      or(eq(orders.buyerId, userId), eq(orders.sellerId, userId))
+    );
+
+    // 4. Listings
+    await db.delete(listings).where(eq(listings.userId, userId));
+
+    // 5. Ancillary records
+    await db.delete(depositVerifications).where(eq(depositVerifications.userId, userId));
+    await db.delete(sellerVerifications).where(eq(sellerVerifications.userId, userId));
+    await db.delete(feedback).where(eq(feedback.userId, userId));
+    await db.delete(otpCodes).where(eq(otpCodes.phone, user.phone));
+
+    // 6. Finally, the user row itself
+    await db.delete(users).where(eq(users.id, userId));
+
+    res.json({ message: 'Account permanently deleted' });
+  } catch (err) {
+    console.error('Delete account error:', err);
+    res.status(500).json({ error: 'Failed to delete account' });
   }
 });
 

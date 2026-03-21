@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet, Alert, Platform, ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -70,6 +70,52 @@ export default function ProfileScreen() {
       { text: t('common.cancel'), style: 'cancel' },
       { text: t('profile.logout'), style: 'destructive', onPress: signOut },
     ]);
+  };
+
+  const deleteAccountMutation = useMutation({
+    mutationFn: () => api.deleteAccount(),
+    onSuccess: () => signOut(),
+    onError: (error: any) => {
+      Alert.alert('', error.message || t('common.error'));
+    },
+  });
+
+  const handleDeleteAccount = () => {
+    // Step 1: explain consequences
+    const step2 = () => {
+      // Step 2: final irreversible confirmation
+      if (Platform.OS === 'web') {
+        if (window.confirm(t('profile.deleteAccountConfirm2'))) {
+          deleteAccountMutation.mutate();
+        }
+        return;
+      }
+      Alert.alert(
+        t('profile.deleteAccount'),
+        t('profile.deleteAccountConfirm2'),
+        [
+          { text: t('common.cancel'), style: 'cancel' },
+          {
+            text: t('profile.deleteAccount'),
+            style: 'destructive',
+            onPress: () => deleteAccountMutation.mutate(),
+          },
+        ],
+      );
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(t('profile.deleteAccountConfirm'))) step2();
+      return;
+    }
+    Alert.alert(
+      t('profile.deleteAccount'),
+      t('profile.deleteAccountConfirm'),
+      [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: 'Continue', style: 'destructive', onPress: step2 },
+      ],
+    );
   };
 
   const toggleLang = () => {
@@ -193,6 +239,21 @@ export default function ProfileScreen() {
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
             <Ionicons name="log-out-outline" size={20} color="#D32F2F" />
             <Text style={styles.logoutText}>{t('profile.logout')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.deleteAccountBtn}
+            onPress={handleDeleteAccount}
+            disabled={deleteAccountMutation.isPending}
+          >
+            {deleteAccountMutation.isPending ? (
+              <ActivityIndicator size="small" color="#D32F2F" />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={20} color="#D32F2F" />
+                <Text style={styles.deleteAccountText}>{t('profile.deleteAccount')}</Text>
+              </>
+            )}
           </TouchableOpacity>
 
           <Text style={styles.sectionHeader}>{t('listing.myListings')}</Text>
@@ -371,6 +432,23 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: '#D32F2F',
     fontWeight: '600',
+  },
+  deleteAccountBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginTop: 10,
+    gap: 8,
+  },
+  deleteAccountText: {
+    fontSize: 13,
+    color: '#D32F2F',
+    fontWeight: '500',
+    textDecorationLine: 'underline',
   },
   sectionHeader: {
     fontSize: 16,
