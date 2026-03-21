@@ -236,12 +236,17 @@ export default function AuthScreen() {
     return () => clearTimeout(timer);
   }, [countdown]);
 
-  // Full E.164 phone number to send to the API
-  const fullPhone = country.dial + phone;
+  // Strip leading zeros (local trunk prefix) before combining with dial code
+  // e.g. UK "07911123456" → "+447911123456"
+  const localNumber = phone.replace(/^0+/, '');
+  const fullPhone = country.dial + localNumber;
 
   // ── Step 1: Enter phone ──────────────────────────────────────────────────
   const handlePhoneSubmit = async () => {
-    if (phone.length < 6) { setError('Please enter a valid phone number'); return; }
+    if (localNumber.length < 5 || localNumber.length > 14) {
+      setError('Please enter a valid phone number');
+      return;
+    }
     setError('');
     setLoading(true);
     try {
@@ -432,9 +437,13 @@ export default function AuthScreen() {
                     placeholder={t('auth.phoneHint')}
                     placeholderTextColor="#999"
                     keyboardType="phone-pad"
-                    maxLength={country.maxLen}
                     value={phone}
-                    onChangeText={(v) => { setPhone(v.replace(/\D/g, '')); setError(''); }}
+                    onChangeText={(v) => {
+                      // Strip everything except digits, keep up to 15
+                      const digits = v.replace(/\D/g, '').slice(0, 15);
+                      setPhone(digits);
+                      setError('');
+                    }}
                     onSubmitEditing={handlePhoneSubmit}
                     returnKeyType="go"
                     autoFocus
