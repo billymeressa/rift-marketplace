@@ -435,32 +435,6 @@ export default function AuthScreen() {
           {step === 'phone' && (
             <View style={styles.form}>
 
-              {/* ── Primary CTA: Sign in with Telegram ── */}
-              <TouchableOpacity
-                style={[styles.telegramSocialBtn, loading && styles.buttonDisabled]}
-                onPress={handlePhoneSubmit}
-                disabled={loading}
-                activeOpacity={0.85}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <>
-                    <View style={styles.telegramSocialIcon}>
-                      <Ionicons name="paper-plane" size={19} color="#fff" />
-                    </View>
-                    <Text style={styles.telegramSocialText}>Sign in with Telegram</Text>
-                  </>
-                )}
-              </TouchableOpacity>
-
-              {/* ── Divider ── */}
-              <View style={styles.dividerRow}>
-                <View style={styles.dividerLine} />
-                <Text style={styles.dividerText}>or enter your phone number</Text>
-                <View style={styles.dividerLine} />
-              </View>
-
               {/* ── Phone input ── */}
               <View style={styles.field}>
                 <Text style={styles.label}>{t('auth.enterPhone')}</Text>
@@ -492,16 +466,28 @@ export default function AuthScreen() {
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
               </View>
 
+              {/* ── Single CTA: Sign in with Telegram ── */}
               <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
+                style={[styles.telegramSocialBtn, loading && styles.buttonDisabled]}
                 onPress={handlePhoneSubmit}
                 disabled={loading}
+                activeOpacity={0.85}
               >
-                {loading
-                  ? <ActivityIndicator color="#fff" size="small" />
-                  : <Text style={styles.buttonText}>{t('auth.continue')}</Text>
-                }
+                {loading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <View style={styles.telegramSocialIcon}>
+                      <Ionicons name="paper-plane" size={19} color="#fff" />
+                    </View>
+                    <Text style={styles.telegramSocialText}>Sign in with Telegram</Text>
+                  </>
+                )}
               </TouchableOpacity>
+
+              <Text style={styles.telegramHint}>
+                We'll send your login code via Telegram
+              </Text>
             </View>
           )}
 
@@ -657,7 +643,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingVertical: 15,
     paddingHorizontal: 20,
-    marginBottom: 20,
+    marginTop: 4,
+    marginBottom: 0,
     shadowColor: '#2AABEE',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.30,
@@ -681,15 +668,12 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginRight: 44, // offset for the icon so text is visually centred
   },
-  // "or enter your phone number" divider
-  dividerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 20,
-    gap: 10,
+  telegramHint: {
+    fontSize: 12,
+    color: '#aaa',
+    textAlign: 'center',
+    marginTop: 12,
   },
-  dividerLine: { flex: 1, height: 1, backgroundColor: '#E8E8E8' },
-  dividerText: { fontSize: 12, color: '#aaa', fontWeight: '500' },
   field: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
   input: {
