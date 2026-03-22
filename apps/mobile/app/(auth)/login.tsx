@@ -515,7 +515,9 @@ export default function AuthScreen() {
                       <Ionicons name="person" size={28} color="#2AABEE" />
                     </View>
                     <Text style={styles.tmaGreeting}>Welcome,</Text>
-                    <Text style={styles.tmaName}>{tmaDisplayName}</Text>
+                    <Text style={styles.tmaName}>
+                      {tgUser ? [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') : 'Telegram User'}
+                    </Text>
                     <Text style={styles.tmaNote}>
                       Your Telegram identity will be used to sign you in — no phone number or code needed.
                     </Text>
