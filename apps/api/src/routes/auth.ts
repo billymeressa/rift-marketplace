@@ -276,33 +276,23 @@ router.post('/telegram-mini-app', async (req, res) => {
     const derivedName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'User';
 
     // ── 6. Find or create user by telegramId ──────────────────────────────────
-    let userRow: typeof users.$inferSelect | undefined;
-
-    try {
-      [userRow] = await db
-        .select()
-        .from(users)
-        .where(eq(users.telegramId, telegramId))
-        .limit(1);
-    } catch (selectErr: any) {
-      res.status(500).json({ step: 'select', error: selectErr?.message, pgCode: selectErr?.code });
-      return;
-    }
+    let [userRow] = await db
+      .select()
+      .from(users)
+      .where(eq(users.telegramId, telegramId))
+      .limit(1);
 
     if (!userRow) {
-      try {
-        [userRow] = await db.insert(users).values({
-          telegramId,
-          name: derivedName,
-          telegramUsername: tgUser.username ?? null,
-          preferredLanguage: tgUser.language_code?.startsWith('am') ? 'am'
-            : tgUser.language_code?.startsWith('om') ? 'om' : 'en',
-        }).returning();
-      } catch (insertErr: any) {
-        res.status(500).json({ step: 'insert', error: insertErr?.message, pgCode: insertErr?.code });
-        return;
-      }
+      // New user — create with Telegram info, no phone
+      [userRow] = await db.insert(users).values({
+        telegramId,
+        name: derivedName,
+        telegramUsername: tgUser.username ?? null,
+        preferredLanguage: tgUser.language_code?.startsWith('am') ? 'am'
+          : tgUser.language_code?.startsWith('om') ? 'om' : 'en',
+      }).returning();
     } else if (!userRow.telegramUsername && tgUser.username) {
+      // Update username if it changed
       [userRow] = await db
         .update(users)
         .set({ telegramUsername: tgUser.username })
@@ -310,17 +300,11 @@ router.post('/telegram-mini-app', async (req, res) => {
         .returning();
     }
 
-    res.json({ token: makeToken(userRow!), user: publicUser(userRow!) });
+    res.json({ token: makeToken(userRow), user: publicUser(userRow) });
   } catch (err: any) {
     if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }
     console.error('Telegram Mini App auth error:', err);
-    // Surface DB/internal errors in detail so we can diagnose (will be removed after fix)
-    res.status(500).json({
-      error: (err as any)?.message ?? 'Authentication failed',
-      code: (err as any)?.code,
-      cause: (err as any)?.cause?.message ?? String((err as any)?.cause ?? ''),
-      detail: (err as any)?.detail ?? (err as any)?.hint,
-    });
+    res.status(500).json({ error: 'Authentication failed' });
   }
 });
 

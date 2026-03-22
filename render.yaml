@@ -6,7 +6,7 @@ services:
     plan: free
     rootDir: apps/api
     buildCommand: npm install && npm run build
-    startCommand: npx drizzle-kit push --force && npm run start
+    startCommand: node scripts/migrate.js && npm run start
     envVars:
       - key: NODE_ENV
         value: production
