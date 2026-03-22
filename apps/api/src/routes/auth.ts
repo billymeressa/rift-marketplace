@@ -305,8 +305,12 @@ router.post('/telegram-mini-app', async (req, res) => {
     if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }
     console.error('Telegram Mini App auth error:', err);
     // Surface DB/internal errors in detail so we can diagnose (will be removed after fix)
-    const cause = (err as any)?.cause?.message ?? (err as any)?.cause ?? '';
-    res.status(500).json({ error: `${err?.message ?? 'Authentication failed'} | cause: ${cause}` });
+    res.status(500).json({
+      error: (err as any)?.message ?? 'Authentication failed',
+      code: (err as any)?.code,
+      cause: (err as any)?.cause?.message ?? String((err as any)?.cause ?? ''),
+      detail: (err as any)?.detail ?? (err as any)?.hint,
+    });
   }
 });
 
