@@ -128,7 +128,7 @@ export const commodityPrices = pgTable('commodity_prices', {
   id: uuid('id').primaryKey().defaultRandom(),
   commodity: varchar('commodity', { length: 50 }).notNull().unique(), // e.g. 'coffee_ice', 'sesame_qingdao'
   label: varchar('label', { length: 100 }).notNull(),                 // e.g. 'Coffee (ICE/NYSE)'
-  price: decimal('price').notNull(),
+  price: decimal('price'),                                            // nullable — price may be TBD/negotiated
   prevPrice: decimal('prev_price'),                                    // for % change calculation
   currency: varchar('currency', { length: 5 }).notNull().default('USD'),
   unit: varchar('unit', { length: 30 }).notNull(),                    // e.g. 'per lb', 'per mt'

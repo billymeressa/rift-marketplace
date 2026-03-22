@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { eq } from 'drizzle-orm';
 import { z } from 'zod';
-import { db } from '../db/index.js';
+import { db } from '../db/client.js';
 import { commodityPrices } from '../db/schema.js';
 
 const router = Router();

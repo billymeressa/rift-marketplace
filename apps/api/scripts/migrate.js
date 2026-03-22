@@ -24,7 +24,7 @@ const migrations = [
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     commodity VARCHAR(50) NOT NULL UNIQUE,
     label VARCHAR(100) NOT NULL,
-    price DECIMAL NOT NULL,
+    price DECIMAL,
     prev_price DECIMAL,
     currency VARCHAR(5) NOT NULL DEFAULT 'USD',
     unit VARCHAR(30) NOT NULL,
