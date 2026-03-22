@@ -163,18 +163,7 @@ export default function TabLayout() {
         }}
       />
 
-      {/* 2 — Markets */}
-      <Tabs.Screen
-        name="markets"
-        options={{
-          title: 'Markets',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="bar-chart-outline" size={size} color={color} />
-          ),
-        }}
-      />
-
-      {/* 3 — Orders */}
+      {/* 2 — Orders */}
       <Tabs.Screen
         name="orders"
         options={{
