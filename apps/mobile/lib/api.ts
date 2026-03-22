@@ -85,12 +85,14 @@ export const api = {
       body: JSON.stringify({ phone, code, ...(name ? { name } : {}) }),
     }),
 
-  /** Telegram Mini App login — exchanges Telegram initData for a JWT. */
-  telegramMiniAppLogin: (initData: string) =>
-    apiRequest<{ token: string; user: any }>('/auth/telegram-mini-app', {
-      method: 'POST',
-      body: JSON.stringify({ initData }),
-    }),
+  /** Telegram Mini App login — exchanges Telegram initData for a JWT.
+   *  First call (no name): returns { isNewUser, suggestedName } for new users.
+   *  Second call (with name): creates the account and returns { token, user }. */
+  telegramMiniAppLogin: (initData: string, name?: string, phone?: string) =>
+    apiRequest<{ token?: string; user?: any; isNewUser?: boolean; suggestedName?: string }>(
+      '/auth/telegram-mini-app',
+      { method: 'POST', body: JSON.stringify({ initData, name, phone }) },
+    ),
 
   deleteAccount: () =>
     apiRequest<{ message: string }>('/auth/account', { method: 'DELETE' }),

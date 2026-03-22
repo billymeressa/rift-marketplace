@@ -211,7 +211,11 @@ router.post('/verify-code', async (req, res) => {
 
 router.post('/telegram-mini-app', async (req, res) => {
   try {
-    const { initData } = z.object({ initData: z.string().min(1) }).parse(req.body);
+    const { initData, name, phone } = z.object({
+      initData: z.string().min(1),
+      name:  z.string().max(100).optional(),
+      phone: z.string().max(20).optional(),
+    }).parse(req.body);
 
     const botToken = process.env.TELEGRAM_BOT_TOKEN;
     if (!botToken) {
@@ -273,7 +277,9 @@ router.post('/telegram-mini-app', async (req, res) => {
     };
 
     const telegramId = String(tgUser.id);
-    const derivedName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'User';
+    const suggestedName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || '';
+    const preferredLang = tgUser.language_code?.startsWith('am') ? 'am'
+      : tgUser.language_code?.startsWith('om') ? 'om' : 'en';
 
     // ── 6. Find or create user by telegramId ──────────────────────────────────
     let [userRow] = await db
@@ -283,21 +289,30 @@ router.post('/telegram-mini-app', async (req, res) => {
       .limit(1);
 
     if (!userRow) {
-      // New user — create with Telegram info, no phone
+      // New user — ask for profile details if not provided yet
+      if (!name?.trim()) {
+        res.json({ isNewUser: true, suggestedName });
+        return;
+      }
+
+      const normalizedPhone = phone?.trim() ? normalizePhone(phone.trim()) : null;
+
       [userRow] = await db.insert(users).values({
         telegramId,
-        name: derivedName,
+        name: name.trim(),
+        phone: normalizedPhone,
         telegramUsername: tgUser.username ?? null,
-        preferredLanguage: tgUser.language_code?.startsWith('am') ? 'am'
-          : tgUser.language_code?.startsWith('om') ? 'om' : 'en',
+        preferredLanguage: preferredLang,
       }).returning();
-    } else if (!userRow.telegramUsername && tgUser.username) {
-      // Update username if it changed
-      [userRow] = await db
-        .update(users)
-        .set({ telegramUsername: tgUser.username })
-        .where(eq(users.id, userRow.id))
-        .returning();
+    } else {
+      // Returning user — update telegramUsername if it changed
+      if (!userRow.telegramUsername && tgUser.username) {
+        [userRow] = await db
+          .update(users)
+          .set({ telegramUsername: tgUser.username })
+          .where(eq(users.id, userRow.id))
+          .returning();
+      }
     }
 
     res.json({ token: makeToken(userRow), user: publicUser(userRow) });

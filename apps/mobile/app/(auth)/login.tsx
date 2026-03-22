@@ -206,7 +206,7 @@ const pickerStyles = StyleSheet.create({
 
 // ─── Main Auth Screen ─────────────────────────────────────────────────────────
 
-type Step = 'phone' | 'name' | 'code';
+type Step = 'phone' | 'name' | 'code' | 'tma-profile';
 
 export default function AuthScreen() {
   const { t } = useTranslation();
@@ -216,15 +216,13 @@ export default function AuthScreen() {
   // Detect Telegram Mini App context once on mount
   const isTMA = Platform.OS === 'web' && isTelegramMiniApp();
   const tgUser = isTMA ? getTelegramUser() : null;
-  const tmaDisplayName = tgUser
-    ? [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ')
-    : 'your Telegram account';
 
   const [step, setStep] = useState<Step>('phone');
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [showPicker, setShowPicker] = useState(false);
   const [phone, setPhone] = useState('');
   const [name, setName] = useState('');
+  const [tmaPhone, setTmaPhone] = useState('');
   const [telegramLink, setTelegramLink] = useState<string | null>(null);
   const [devCode, setDevCode] = useState<string | null>(null);
   const [isNewUser, setIsNewUser] = useState(false);
@@ -407,16 +405,44 @@ export default function AuthScreen() {
     setOtpDigits(['', '', '', '', '', '']);
   };
 
-  // ── TMA: one-tap login via Telegram identity ─────────────────────────────
+  // ── TMA step 1: check if new or returning user ───────────────────────────
   const handleTMALogin = async () => {
     setError('');
     setLoading(true);
     try {
       const initData = getTelegramInitData();
+      if (!initData) {
+        setError('Could not read Telegram identity. Please close and reopen the app.');
+        return;
+      }
       const result = await api.telegramMiniAppLogin(initData);
-      await signIn(result.token, result.user);
+      if (result.isNewUser) {
+        // Pre-fill name with Telegram suggestion but let user edit
+        setName(result.suggestedName || '');
+        setStep('tma-profile');
+      } else if (result.token && result.user) {
+        await signIn(result.token, result.user);
+      }
     } catch (err: any) {
-      setError('Sign-in failed. Please try again.');
+      setError(err.message || 'Sign-in failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // ── TMA step 2: submit profile details and create account ─────────────────
+  const handleTMAProfileSubmit = async () => {
+    if (!name.trim()) { setError('Please enter your full name.'); return; }
+    setError('');
+    setLoading(true);
+    try {
+      const initData = getTelegramInitData();
+      const result = await api.telegramMiniAppLogin(initData, name.trim(), tmaPhone.trim() || undefined);
+      if (result.token && result.user) {
+        await signIn(result.token, result.user);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Sign-up failed. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -424,6 +450,8 @@ export default function AuthScreen() {
 
   const stepTitle = step === 'phone'
     ? t('auth.subtitle')
+    : step === 'tma-profile'
+    ? ''   // header is rendered inside the step itself
     : step === 'name'
     ? 'What is your name?'
     : 'Code sent via Telegram';
@@ -569,6 +597,69 @@ export default function AuthScreen() {
                   </Text>
                 </>
               )}
+            </View>
+          )}
+
+          {/* ── TMA profile step (new TMA users only) ── */}
+          {step === 'tma-profile' && (
+            <View style={styles.form}>
+              <View style={styles.tmaProfileHeader}>
+                <View style={styles.tmaAvatar}>
+                  <Ionicons name="person-add" size={26} color="#2AABEE" />
+                </View>
+                <Text style={styles.tmaProfileTitle}>Create your account</Text>
+                <Text style={styles.tmaProfileSub}>Just a few details to get you started</Text>
+              </View>
+
+              {/* Full name */}
+              <View style={styles.field}>
+                <Text style={styles.label}>Full Name *</Text>
+                <TextInput
+                  style={[styles.input, error && !name.trim() ? styles.inputError : null]}
+                  placeholder="e.g. Abebe Girma"
+                  placeholderTextColor="#999"
+                  value={name}
+                  onChangeText={(v) => { setName(v); setError(''); }}
+                  returnKeyType="next"
+                  autoCapitalize="words"
+                  autoFocus
+                />
+              </View>
+
+              {/* Phone number (optional) */}
+              <View style={styles.field}>
+                <Text style={styles.label}>Phone Number <Text style={styles.optional}>(optional)</Text></Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. +251911234567"
+                  placeholderTextColor="#999"
+                  value={tmaPhone}
+                  onChangeText={(v) => setTmaPhone(v)}
+                  keyboardType="phone-pad"
+                  returnKeyType="done"
+                  onSubmitEditing={handleTMAProfileSubmit}
+                />
+              </View>
+
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+              <TouchableOpacity
+                style={[styles.telegramSocialBtn, (!name.trim() || loading) && styles.buttonDisabled]}
+                onPress={handleTMAProfileSubmit}
+                disabled={!name.trim() || loading}
+                activeOpacity={0.85}
+              >
+                {loading ? (
+                  <ActivityIndicator color="#fff" size="small" />
+                ) : (
+                  <>
+                    <View style={styles.telegramSocialIcon}>
+                      <Ionicons name="checkmark" size={20} color="#fff" />
+                    </View>
+                    <Text style={styles.telegramSocialText}>Create Account</Text>
+                  </>
+                )}
+              </TouchableOpacity>
             </View>
           )}
 
@@ -794,6 +885,26 @@ const styles = StyleSheet.create({
     color: '#666',
     textAlign: 'center',
     lineHeight: 19,
+  },
+  tmaProfileHeader: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  tmaProfileTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  tmaProfileSub: {
+    fontSize: 13,
+    color: '#888',
+  },
+  optional: {
+    fontWeight: '400',
+    color: '#aaa',
+    fontSize: 13,
   },
   field: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },

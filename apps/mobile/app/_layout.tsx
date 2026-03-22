@@ -36,16 +36,20 @@ export default function RootLayout() {
         telegramReady(); // tell Telegram the app is ready
         try {
           const initData = getTelegramInitData();
-          const { token: tmaToken, user: tmaUser } = await api.telegramMiniAppLogin(initData);
-          await saveToken(tmaToken);
-          await saveUser(tmaUser);
-          setToken(tmaToken);
-          setUser(tmaUser);
-          setIsLoading(false);
-          return; // skip reading from storage — we just logged in
+          const result = await api.telegramMiniAppLogin(initData);
+          // isNewUser: true means server needs profile details before creating account.
+          // Fall through to the login screen which handles the profile form.
+          if (!result.isNewUser && result.token && result.user) {
+            await saveToken(result.token);
+            await saveUser(result.user);
+            setToken(result.token);
+            setUser(result.user);
+            setIsLoading(false);
+            return; // existing user — logged in immediately
+          }
+          // New user — fall through so login screen shows the profile form
         } catch (err) {
           console.warn('TMA auto-login failed, falling back to normal auth:', err);
-          // Fall through to normal token restore below
         }
       }
 
