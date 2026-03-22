@@ -1,44 +1,41 @@
 /**
  * Startup migration script.
- * Applies schema changes that drizzle-kit push may miss.
- * Safe to run repeatedly — all statements use IF NOT EXISTS / IF EXISTS guards.
+ * Applies schema changes safely using IF NOT EXISTS guards.
+ * Safe to run on every startup.
  */
-import pg from 'pg';
+import { Pool } from 'pg';
 
-const { Pool } = pg;
+if (!process.env.DATABASE_URL) {
+  console.error('❌ DATABASE_URL is not set — skipping migrations');
+  process.exit(0); // non-fatal: let the server start anyway
+}
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 
 const migrations = [
-  // TMA support: add telegramId + telegramUsername, make phone nullable
-  `ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_id    VARCHAR(30)  UNIQUE`,
+  // TMA support
+  `ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_id VARCHAR(30)`,
   `ALTER TABLE users ADD COLUMN IF NOT EXISTS telegram_username VARCHAR(50)`,
   `ALTER TABLE users ALTER COLUMN phone DROP NOT NULL`,
+  // Unique index separately (CREATE UNIQUE INDEX is safer than inline UNIQUE on ADD COLUMN)
+  `CREATE UNIQUE INDEX IF NOT EXISTS users_telegram_id_key ON users(telegram_id) WHERE telegram_id IS NOT NULL`,
 ];
 
 async function run() {
   const client = await pool.connect();
   try {
     for (const sql of migrations) {
-      try {
-        await client.query(sql);
-        console.log(`✅ Migration OK: ${sql.slice(0, 60)}...`);
-      } catch (err) {
-        // Ignore "already exists" type errors
-        if (err.code === '42701' || err.code === '42P07') {
-          console.log(`⏭  Already applied: ${sql.slice(0, 60)}...`);
-        } else {
-          console.error(`❌ Migration failed: ${sql}\n   ${err.message}`);
-        }
-      }
+      await client.query(sql);
+      console.log(`✅ ${sql.slice(0, 70)}`);
     }
+    console.log('✅ All migrations complete');
+  } catch (err) {
+    console.error('❌ Migration error:', err.message);
+    process.exit(1);
   } finally {
     client.release();
     await pool.end();
   }
 }
 
-run().catch(err => {
-  console.error('Migration script error:', err);
-  process.exit(1);
-});
+run();
