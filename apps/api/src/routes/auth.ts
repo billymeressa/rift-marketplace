@@ -276,31 +276,41 @@ router.post('/telegram-mini-app', async (req, res) => {
     const derivedName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'User';
 
     // ── 6. Find or create user by telegramId ──────────────────────────────────
-    let [user] = await db
-      .select()
-      .from(users)
-      .where(eq(users.telegramId, telegramId))
-      .limit(1);
+    let userRow: typeof users.$inferSelect | undefined;
 
-    if (!user) {
-      // New user — create with Telegram info, no phone
-      [user] = await db.insert(users).values({
-        telegramId,
-        name: derivedName,
-        telegramUsername: tgUser.username ?? null,
-        preferredLanguage: tgUser.language_code?.startsWith('am') ? 'am'
-          : tgUser.language_code?.startsWith('om') ? 'om' : 'en',
-      }).returning();
-    } else if (!user.telegramUsername && tgUser.username) {
-      // Update username if it changed
-      [user] = await db
+    try {
+      [userRow] = await db
+        .select()
+        .from(users)
+        .where(eq(users.telegramId, telegramId))
+        .limit(1);
+    } catch (selectErr: any) {
+      res.status(500).json({ step: 'select', error: selectErr?.message, pgCode: selectErr?.code });
+      return;
+    }
+
+    if (!userRow) {
+      try {
+        [userRow] = await db.insert(users).values({
+          telegramId,
+          name: derivedName,
+          telegramUsername: tgUser.username ?? null,
+          preferredLanguage: tgUser.language_code?.startsWith('am') ? 'am'
+            : tgUser.language_code?.startsWith('om') ? 'om' : 'en',
+        }).returning();
+      } catch (insertErr: any) {
+        res.status(500).json({ step: 'insert', error: insertErr?.message, pgCode: insertErr?.code });
+        return;
+      }
+    } else if (!userRow.telegramUsername && tgUser.username) {
+      [userRow] = await db
         .update(users)
         .set({ telegramUsername: tgUser.username })
-        .where(eq(users.id, user.id))
+        .where(eq(users.id, userRow.id))
         .returning();
     }
 
-    res.json({ token: makeToken(user), user: publicUser(user) });
+    res.json({ token: makeToken(userRow!), user: publicUser(userRow!) });
   } catch (err: any) {
     if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }
     console.error('Telegram Mini App auth error:', err);
