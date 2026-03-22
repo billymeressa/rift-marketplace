@@ -1,6 +1,21 @@
 import { Platform } from 'react-native';
 import { getToken, removeToken, removeUser } from './auth';
 
+export interface CommodityPrice {
+  id: string;
+  commodity: string;
+  label: string;
+  price: string | null;
+  prevPrice: string | null;
+  currency: string;
+  unit: string;
+  tradeTerm: string | null;
+  market: string | null;
+  source: string | null;
+  recordedAt: string;
+  updatedAt: string;
+}
+
 // Android emulator routes localhost → 10.0.2.2 (host machine)
 const DEFAULT_HOST = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
 const API_URL = process.env.EXPO_PUBLIC_API_URL || `http://${DEFAULT_HOST}:3000/api/v1`;
@@ -110,6 +125,10 @@ export const api = {
       method: 'POST',
       body: JSON.stringify({ image: base64 }),
     }),
+
+  // Market prices
+  getPrices: () =>
+    apiRequest<{ data: CommodityPrice[] }>('/prices'),
 
   // Recommendations
   getRecommendations: () =>

@@ -124,6 +124,21 @@ export const messages = pgTable('messages', {
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const commodityPrices = pgTable('commodity_prices', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  commodity: varchar('commodity', { length: 50 }).notNull().unique(), // e.g. 'coffee_ice', 'sesame_qingdao'
+  label: varchar('label', { length: 100 }).notNull(),                 // e.g. 'Coffee (ICE/NYSE)'
+  price: decimal('price').notNull(),
+  prevPrice: decimal('prev_price'),                                    // for % change calculation
+  currency: varchar('currency', { length: 5 }).notNull().default('USD'),
+  unit: varchar('unit', { length: 30 }).notNull(),                    // e.g. 'per lb', 'per mt'
+  tradeTerm: varchar('trade_term', { length: 20 }),                   // FOB, CIF, CNF, etc.
+  market: varchar('market', { length: 100 }),                         // 'Qingdao', 'Djibouti', etc.
+  source: varchar('source', { length: 100 }),                         // 'ICE/NYSE', 'ECTA', etc.
+  recordedAt: timestamp('recorded_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const feedback = pgTable('feedback', {
   id: uuid('id').primaryKey().defaultRandom(),
   userId: uuid('user_id').references(() => users.id),
