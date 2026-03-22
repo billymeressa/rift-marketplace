@@ -10,8 +10,8 @@ declare global {
   interface Window {
     Telegram?: {
       WebApp?: {
-        initData: string;          // raw URL-encoded init data string
-        initDataUnsafe: {          // already-parsed (client-side only, don't trust without server verification)
+        initData: string;
+        initDataUnsafe: {
           user?: {
             id: number;
             first_name: string;
@@ -22,9 +22,10 @@ declare global {
           auth_date: number;
           hash: string;
         };
-        ready(): void;             // tell Telegram the app is ready (hides loading spinner)
-        expand(): void;            // expand to full height
+        ready(): void;
+        expand(): void;
         close(): void;
+        requestContact(callback: (sent: boolean, event?: { responseUnsafe?: { contact?: { phone_number: string; first_name: string; user_id: number } } }) => void): void;
         colorScheme: 'light' | 'dark';
         themeParams: Record<string, string>;
         version: string;
@@ -35,7 +36,6 @@ declare global {
 
 /** Returns true when the app is running inside a Telegram Mini App context. */
 export function isTelegramMiniApp(): boolean {
-  // Must be web AND the SDK must be loaded AND initData must be non-empty
   return (
     typeof window !== 'undefined' &&
     !!window.Telegram?.WebApp?.initData &&
@@ -60,4 +60,32 @@ export function telegramReady() {
   if (typeof window === 'undefined') return;
   window.Telegram?.WebApp?.ready();
   window.Telegram?.WebApp?.expand();
+}
+
+/**
+ * Request the user's verified phone number via Telegram's native dialog.
+ * Returns the phone number string (e.g. "+251911234567") or null if cancelled.
+ * The phone comes directly from Telegram — it's the one linked to their account.
+ */
+export function requestContact(): Promise<string | null> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !window.Telegram?.WebApp?.requestContact) {
+      resolve(null);
+      return;
+    }
+    window.Telegram.WebApp.requestContact((sent, event) => {
+      if (!sent) {
+        resolve(null);
+        return;
+      }
+      const phone = event?.responseUnsafe?.contact?.phone_number;
+      if (phone) {
+        resolve(phone.startsWith('+') ? phone : '+' + phone);
+      } else {
+        // User shared but response not available in this API version —
+        // the webhook will handle it instead
+        resolve('shared');
+      }
+    });
+  });
 }

@@ -10,7 +10,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import LanguageToggle from '../../components/LanguageToggle';
 import { useResponsive } from '../../hooks/useResponsive';
-import { isTelegramMiniApp, getTelegramInitData } from '../../lib/telegram-webapp';
+import { isTelegramMiniApp, getTelegramInitData, requestContact } from '../../lib/telegram-webapp';
 
 // ─── Country data ────────────────────────────────────────────────────────────
 
@@ -435,7 +435,10 @@ export default function AuthScreen() {
     setLoading(true);
     try {
       const initData = getTelegramInitData();
-      const result = await api.telegramMiniAppLogin(initData, name.trim(), tmaPhone.trim() || undefined);
+      // If phone was shared via native dialog, pass it. If 'shared' (older API),
+      // the webhook already sent it to the bot — it'll be linked after account creation.
+      const phoneToSend = tmaPhone && tmaPhone !== 'shared' ? tmaPhone.trim() : undefined;
+      const result = await api.telegramMiniAppLogin(initData, name.trim(), phoneToSend);
       if (result.token && result.user) {
         await signIn(result.token, result.user);
       }
@@ -623,19 +626,34 @@ export default function AuthScreen() {
                 />
               </View>
 
-              {/* Phone number (optional) */}
+              {/* Phone number — native Telegram verification */}
               <View style={styles.field}>
-                <Text style={styles.label}>Phone Number <Text style={styles.optional}>(optional)</Text></Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. +251911234567"
-                  placeholderTextColor="#999"
-                  value={tmaPhone}
-                  onChangeText={(v) => setTmaPhone(v)}
-                  keyboardType="phone-pad"
-                  returnKeyType="done"
-                  onSubmitEditing={handleTMAProfileSubmit}
-                />
+                <Text style={styles.label}>Phone Number</Text>
+                {tmaPhone ? (
+                  <View style={styles.phoneVerified}>
+                    <Ionicons name="checkmark-circle" size={20} color="#2E7D32" />
+                    <Text style={styles.phoneVerifiedText}>{tmaPhone}</Text>
+                  </View>
+                ) : (
+                  <TouchableOpacity
+                    style={styles.sharePhoneBtn}
+                    onPress={async () => {
+                      const phone = await requestContact();
+                      if (phone && phone !== 'shared') {
+                        setTmaPhone(phone);
+                      } else if (phone === 'shared') {
+                        // Older API: phone was shared via webhook but not returned directly.
+                        // The webhook will link it after account creation.
+                        setTmaPhone('shared');
+                      }
+                    }}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="phone-portrait-outline" size={20} color="#2AABEE" />
+                    <Text style={styles.sharePhoneBtnText}>Verify Phone Number</Text>
+                    <Ionicons name="shield-checkmark-outline" size={16} color="#2E7D32" style={{ marginLeft: 'auto' }} />
+                  </TouchableOpacity>
+                )}
               </View>
 
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -964,4 +982,39 @@ const styles = StyleSheet.create({
   resendDisabled: { color: '#aaa' },
   backLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 20 },
   backText: { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
+  // ── TMA phone verification ───────────────────────────────────────────────
+  sharePhoneBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    backgroundColor: '#F0F8FF',
+    borderWidth: 1.5,
+    borderColor: '#2AABEE',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+  },
+  sharePhoneBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#2AABEE',
+  },
+  phoneVerified: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#F1F8E9',
+    borderWidth: 1.5,
+    borderColor: '#A5D6A7',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+  },
+  phoneVerifiedText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: '#2E7D32',
+  },
 });
