@@ -15,8 +15,20 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        {/* Telegram Mini App SDK — must load before the app bundle */}
-        <script src="https://telegram.org/js/telegram-web-app.js" />
+        {/* Telegram Mini App SDK — must load before the app bundle.
+            Uses dangerouslySetInnerHTML because self-closing <script /> tags
+            are invalid HTML and get silently ignored by browsers. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              // Load Telegram Web App SDK synchronously
+              var s = document.createElement('script');
+              s.src = 'https://telegram.org/js/telegram-web-app.js';
+              s.async = false;
+              document.head.appendChild(s);
+            `,
+          }}
+        />
         <ScrollViewStyleReset />
         <style dangerouslySetInnerHTML={{
           __html: `
