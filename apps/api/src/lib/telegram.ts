@@ -64,7 +64,7 @@ export async function setChatMenuButton(webAppUrl: string): Promise<void> {
       body: JSON.stringify({
         menu_button: {
           type: 'web_app',
-          text: 'Open Nile Xport',
+          text: 'Open App',
           web_app: { url: webAppUrl },
         },
       }),

@@ -19,7 +19,7 @@ services:
       - key: TELEGRAM_BOT_TOKEN
         sync: false
       - key: TELEGRAM_MINI_APP_URL
-        value: https://mobile-wheat-gamma.vercel.app
+        value: https://rift-marketplace.vercel.app
 
 databases:
   - name: rift-db
