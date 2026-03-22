@@ -50,6 +50,55 @@ export function getTelegramDeepLink(botUsername: string, session: string): strin
 }
 
 /**
+ * Sends a message with a "Share Phone Number" reply keyboard button.
+ * Telegram will send the user's verified phone number when they tap it.
+ */
+export async function sendContactRequest(chatId: number | string, text: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${api()}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: 'HTML',
+        reply_markup: {
+          keyboard: [[{ text: '📱 Share Phone Number', request_contact: true }]],
+          resize_keyboard: true,
+          one_time_keyboard: true,
+        },
+      }),
+    });
+    return (await res.json()).ok;
+  } catch (err) {
+    console.error('sendContactRequest failed:', err);
+    return false;
+  }
+}
+
+/**
+ * Removes the custom reply keyboard (cleans up after contact is shared).
+ */
+export async function removeKeyboard(chatId: number | string, text: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${api()}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: chatId,
+        text,
+        parse_mode: 'HTML',
+        reply_markup: { remove_keyboard: true },
+      }),
+    });
+    return (await res.json()).ok;
+  } catch (err) {
+    console.error('removeKeyboard failed:', err);
+    return false;
+  }
+}
+
+/**
  * Registers the Mini App URL as the bot's menu button so users see an
  * "Open App" button in every chat with the bot.
  *
