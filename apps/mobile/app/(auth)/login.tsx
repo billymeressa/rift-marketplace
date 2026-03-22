@@ -10,6 +10,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import LanguageToggle from '../../components/LanguageToggle';
 import { useResponsive } from '../../hooks/useResponsive';
+import { isTelegramMiniApp, getTelegramInitData, getTelegramUser } from '../../lib/telegram-webapp';
 
 // ─── Country data ────────────────────────────────────────────────────────────
 
@@ -212,6 +213,13 @@ export default function AuthScreen() {
   const { signIn } = useAuth();
   const { isMobile, formMaxWidth } = useResponsive();
 
+  // Detect Telegram Mini App context once on mount
+  const isTMA = Platform.OS === 'web' && isTelegramMiniApp();
+  const tgUser = isTMA ? getTelegramUser() : null;
+  const tmaDisplayName = tgUser
+    ? [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ')
+    : 'your Telegram account';
+
   const [step, setStep] = useState<Step>('phone');
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [showPicker, setShowPicker] = useState(false);
@@ -399,6 +407,21 @@ export default function AuthScreen() {
     setOtpDigits(['', '', '', '', '', '']);
   };
 
+  // ── TMA: one-tap login via Telegram identity ─────────────────────────────
+  const handleTMALogin = async () => {
+    setError('');
+    setLoading(true);
+    try {
+      const initData = getTelegramInitData();
+      const result = await api.telegramMiniAppLogin(initData);
+      await signIn(result.token, result.user);
+    } catch (err: any) {
+      setError('Sign-in failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const stepTitle = step === 'phone'
     ? t('auth.subtitle')
     : step === 'name'
@@ -456,59 +479,96 @@ export default function AuthScreen() {
           {step === 'phone' && (
             <View style={styles.form}>
 
-              {/* ── Phone input ── */}
-              <View style={styles.field}>
-                <Text style={styles.label}>{t('auth.enterPhone')}</Text>
-                <View style={[styles.phoneRow, error ? styles.inputError : null]}>
-                  <TouchableOpacity
-                    style={styles.countryBtn}
-                    onPress={() => setShowPicker(true)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.countryFlag}>{country.flag}</Text>
-                    <Text style={styles.countryDial}>{country.dial}</Text>
-                    <Ionicons name="chevron-down" size={14} color="#666" />
-                  </TouchableOpacity>
-                  <View style={styles.divider} />
-                  <TextInput
-                    style={styles.phoneInput}
-                    placeholder={`e.g. ${country.example}`}
-                    placeholderTextColor="#999"
-                    keyboardType="phone-pad"
-                    value={phone}
-                    onChangeText={(v) => {
-                      setPhone(cleanPhoneInput(v, country));
-                      setError('');
-                    }}
-                    onSubmitEditing={handlePhoneSubmit}
-                    returnKeyType="go"
-                  />
-                </View>
-                {error ? <Text style={styles.errorText}>{error}</Text> : null}
-              </View>
-
-              {/* ── Single CTA: Sign in with Telegram ── */}
-              <TouchableOpacity
-                style={[styles.telegramSocialBtn, loading && styles.buttonDisabled]}
-                onPress={handlePhoneSubmit}
-                disabled={loading}
-                activeOpacity={0.85}
-              >
-                {loading ? (
-                  <ActivityIndicator color="#fff" size="small" />
-                ) : (
-                  <>
-                    <View style={styles.telegramSocialIcon}>
-                      <Ionicons name="paper-plane" size={19} color="#fff" />
+              {isTMA ? (
+                /* ── Telegram Mini App: one-tap login, no phone needed ── */
+                <>
+                  <View style={styles.tmaCard}>
+                    <View style={styles.tmaAvatar}>
+                      <Ionicons name="person" size={28} color="#2AABEE" />
                     </View>
-                    <Text style={styles.telegramSocialText}>Sign in with Telegram</Text>
-                  </>
-                )}
-              </TouchableOpacity>
+                    <Text style={styles.tmaGreeting}>Welcome,</Text>
+                    <Text style={styles.tmaName}>{tmaDisplayName}</Text>
+                    <Text style={styles.tmaNote}>
+                      Your Telegram identity will be used to sign you in — no phone number or code needed.
+                    </Text>
+                  </View>
 
-              <Text style={styles.telegramHint}>
-                We'll send your login code via Telegram
-              </Text>
+                  {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+                  <TouchableOpacity
+                    style={[styles.telegramSocialBtn, loading && styles.buttonDisabled]}
+                    onPress={handleTMALogin}
+                    disabled={loading}
+                    activeOpacity={0.85}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <>
+                        <View style={styles.telegramSocialIcon}>
+                          <Ionicons name="paper-plane" size={19} color="#fff" />
+                        </View>
+                        <Text style={styles.telegramSocialText}>Continue with Telegram</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+                </>
+              ) : (
+                /* ── Regular flow: phone + OTP ── */
+                <>
+                  <View style={styles.field}>
+                    <Text style={styles.label}>{t('auth.enterPhone')}</Text>
+                    <View style={[styles.phoneRow, error ? styles.inputError : null]}>
+                      <TouchableOpacity
+                        style={styles.countryBtn}
+                        onPress={() => setShowPicker(true)}
+                        activeOpacity={0.7}
+                      >
+                        <Text style={styles.countryFlag}>{country.flag}</Text>
+                        <Text style={styles.countryDial}>{country.dial}</Text>
+                        <Ionicons name="chevron-down" size={14} color="#666" />
+                      </TouchableOpacity>
+                      <View style={styles.divider} />
+                      <TextInput
+                        style={styles.phoneInput}
+                        placeholder={`e.g. ${country.example}`}
+                        placeholderTextColor="#999"
+                        keyboardType="phone-pad"
+                        value={phone}
+                        onChangeText={(v) => {
+                          setPhone(cleanPhoneInput(v, country));
+                          setError('');
+                        }}
+                        onSubmitEditing={handlePhoneSubmit}
+                        returnKeyType="go"
+                      />
+                    </View>
+                    {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                  </View>
+
+                  <TouchableOpacity
+                    style={[styles.telegramSocialBtn, loading && styles.buttonDisabled]}
+                    onPress={handlePhoneSubmit}
+                    disabled={loading}
+                    activeOpacity={0.85}
+                  >
+                    {loading ? (
+                      <ActivityIndicator color="#fff" size="small" />
+                    ) : (
+                      <>
+                        <View style={styles.telegramSocialIcon}>
+                          <Ionicons name="paper-plane" size={19} color="#fff" />
+                        </View>
+                        <Text style={styles.telegramSocialText}>Sign in with Telegram</Text>
+                      </>
+                    )}
+                  </TouchableOpacity>
+
+                  <Text style={styles.telegramHint}>
+                    We'll send your login code via Telegram
+                  </Text>
+                </>
+              )}
             </View>
           )}
 
@@ -694,6 +754,46 @@ const styles = StyleSheet.create({
     color: '#aaa',
     textAlign: 'center',
     marginTop: 12,
+  },
+  // ── TMA one-tap card ──────────────────────────────────────────────────────
+  tmaCard: {
+    alignItems: 'center',
+    backgroundColor: '#F0F8FF',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: '#CDEEFF',
+    paddingVertical: 24,
+    paddingHorizontal: 20,
+    marginBottom: 20,
+  },
+  tmaAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: '#E8F6FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+    borderWidth: 2,
+    borderColor: '#2AABEE',
+  },
+  tmaGreeting: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 2,
+  },
+  tmaName: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  tmaNote: {
+    fontSize: 13,
+    color: '#666',
+    textAlign: 'center',
+    lineHeight: 19,
   },
   field: { marginBottom: 16 },
   label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
