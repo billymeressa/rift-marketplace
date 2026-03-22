@@ -16,6 +16,10 @@ services:
         fromDatabase:
           name: rift-db
           property: connectionString
+      - key: TELEGRAM_BOT_TOKEN
+        sync: false
+      - key: TELEGRAM_MINI_APP_URL
+        value: https://mobile-wheat-gamma.vercel.app
 
 databases:
   - name: rift-db
