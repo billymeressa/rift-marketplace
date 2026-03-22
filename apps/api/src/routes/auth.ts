@@ -294,6 +294,16 @@ router.post('/telegram-mini-app', async (req, res) => {
 
       const normalizedPhone = phone?.trim() ? normalizePhone(phone.trim()) : null;
 
+      // Check if phone is already used by a different account
+      if (normalizedPhone) {
+        const [phoneConflict] = await db.select({ id: users.id }).from(users)
+          .where(eq(users.phone, normalizedPhone)).limit(1);
+        if (phoneConflict) {
+          res.status(409).json({ error: 'This phone number is already linked to another account. Leave it blank or use a different number.' });
+          return;
+        }
+      }
+
       [userRow] = await db.insert(users).values({
         telegramId,
         name: name.trim(),
@@ -316,7 +326,12 @@ router.post('/telegram-mini-app', async (req, res) => {
   } catch (err: any) {
     if (err instanceof z.ZodError) { res.status(400).json({ error: err.errors[0].message }); return; }
     console.error('Telegram Mini App auth error:', err);
-    res.status(500).json({ error: 'Authentication failed' });
+    // Unique constraint violation (phone or telegramId already exists)
+    if (err?.cause?.code === '23505' || err?.code === '23505') {
+      res.status(409).json({ error: 'An account with this phone number already exists.' });
+      return;
+    }
+    res.status(500).json({ error: err.message || 'Authentication failed' });
   }
 });
 
