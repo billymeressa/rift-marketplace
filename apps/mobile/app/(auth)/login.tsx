@@ -10,7 +10,7 @@ import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import LanguageToggle from '../../components/LanguageToggle';
 import { useResponsive } from '../../hooks/useResponsive';
-import { isTelegramMiniApp, getTelegramInitData, getTelegramUser } from '../../lib/telegram-webapp';
+import { isTelegramMiniApp, getTelegramInitData } from '../../lib/telegram-webapp';
 
 // ─── Country data ────────────────────────────────────────────────────────────
 
@@ -215,7 +215,6 @@ export default function AuthScreen() {
 
   // Detect Telegram Mini App context once on mount
   const isTMA = Platform.OS === 'web' && isTelegramMiniApp();
-  const tgUser = isTMA ? getTelegramUser() : null;
 
   const [step, setStep] = useState<Step>('phone');
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
@@ -417,8 +416,7 @@ export default function AuthScreen() {
       }
       const result = await api.telegramMiniAppLogin(initData);
       if (result.isNewUser) {
-        // Pre-fill name with Telegram suggestion but let user edit
-        setName(result.suggestedName || '');
+        setName('');
         setStep('tma-profile');
       } else if (result.token && result.user) {
         await signIn(result.token, result.user);
@@ -512,14 +510,11 @@ export default function AuthScreen() {
                 <>
                   <View style={styles.tmaCard}>
                     <View style={styles.tmaAvatar}>
-                      <Ionicons name="person" size={28} color="#2AABEE" />
+                      <Ionicons name="paper-plane" size={28} color="#2AABEE" />
                     </View>
-                    <Text style={styles.tmaGreeting}>Welcome,</Text>
-                    <Text style={styles.tmaName}>
-                      {tgUser ? [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') : 'Telegram User'}
-                    </Text>
+                    <Text style={styles.tmaName}>Sign in with Telegram</Text>
                     <Text style={styles.tmaNote}>
-                      Your Telegram identity will be used to sign you in — no phone number or code needed.
+                      Your Telegram account will be used to sign you in — no phone number or code needed.
                     </Text>
                   </View>
 

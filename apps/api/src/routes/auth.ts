@@ -270,14 +270,11 @@ router.post('/telegram-mini-app', async (req, res) => {
     }
     const tgUser = JSON.parse(tgUserRaw) as {
       id: number;
-      first_name: string;
-      last_name?: string;
       username?: string;
       language_code?: string;
     };
 
     const telegramId = String(tgUser.id);
-    const suggestedName = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || '';
     const preferredLang = tgUser.language_code?.startsWith('am') ? 'am'
       : tgUser.language_code?.startsWith('om') ? 'om' : 'en';
 
@@ -291,7 +288,7 @@ router.post('/telegram-mini-app', async (req, res) => {
     if (!userRow) {
       // New user — ask for profile details if not provided yet
       if (!name?.trim()) {
-        res.json({ isNewUser: true, suggestedName });
+        res.json({ isNewUser: true });
         return;
       }
 

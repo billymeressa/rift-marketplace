@@ -86,10 +86,10 @@ export const api = {
     }),
 
   /** Telegram Mini App login — exchanges Telegram initData for a JWT.
-   *  First call (no name): returns { isNewUser, suggestedName } for new users.
+   *  First call (no name): returns { isNewUser: true } for new users.
    *  Second call (with name): creates the account and returns { token, user }. */
   telegramMiniAppLogin: (initData: string, name?: string, phone?: string) =>
-    apiRequest<{ token?: string; user?: any; isNewUser?: boolean; suggestedName?: string }>(
+    apiRequest<{ token?: string; user?: any; isNewUser?: boolean }>(
       '/auth/telegram-mini-app',
       { method: 'POST', body: JSON.stringify({ initData, name, phone }) },
     ),
