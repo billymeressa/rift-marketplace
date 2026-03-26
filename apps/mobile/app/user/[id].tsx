@@ -1,4 +1,3 @@
-import { useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,22 +5,17 @@ import {
   StyleSheet,
   ActivityIndicator,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { api, apiRequest } from '../../lib/api';
 import TrustBadge from '../../components/TrustBadge';
 import StarRating from '../../components/StarRating';
-import { useTelegramBackButton } from '../../lib/telegram-webapp';
 
 export default function UserProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { t } = useTranslation();
-  const router = useRouter();
-
-  // Telegram BackButton — navigate back instead of closing TMA
-  useEffect(() => useTelegramBackButton(() => router.back()), []);
 
   const { data: trust, isLoading: trustLoading } = useQuery({
     queryKey: ['userTrust', id],

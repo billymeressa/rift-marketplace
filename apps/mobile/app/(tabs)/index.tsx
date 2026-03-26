@@ -2,7 +2,6 @@ import { useState, useCallback } from 'react';
 import {
   View, FlatList, Text, TextInput, TouchableOpacity,
   StyleSheet, RefreshControl, ActivityIndicator, ScrollView,
-  Platform,
 } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
@@ -15,11 +14,6 @@ import FilterSheet from '../../components/FilterSheet';
 import ResponsiveContainer from '../../components/ResponsiveContainer';
 import { useResponsive } from '../../hooks/useResponsive';
 import { PRODUCT_LABELS } from '../../lib/options';
-import { isTelegramMiniApp } from '../../lib/telegram-webapp';
-import { getTMATheme } from '../../lib/telegram-theme';
-
-const isTMA = Platform.OS === 'web' && typeof window !== 'undefined' && isTelegramMiniApp();
-const theme = isTMA ? getTMATheme() : null;
 
 // ─── Recommended strip (shown only when idle — no search/filters) ─────────────
 
@@ -43,7 +37,7 @@ function RecommendedSection() {
 
   return (
     <View style={recStyles.section}>
-      <Text style={[recStyles.heading, isTMA && { color: theme?.text }]}>{sectionTitle}</Text>
+      <Text style={recStyles.heading}>{sectionTitle}</Text>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={recStyles.row}>
         {recs.map((item: any) => {
           const productLabel = PRODUCT_LABELS[item.productCategory]?.[lang] || item.productCategory;
@@ -51,7 +45,7 @@ function RecommendedSection() {
           return (
             <TouchableOpacity
               key={item.id}
-              style={[recStyles.card, isTMA && { backgroundColor: theme?.card, borderColor: theme?.separator }]}
+              style={recStyles.card}
               onPress={() => router.push(`/listing/${item.id}`)}
               activeOpacity={0.75}
             >
@@ -62,14 +56,14 @@ function RecommendedSection() {
                     : (lang === 'am' ? 'ግዢ' : lang === 'om' ? 'BITTAA' : 'BUY')}
                 </Text>
               </View>
-              <Text style={[recStyles.product, isTMA && { color: theme?.text }]}>{productLabel}</Text>
-              {item.region && <Text style={[recStyles.region, isTMA && { color: theme?.subtitle }]}>{item.region}</Text>}
+              <Text style={recStyles.product}>{productLabel}</Text>
+              {item.region && <Text style={recStyles.region}>{item.region}</Text>}
               {item.price && (
-                <Text style={[recStyles.price, isTMA && { color: theme?.accent }]}>
+                <Text style={recStyles.price}>
                   {Number(item.price).toLocaleString()} {item.currency}
                 </Text>
               )}
-              <Text style={[recStyles.matchReason, isTMA && { color: theme?.hint }]} numberOfLines={2}>{item.matchReason}</Text>
+              <Text style={recStyles.matchReason} numberOfLines={2}>{item.matchReason}</Text>
             </TouchableOpacity>
           );
         })}
@@ -94,12 +88,14 @@ export default function HomeScreen() {
   const isSearching = submittedSearch.length > 0 || Object.keys(filters).length > 0;
   const activeFilterCount = Object.keys(filters).length;
 
+  // Feed mode: plain paginated feed
   const feedQuery = useQuery({
     queryKey: ['listings', 'feed', page],
     queryFn: () => api.getListings({ page: String(page), limit: '20' }),
     enabled: !isSearching,
   });
 
+  // Search mode: filtered results (no pagination needed, API returns top matches)
   const searchQuery = useQuery({
     queryKey: ['listings', 'search', submittedSearch, filters],
     queryFn: () => api.getListings({ ...filters, search: submittedSearch, limit: '50' }),
@@ -128,42 +124,16 @@ export default function HomeScreen() {
     setPage(1);
   };
 
-  // TMA: tighter gutter
-  const gutter = isTMA ? 6 : cardGutter;
-
   const ListHeader = (
     <>
       {/* Search bar */}
-      <View style={[
-        styles.searchRow,
-        isTMA && {
-          backgroundColor: theme?.bg,
-          borderBottomColor: theme?.separator,
-          paddingHorizontal: 12,
-          paddingVertical: 8,
-          gap: 8,
-        },
-      ]}>
-        <View style={[
-          styles.searchBox,
-          isTMA && {
-            backgroundColor: theme?.secondaryBg,
-            borderRadius: 12,
-            paddingHorizontal: 10,
-          },
-        ]}>
-          <Ionicons name="search-outline" size={16} color={isTMA ? theme?.hint : '#999'} />
+      <View style={styles.searchRow}>
+        <View style={styles.searchBox}>
+          <Ionicons name="search-outline" size={18} color="#999" />
           <TextInput
-            style={[
-              styles.searchInput,
-              isTMA && {
-                fontSize: 14,
-                paddingVertical: 8,
-                color: theme?.text,
-              },
-            ]}
+            style={styles.searchInput}
             placeholder={t('search.placeholder')}
-            placeholderTextColor={isTMA ? theme?.hint : '#999'}
+            placeholderTextColor="#999"
             value={search}
             onChangeText={setSearch}
             onSubmitEditing={handleSearchSubmit}
@@ -171,33 +141,17 @@ export default function HomeScreen() {
           />
           {search.length > 0 && (
             <TouchableOpacity onPress={handleClearSearch}>
-              <Ionicons name="close-circle" size={16} color={isTMA ? theme?.hint : '#999'} />
+              <Ionicons name="close-circle" size={18} color="#999" />
             </TouchableOpacity>
           )}
         </View>
         <TouchableOpacity
-          style={[
-            styles.filterBtn,
-            isTMA && {
-              width: 38,
-              height: 38,
-              borderRadius: 12,
-              backgroundColor: theme?.secondaryBg,
-            },
-            activeFilterCount > 0 && (isTMA
-              ? { backgroundColor: theme?.accent + '18' }
-              : styles.filterBtnActive
-            ),
-          ]}
+          style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
           onPress={() => setShowFilters(true)}
         >
-          <Ionicons
-            name="options-outline"
-            size={18}
-            color={activeFilterCount > 0 ? (isTMA ? theme?.accent : '#2E7D32') : (isTMA ? theme?.hint : '#666')}
-          />
+          <Ionicons name="options-outline" size={20} color={activeFilterCount > 0 ? '#2E7D32' : '#666'} />
           {activeFilterCount > 0 && (
-            <View style={[styles.filterBadge, isTMA && { backgroundColor: theme?.accent }]}>
+            <View style={styles.filterBadge}>
               <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
             </View>
           )}
@@ -206,9 +160,7 @@ export default function HomeScreen() {
 
       {/* Result count (search mode) */}
       {isSearching && (
-        <Text style={[styles.resultCount, isTMA && { color: theme?.hint }]}>
-          {total} {t('search.results')}
-        </Text>
+        <Text style={styles.resultCount}>{total} {t('search.results')}</Text>
       )}
 
       {/* Recommendations (idle mode, logged-in users only) */}
@@ -217,39 +169,32 @@ export default function HomeScreen() {
   );
 
   return (
-    <ResponsiveContainer
-      style={[styles.container, isTMA && { backgroundColor: theme?.secondaryBg }]}
-      size="feed"
-    >
+    <ResponsiveContainer style={styles.container} size="feed">
       <FlatList
         key={`cols-${numColumns}`}
         data={listings}
         keyExtractor={(item) => item.id}
         numColumns={numColumns}
         renderItem={({ item }) => (
-          <View style={{ flex: 1, margin: gutter / 2, alignSelf: 'flex-start' }}>
+          <View style={{ flex: 1, margin: cardGutter / 2, alignSelf: 'flex-start' }}>
             <ListingCard listing={item} />
           </View>
         )}
-        contentContainerStyle={[styles.list, { paddingHorizontal: gutter / 2 }, isTMA && { paddingBottom: 60 }]}
-        columnWrapperStyle={{ paddingHorizontal: gutter / 2, alignItems: 'flex-start' }}
+        contentContainerStyle={[styles.list, { paddingHorizontal: cardGutter / 2 }]}
+        columnWrapperStyle={{ paddingHorizontal: cardGutter / 2, alignItems: 'flex-start' }}
         ListHeaderComponent={ListHeader}
         refreshControl={
           !isSearching
-            ? <RefreshControl
-                refreshing={feedQuery.isRefetching}
-                onRefresh={onRefresh}
-                tintColor={isTMA ? theme?.accent : '#2E7D32'}
-              />
+            ? <RefreshControl refreshing={feedQuery.isRefetching} onRefresh={onRefresh} tintColor="#2E7D32" />
             : undefined
         }
         ListEmptyComponent={
           activeQuery.isLoading ? (
-            <ActivityIndicator size="large" color={isTMA ? theme?.accent : '#2E7D32'} style={styles.loader} />
+            <ActivityIndicator size="large" color="#2E7D32" style={styles.loader} />
           ) : (
             <View style={styles.empty}>
-              {isSearching && <Ionicons name="search-outline" size={44} color={isTMA ? theme?.separator : '#ddd'} />}
-              <Text style={[styles.emptyText, isTMA && { color: theme?.hint }]}>
+              {isSearching && <Ionicons name="search-outline" size={48} color="#ddd" />}
+              <Text style={styles.emptyText}>
                 {isSearching ? t('common.noResults') : t('listing.noListings')}
               </Text>
             </View>
@@ -257,19 +202,8 @@ export default function HomeScreen() {
         }
         ListFooterComponent={
           hasMore ? (
-            <TouchableOpacity
-              style={[
-                styles.loadMore,
-                isTMA && {
-                  backgroundColor: theme?.card,
-                  borderColor: theme?.separator,
-                },
-              ]}
-              onPress={() => setPage((p) => p + 1)}
-            >
-              <Text style={[styles.loadMoreText, isTMA && { color: theme?.accent }]}>
-                {t('common.loadMore')}
-              </Text>
+            <TouchableOpacity style={styles.loadMore} onPress={() => setPage((p) => p + 1)}>
+              <Text style={styles.loadMoreText}>{t('common.loadMore')}</Text>
             </TouchableOpacity>
           ) : null
         }
@@ -288,27 +222,28 @@ export default function HomeScreen() {
 // ─── Styles ───────────────────────────────────────────────────────────────────
 
 const recStyles = StyleSheet.create({
-  section: { paddingTop: 10, paddingBottom: 4 },
-  heading: { fontSize: 14, fontWeight: '700', color: '#1a1a1a', paddingHorizontal: 14, marginBottom: 8 },
-  row: { paddingHorizontal: 12, gap: 8 },
+  section: { paddingTop: 12, paddingBottom: 4 },
+  heading: { fontSize: 15, fontWeight: '700', color: '#1a1a1a', paddingHorizontal: 16, marginBottom: 10 },
+  row: { paddingHorizontal: 16, gap: 10 },
   card: {
-    width: 148, backgroundColor: '#fff', borderRadius: 12, padding: 10,
+    width: 160, backgroundColor: '#fff', borderRadius: 12, padding: 12,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06, shadowRadius: 3, elevation: 2,
+    shadowOpacity: 0.08, shadowRadius: 4, elevation: 2,
     borderWidth: 1, borderColor: '#E8F5E9',
   },
-  typeBadge: { alignSelf: 'flex-start', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, marginBottom: 5 },
+  typeBadge: { alignSelf: 'flex-start', paddingHorizontal: 7, paddingVertical: 2, borderRadius: 4, marginBottom: 6 },
   sellBadge: { backgroundColor: '#FFF3E0' },
   buyBadge: { backgroundColor: '#E8F5E9' },
-  typeText: { fontSize: 9, fontWeight: '700', color: '#333' },
-  product: { fontSize: 13, fontWeight: '700', color: '#1a1a1a', marginBottom: 2 },
-  region: { fontSize: 11, color: '#666', marginBottom: 2 },
-  price: { fontSize: 12, fontWeight: '700', color: '#2E7D32', marginBottom: 4 },
-  matchReason: { fontSize: 10, color: '#888', lineHeight: 14 },
+  typeText: { fontSize: 10, fontWeight: '700', color: '#333' },
+  product: { fontSize: 14, fontWeight: '700', color: '#1a1a1a', marginBottom: 2 },
+  region: { fontSize: 12, color: '#666', marginBottom: 2 },
+  price: { fontSize: 13, fontWeight: '700', color: '#2E7D32', marginBottom: 6 },
+  matchReason: { fontSize: 11, color: '#888', lineHeight: 15 },
 });
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9F9F9' },
+  // Search bar
   searchRow: {
     flexDirection: 'row',
     paddingHorizontal: 16,
@@ -335,13 +270,14 @@ const styles = StyleSheet.create({
     width: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
   },
   filterBadgeText: { fontSize: 10, color: '#fff', fontWeight: '700' },
-  resultCount: { fontSize: 12, color: '#666', paddingHorizontal: 14, paddingTop: 6 },
+  resultCount: { fontSize: 13, color: '#666', paddingHorizontal: 16, paddingTop: 8 },
+  // Feed
   list: { paddingTop: 4, paddingBottom: 80 },
   loader: { marginTop: 60 },
-  empty: { alignItems: 'center', marginTop: 60, gap: 10, paddingHorizontal: 24 },
-  emptyText: { fontSize: 15, color: '#999' },
+  empty: { alignItems: 'center', marginTop: 60, gap: 12, paddingHorizontal: 24 },
+  emptyText: { fontSize: 16, color: '#999' },
   loadMore: {
-    paddingVertical: 12, marginHorizontal: 14, marginVertical: 8,
+    paddingVertical: 14, marginHorizontal: 16, marginVertical: 8,
     backgroundColor: '#fff', borderRadius: 12, alignItems: 'center',
     borderWidth: 1, borderColor: '#E0E0E0',
   },

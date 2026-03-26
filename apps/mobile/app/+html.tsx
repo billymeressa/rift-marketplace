@@ -34,40 +34,35 @@ export default function Root({ children }: { children: React.ReactNode }) {
           __html: `
             html, body, #root {
               height: 100dvh;
-              height: var(--tg-viewport-stable-height, 100dvh);
               overflow: hidden;
-              background-color: var(--tg-theme-bg-color, #F5F5F5);
-              color: var(--tg-theme-text-color, #000);
+              background-color: #F5F5F5;
             }
             * { box-sizing: border-box; }
             body {
               font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
               -webkit-font-smoothing: antialiased;
               -moz-osx-font-smoothing: grayscale;
-              margin: 0;
-              padding: 0;
-              overscroll-behavior: none;
             }
             /* Better scrollbars on desktop */
             ::-webkit-scrollbar {
-              width: 6px;
-              height: 6px;
+              width: 8px;
+              height: 8px;
             }
             ::-webkit-scrollbar-track {
               background: transparent;
             }
             ::-webkit-scrollbar-thumb {
-              background: rgba(0,0,0,0.15);
-              border-radius: 3px;
+              background: #ccc;
+              border-radius: 4px;
             }
             ::-webkit-scrollbar-thumb:hover {
-              background: rgba(0,0,0,0.25);
+              background: #aaa;
             }
             /* Smooth transitions */
-            a, button { transition: opacity 0.12s ease; }
+            a, button { transition: opacity 0.15s ease; }
             /* Remove blue highlight on mobile web taps */
             * { -webkit-tap-highlight-color: transparent; }
-            /* Ensure inputs look right */
+            /* Ensure inputs look right on desktop */
             input, textarea {
               outline: none;
               -webkit-appearance: none;
@@ -75,23 +70,6 @@ export default function Root({ children }: { children: React.ReactNode }) {
             input:focus, textarea:focus {
               outline: none;
             }
-            /* TMA-specific: disable elastic bounce / pull-to-refresh on body */
-            body.tma-active {
-              overscroll-behavior-y: contain;
-              -webkit-overflow-scrolling: touch;
-              user-select: none;
-              -webkit-user-select: none;
-            }
-          `
-        }} />
-        {/* Mark body as TMA when Telegram SDK is present */}
-        <script dangerouslySetInnerHTML={{
-          __html: `
-            window.addEventListener('DOMContentLoaded', function() {
-              if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData) {
-                document.body.classList.add('tma-active');
-              }
-            });
           `
         }} />
       </head>

@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, useWindowDimensions, FlatList, Alert, Platform } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, useWindowDimensions, FlatList, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import { isTelegramMiniApp, useTelegramBackButton } from '../../lib/telegram-webapp';
-import { getTMATheme } from '../../lib/telegram-theme';
+import { useTelegramBackButton } from '../../lib/telegram-webapp';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import TrustBadge from '../../components/TrustBadge';
@@ -14,9 +13,6 @@ import {
   PRODUCT_LABELS, REGION_LABELS, CONDITION_LABELS,
   buildLabelMap, TRANSACTION_OPTIONS, prettifyValue, buildListingTitle,
 } from '../../lib/options';
-
-const isTMA = Platform.OS === 'web' && typeof window !== 'undefined' && isTelegramMiniApp();
-const theme = isTMA ? getTMATheme() : null;
 
 const TRANSACTION_LABELS = buildLabelMap(TRANSACTION_OPTIONS);
 
@@ -41,14 +37,16 @@ export default function ListingDetailScreen() {
   const { width: screenWidth } = useWindowDimensions();
   const { isMobile, detailMaxWidth } = useResponsive();
 
+  // Image gallery width: cap at content max-width on desktop
   const contentWidth = isMobile ? screenWidth : Math.min(screenWidth, detailMaxWidth);
-  const galleryImageWidth = contentWidth;
+  const galleryImageWidth = contentWidth - (isMobile ? 0 : 0);
 
   const queryClient = useQueryClient();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  // Telegram BackButton — navigates back instead of closing the mini app
+  // In Telegram Mini App, show the native back button so pressing it navigates
+  // back within the app instead of closing the mini app.
   useEffect(() => useTelegramBackButton(() => router.back()), []);
 
   const { data: listing, isLoading } = useQuery({
@@ -58,55 +56,53 @@ export default function ListingDetailScreen() {
   });
 
   const handleDelete = () => {
-    const msg = 'Are you sure you want to delete this listing? This cannot be undone.';
-    if (Platform.OS === 'web') {
-      if (window.confirm(msg)) doDelete();
-      return;
-    }
-    Alert.alert('Delete Listing', msg, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Delete', style: 'destructive', onPress: doDelete },
-    ]);
-  };
-
-  const doDelete = async () => {
-    setIsDeleting(true);
-    try {
-      await api.deleteListing(id!);
-      queryClient.invalidateQueries({ queryKey: ['listings'] });
-      router.back();
-    } catch {
-      Alert.alert('Error', 'Failed to delete listing. Please try again.');
-      setIsDeleting(false);
-    }
+    Alert.alert(
+      'Delete Listing',
+      'Are you sure you want to delete this listing? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
+            try {
+              await api.deleteListing(id!);
+              queryClient.invalidateQueries({ queryKey: ['listings'] });
+              router.back();
+            } catch {
+              Alert.alert('Error', 'Failed to delete listing. Please try again.');
+              setIsDeleting(false);
+            }
+          },
+        },
+      ]
+    );
   };
 
   if (isLoading) {
     return (
-      <View style={[styles.loader, isTMA && { backgroundColor: theme?.bg }]}>
-        <ActivityIndicator size="large" color={isTMA ? theme?.accent : '#2E7D32'} />
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#2E7D32" />
       </View>
     );
   }
 
   if (!listing) {
     return (
-      <View style={[styles.loader, isTMA && { backgroundColor: theme?.bg }]}>
-        <Text style={[styles.errorText, isTMA && { color: theme?.hint }]}>{t('common.error')}</Text>
+      <View style={styles.loader}>
+        <Text style={styles.errorText}>{t('common.error')}</Text>
       </View>
     );
   }
 
   const isBuy = listing.type === 'buy';
   const images: string[] = listing.images || [];
-  const isOwner = currentUser?.id && listing.user?.id && currentUser.id === listing.user.id;
-  const canInteract = currentUser?.id && listing.user?.id && currentUser.id !== listing.user.id;
 
   return (
-    <ScrollView style={[styles.container, isTMA && { backgroundColor: theme?.secondaryBg }]}>
+    <ScrollView style={styles.container}>
       <View style={[
         styles.contentWrapper,
-        isTMA && { backgroundColor: theme?.bg },
         !isMobile && { maxWidth: detailMaxWidth, alignSelf: 'center' as const, width: '100%' as any },
       ]}>
         {/* Image gallery */}
@@ -125,7 +121,7 @@ export default function ListingDetailScreen() {
               renderItem={({ item }) => (
                 <Image
                   source={{ uri: item }}
-                  style={[styles.galleryImage, { width: galleryImageWidth }, isTMA && { height: 280 }]}
+                  style={[styles.galleryImage, { width: galleryImageWidth }]}
                   resizeMode="cover"
                 />
               )}
@@ -133,18 +129,14 @@ export default function ListingDetailScreen() {
             {images.length > 1 && (
               <View style={styles.dots}>
                 {images.map((_, i) => (
-                  <View key={i} style={[
-                    styles.dot,
-                    i === activeImageIndex && [styles.dotActive, isTMA && { backgroundColor: theme?.accent }],
-                  ]} />
+                  <View key={i} style={[styles.dot, i === activeImageIndex && styles.dotActive]} />
                 ))}
               </View>
             )}
           </View>
         )}
 
-        <View style={[styles.content, isTMA && { padding: 16, paddingBottom: 24 }]}>
-          {/* Type badge */}
+        <View style={styles.content}>
           <View style={[styles.typeBanner, isBuy ? styles.buyBanner : styles.sellBanner]}>
             <Text style={[styles.typeText, isBuy ? styles.buyText : styles.sellText]}>
               {isBuy
@@ -153,16 +145,11 @@ export default function ListingDetailScreen() {
             </Text>
           </View>
 
-          {/* Title */}
-          <Text style={[styles.title, isTMA && { color: theme?.text, fontSize: 20, marginBottom: 14 }]}>
+          <Text style={styles.title}>
             {buildListingTitle(listing, lang, { includeRegion: true })}
           </Text>
 
-          {/* Details grid */}
-          <View style={[
-            styles.metaGrid,
-            isTMA && { backgroundColor: theme?.secondaryBg, padding: 14, gap: 10 },
-          ]}>
+          <View style={styles.metaGrid}>
             <DetailRow label={t('listing.product')} value={getLabel('product', listing.productCategory, lang)} />
             {listing.region && <DetailRow label={t('listing.region')} value={getLabel('region', listing.region, lang)} />}
             {listing.grade && <DetailRow label={t('listing.grade')} value={`Grade ${listing.grade}`} />}
@@ -177,91 +164,71 @@ export default function ListingDetailScreen() {
             )}
           </View>
 
-          {/* Description */}
           {listing.description && (
             <View style={styles.descSection}>
-              <Text style={[styles.descLabel, isTMA && { color: theme?.subtitle }]}>{t('listing.description')}</Text>
-              <Text style={[styles.descText, isTMA && { color: theme?.text }]}>{listing.description}</Text>
+              <Text style={styles.descLabel}>{t('listing.description')}</Text>
+              <Text style={styles.descText}>{listing.description}</Text>
             </View>
           )}
 
-          {/* Seller info */}
-          <View style={[styles.posterSection, isTMA && { borderTopColor: theme?.separator }]}>
-            <View style={[styles.posterAvatar, isTMA && { backgroundColor: theme?.accent }]}>
-              <Ionicons name="storefront-outline" size={20} color={isTMA ? theme?.buttonText : '#fff'} />
+          <View style={styles.posterSection}>
+            <View style={styles.posterAvatar}>
+              <Ionicons name="storefront-outline" size={22} color="#fff" />
             </View>
             <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={[styles.posterName, isTMA && { color: theme?.text }]}>Seller</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={styles.posterName}>Seller</Text>
                 {listing.user?.id && <TrustBadge userId={listing.user.id} />}
               </View>
-              <Text style={[styles.posterDate, isTMA && { color: theme?.hint }]}>
+              <Text style={styles.posterDate}>
                 Posted {new Date(listing.createdAt).toLocaleDateString()}
               </Text>
             </View>
           </View>
 
-          {/* CTAs for non-owners */}
-          {canInteract && (
-            <>
-              <TouchableOpacity
-                style={[styles.orderBtn, isTMA && { backgroundColor: theme?.button, borderRadius: 10, paddingVertical: 14 }]}
-                onPress={() => router.push(`/order/create?listingId=${listing.id}`)}
-              >
-                <Ionicons name="cart-outline" size={18} color={isTMA ? theme?.buttonText : '#fff'} />
-                <Text style={[styles.orderBtnText, isTMA && { color: theme?.buttonText, fontSize: 15 }]}>
-                  {isBuy ? t('order.makeOffer') : t('order.createOrder')}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.messageBtn,
-                  isTMA && {
-                    borderColor: theme?.accent,
-                    backgroundColor: theme?.bg,
-                    borderRadius: 10,
-                    paddingVertical: 14,
-                  },
-                ]}
-                onPress={() => router.push(`/message-compose?listingId=${listing.id}&sellerId=${listing.user.id}`)}
-              >
-                <Ionicons name="chatbubble-ellipses-outline" size={18} color={isTMA ? theme?.accent : '#2E7D32'} />
-                <Text style={[styles.messageBtnText, isTMA && { color: theme?.accent, fontSize: 15 }]}>
-                  {t('messages.sendMessage')}
-                </Text>
-              </TouchableOpacity>
-            </>
+          {/* Order / offer is the primary CTA */}
+          {currentUser?.id && listing.user?.id && currentUser.id !== listing.user.id && (
+            <TouchableOpacity
+              style={styles.orderBtn}
+              onPress={() => router.push(`/order/create?listingId=${listing.id}`)}
+            >
+              <Ionicons name="cart-outline" size={20} color="#fff" />
+              <Text style={styles.orderBtnText}>
+                {isBuy ? t('order.makeOffer') : t('order.createOrder')}
+              </Text>
+            </TouchableOpacity>
           )}
 
-          {/* Owner actions */}
-          {isOwner && (
+          {/* Message is secondary */}
+          {currentUser?.id && listing.user?.id && currentUser.id !== listing.user.id && (
+            <TouchableOpacity
+              style={styles.messageBtn}
+              onPress={() => router.push(`/message-compose?listingId=${listing.id}&sellerId=${listing.user.id}`)}
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={20} color="#2E7D32" />
+              <Text style={styles.messageBtnText}>{t('messages.sendMessage')}</Text>
+            </TouchableOpacity>
+          )}
+
+          {currentUser?.id && listing.user?.id && currentUser.id === listing.user.id && (
             <>
               <TouchableOpacity
-                style={[styles.editBtn, isTMA && { borderColor: theme?.accent, backgroundColor: theme?.bg, borderRadius: 10, paddingVertical: 14 }]}
+                style={styles.editBtn}
                 onPress={() => router.push(`/listing/edit/${listing.id}`)}
               >
-                <Ionicons name="create-outline" size={18} color={isTMA ? theme?.accent : '#2E7D32'} />
-                <Text style={[styles.editBtnText, isTMA && { color: theme?.accent, fontSize: 15 }]}>
-                  {t('common.edit')} {t('listing.listing') || 'Listing'}
-                </Text>
+                <Ionicons name="create-outline" size={20} color="#2E7D32" />
+                <Text style={styles.editBtnText}>{t('common.edit')} {t('listing.listing') || 'Listing'}</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={[
-                  styles.deleteBtn,
-                  isTMA && { borderColor: theme?.destructive, backgroundColor: theme?.bg, borderRadius: 10, paddingVertical: 14 },
-                  isDeleting && styles.deleteBtnDisabled,
-                ]}
+                style={[styles.deleteBtn, isDeleting && styles.deleteBtnDisabled]}
                 onPress={handleDelete}
                 disabled={isDeleting}
               >
                 {isDeleting
-                  ? <ActivityIndicator size="small" color={isTMA ? theme?.destructive : '#D32F2F'} />
-                  : <Ionicons name="trash-outline" size={18} color={isTMA ? theme?.destructive : '#D32F2F'} />
+                  ? <ActivityIndicator size="small" color="#D32F2F" />
+                  : <Ionicons name="trash-outline" size={20} color="#D32F2F" />
                 }
-                <Text style={[styles.deleteBtnText, isTMA && { color: theme?.destructive, fontSize: 15 }]}>
-                  Delete Listing
-                </Text>
+                <Text style={styles.deleteBtnText}>Delete Listing</Text>
               </TouchableOpacity>
             </>
           )}
@@ -275,8 +242,8 @@ function DetailRow({ label, value }: { label: string; value: string | null }) {
   if (!value) return null;
   return (
     <View style={styles.detailRow}>
-      <Text style={[styles.detailLabel, isTMA && { color: theme?.hint }]}>{label}</Text>
-      <Text style={[styles.detailValue, isTMA && { color: theme?.text }]}>{value}</Text>
+      <Text style={styles.detailLabel}>{label}</Text>
+      <Text style={styles.detailValue}>{value}</Text>
     </View>
   );
 }
@@ -303,18 +270,18 @@ const styles = StyleSheet.create({
   dots: {
     flexDirection: 'row',
     justifyContent: 'center',
-    gap: 5,
-    paddingVertical: 8,
+    gap: 6,
+    paddingVertical: 10,
   },
   dot: {
-    width: 7,
-    height: 7,
+    width: 8,
+    height: 8,
     borderRadius: 4,
     backgroundColor: '#ccc',
   },
   dotActive: {
     backgroundColor: '#2E7D32',
-    width: 18,
+    width: 20,
   },
   loader: {
     flex: 1,
@@ -327,15 +294,15 @@ const styles = StyleSheet.create({
   },
   typeBanner: {
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
     borderRadius: 6,
-    marginBottom: 10,
+    marginBottom: 12,
     borderWidth: 1,
   },
   buyBanner:  { backgroundColor: '#FFF8E1', borderColor: '#FFD54F' },
   sellBanner: { backgroundColor: '#E8F5E9', borderColor: '#81C784' },
-  typeText:   { fontSize: 11, fontWeight: '700', letterSpacing: 0.2 },
+  typeText:   { fontSize: 12, fontWeight: '700', letterSpacing: 0.2 },
   buyText:    { color: '#F57F17' },
   sellText:   { color: '#2E7D32' },
   title: {
@@ -356,52 +323,57 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   detailLabel: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#666',
   },
   detailValue: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: '#1a1a1a',
   },
   descSection: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
   descLabel: {
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '600',
     color: '#555',
-    marginBottom: 4,
+    marginBottom: 6,
   },
   descText: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#333',
-    lineHeight: 21,
+    lineHeight: 22,
   },
   posterSection: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    paddingVertical: 14,
+    gap: 12,
+    paddingVertical: 16,
     borderTopWidth: 1,
     borderTopColor: '#eee',
-    marginBottom: 16,
+    marginBottom: 20,
   },
   posterAvatar: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: '#2E7D32',
     alignItems: 'center',
     justifyContent: 'center',
   },
+  posterAvatarText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: '#fff',
+  },
   posterName: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '600',
     color: '#1a1a1a',
   },
   posterDate: {
-    fontSize: 12,
+    fontSize: 13,
     color: '#999',
   },
   orderBtn: {
@@ -412,7 +384,7 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     borderRadius: 12,
     backgroundColor: '#2E7D32',
-    marginTop: 8,
+    marginTop: 12,
   },
   orderBtnText: {
     fontSize: 16,
@@ -429,8 +401,8 @@ const styles = StyleSheet.create({
     gap: 8,
     paddingVertical: 16,
     borderRadius: 12,
-    marginTop: 8,
-    marginBottom: 8,
+    marginTop: 10,
+    marginBottom: 12,
   },
   messageBtnText: {
     fontSize: 16,
@@ -447,7 +419,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#2E7D32',
     backgroundColor: '#fff',
-    marginTop: 8,
+    marginTop: 12,
   },
   editBtnText: {
     fontSize: 16,
@@ -464,7 +436,7 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#D32F2F',
     backgroundColor: '#fff',
-    marginTop: 8,
+    marginTop: 10,
   },
   deleteBtnDisabled: {
     opacity: 0.5,

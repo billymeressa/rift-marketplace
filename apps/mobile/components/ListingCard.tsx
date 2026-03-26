@@ -1,16 +1,12 @@
-import { View, Text, Image, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { REGION_LABELS, buildListingTitle } from '../lib/options';
-import { isTelegramMiniApp } from '../lib/telegram-webapp';
-import { getTMATheme } from '../lib/telegram-theme';
-
-const isTMA = Platform.OS === 'web' && typeof window !== 'undefined' && isTelegramMiniApp();
-const theme = isTMA ? getTMATheme() : null;
 
 interface ListingCardProps {
   listing: any;
+  onDelete?: () => void;
 }
 
 function timeAgo(dateStr: string): string {
@@ -42,6 +38,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
     ? `${listing.currency === 'USD' ? '$' : ''}${Number(listing.price).toLocaleString()}${listing.currency === 'ETB' ? ' ETB' : ''}`
     : null;
 
+  // Grade is now part of the title — meta shows region + quantity only
   const metaParts: string[] = [];
   if (regionLabel)                      metaParts.push(regionLabel);
   if (listing.quantity && listing.unit) metaParts.push(`${Number(listing.quantity).toLocaleString()} ${listing.unit}`);
@@ -49,69 +46,45 @@ export default function ListingCard({ listing }: ListingCardProps) {
 
   return (
     <TouchableOpacity
-      style={[
-        styles.card,
-        isTMA && {
-          backgroundColor: theme?.card || '#fff',
-          borderRadius: 10,
-          shadowOpacity: theme?.isDark ? 0 : 0.06,
-        },
-      ]}
+      style={styles.card}
       onPress={() => router.push(`/listing/${listing.id}`)}
       activeOpacity={0.82}
     >
       {/* Image */}
-      <View style={[styles.imageWrap, isTMA && { borderTopLeftRadius: 10, borderTopRightRadius: 10 }]}>
+      <View style={styles.imageWrap}>
         {hasImage ? (
           <Image source={{ uri: images[0] }} style={styles.image} resizeMode="cover" />
         ) : (
-          <View style={[
-            styles.imagePlaceholder,
-            isTMA && { backgroundColor: theme?.isDark ? 'rgba(255,255,255,0.05)' : '#F1F8E9' },
-          ]}>
-            <Ionicons name="leaf-outline" size={26} color={isTMA ? theme?.hint : '#A5D6A7'} />
+          <View style={styles.imagePlaceholder}>
+            <Ionicons name="leaf-outline" size={28} color="#A5D6A7" />
           </View>
         )}
 
-        {/* Buy/Sell badge */}
+        {/* Buy/Sell badge — bottom-left overlay */}
         <View style={[styles.badge, isBuy ? styles.badgeBuy : styles.badgeSell]}>
           <Text style={styles.badgeText}>{typeLabel}</Text>
         </View>
 
-        {/* Time pill */}
+        {/* Time — top-right overlay */}
         <View style={styles.timePill}>
           <Text style={styles.timePillText}>{timeAgo(listing.createdAt)}</Text>
         </View>
       </View>
 
       {/* Body */}
-      <View style={[styles.body, isTMA && { padding: 8, gap: 2 }]}>
-        <Text
-          style={[styles.product, isTMA && { color: theme?.text, fontSize: 12 }]}
-          numberOfLines={2}
-        >
-          {listingTitle}
-        </Text>
+      <View style={styles.body}>
+        <Text style={styles.product} numberOfLines={2}>{listingTitle}</Text>
 
         {priceStr ? (
-          <Text
-            style={[styles.price, isTMA && { color: theme?.accent, fontSize: 14 }]}
-            numberOfLines={1}
-          >
-            {priceStr}
-          </Text>
+          <Text style={styles.price} numberOfLines={1}>{priceStr}</Text>
         ) : (
-          <Text style={[styles.priceEmpty, isTMA && { color: theme?.hint }]}>Price on request</Text>
+          <Text style={styles.priceEmpty}>Price on request</Text>
         )}
 
         {metaLine.length > 0 && (
-          <Text
-            style={[styles.meta, isTMA && { color: theme?.hint }]}
-            numberOfLines={1}
-          >
-            {metaLine}
-          </Text>
+          <Text style={styles.meta} numberOfLines={1}>{metaLine}</Text>
         )}
+
       </View>
     </TouchableOpacity>
   );
@@ -151,26 +124,26 @@ const styles = StyleSheet.create({
   /* Overlays */
   badge: {
     position: 'absolute',
-    bottom: 6,
-    left: 6,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 4,
+    bottom: 8,
+    left: 8,
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: 5,
   },
   badgeBuy:  { backgroundColor: 'rgba(245,127,23,0.90)' },
   badgeSell: { backgroundColor: 'rgba(46,125,50,0.90)'  },
-  badgeText: { fontSize: 9, fontWeight: '800', color: '#fff', letterSpacing: 0.3 },
+  badgeText: { fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: 0.3 },
 
   timePill: {
     position: 'absolute',
-    top: 6,
-    right: 6,
-    backgroundColor: 'rgba(0,0,0,0.45)',
-    borderRadius: 8,
-    paddingHorizontal: 6,
+    top: 8,
+    right: 8,
+    backgroundColor: 'rgba(0,0,0,0.40)',
+    borderRadius: 10,
+    paddingHorizontal: 7,
     paddingVertical: 2,
   },
-  timePillText: { fontSize: 9, color: '#fff', fontWeight: '600' },
+  timePillText: { fontSize: 10, color: '#fff', fontWeight: '600' },
 
   /* Body */
   body: {
@@ -181,22 +154,22 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '700',
     color: '#1a1a1a',
-    lineHeight: 17,
+    lineHeight: 18,
   },
   price: {
     fontSize: 15,
     fontWeight: '800',
     color: '#2E7D32',
-    marginTop: 1,
+    marginTop: 2,
   },
   priceEmpty: {
-    fontSize: 11,
+    fontSize: 12,
     color: '#bbb',
     fontStyle: 'italic',
-    marginTop: 1,
+    marginTop: 2,
   },
   meta: {
-    fontSize: 10,
+    fontSize: 11,
     color: '#999',
     marginTop: 1,
   },

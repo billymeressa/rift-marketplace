@@ -10,66 +10,6 @@ import ListingCard from '../../components/ListingCard';
 import TrustBadge from '../../components/TrustBadge';
 import { useRouter } from 'expo-router';
 import ResponsiveContainer from '../../components/ResponsiveContainer';
-import { isTelegramMiniApp } from '../../lib/telegram-webapp';
-import { getTMATheme } from '../../lib/telegram-theme';
-
-const isTMA = Platform.OS === 'web' && typeof window !== 'undefined' && isTelegramMiniApp();
-const theme = isTMA ? getTMATheme() : null;
-
-// ─── TMA-style grouped menu row ────────────────────────────────────────────
-
-function MenuRow({
-  icon, iconColor, label, value, onPress, isFirst, isLast, destructive,
-}: {
-  icon: string; iconColor?: string; label: string; value?: string;
-  onPress: () => void; isFirst?: boolean; isLast?: boolean; destructive?: boolean;
-}) {
-  const textColor = destructive
-    ? (isTMA ? theme?.destructive : '#D32F2F')
-    : (isTMA ? theme?.text : '#333');
-
-  return (
-    <TouchableOpacity
-      style={[
-        menuStyles.row,
-        isTMA && { backgroundColor: theme?.card },
-        isFirst && menuStyles.rowFirst,
-        isLast && menuStyles.rowLast,
-        !isLast && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: isTMA ? theme?.separator : '#eee' },
-      ]}
-      onPress={onPress}
-      activeOpacity={0.6}
-    >
-      <Ionicons
-        name={icon as any}
-        size={20}
-        color={destructive ? (isTMA ? theme?.destructive : '#D32F2F') : (iconColor || (isTMA ? theme?.accent : '#2E7D32'))}
-      />
-      <Text style={[menuStyles.label, { color: textColor }]}>{label}</Text>
-      {value && <Text style={[menuStyles.value, isTMA && { color: theme?.hint }]}>{value}</Text>}
-      {!destructive && (
-        <Ionicons name="chevron-forward" size={16} color={isTMA ? theme?.hint : '#ccc'} />
-      )}
-    </TouchableOpacity>
-  );
-}
-
-const menuStyles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 13,
-    paddingHorizontal: 16,
-    backgroundColor: '#fff',
-    gap: 12,
-  },
-  rowFirst: { borderTopLeftRadius: 12, borderTopRightRadius: 12 },
-  rowLast: { borderBottomLeftRadius: 12, borderBottomRightRadius: 12 },
-  label: { fontSize: 15, color: '#333', flex: 1 },
-  value: { fontSize: 14, color: '#999' },
-});
-
-// ─── Main screen ────────────────────────────────────────────────────────────
 
 export default function ProfileScreen() {
   const { t, i18n } = useTranslation();
@@ -143,7 +83,9 @@ export default function ProfileScreen() {
   });
 
   const handleDeleteAccount = () => {
+    // Step 1: explain consequences
     const step2 = () => {
+      // Step 2: final irreversible confirmation
       if (Platform.OS === 'web') {
         if (window.confirm(t('profile.deleteAccountConfirm2'))) {
           deleteAccountMutation.mutate();
@@ -185,192 +127,156 @@ export default function ProfileScreen() {
     setLanguage(newLang);
   };
 
-  const langDisplay = i18n.language === 'am' ? 'አማርኛ' : i18n.language === 'om' ? 'Afaan Oromoo' : 'English';
-
-  const ProfileHeader = (
-    <View style={[styles.header, isTMA && { paddingTop: 16 }]}>
-      {/* Avatar + name */}
-      <View style={[styles.avatar, isTMA && { backgroundColor: theme?.accent || '#2E7D32' }]}>
-        <Text style={styles.avatarText}>
-          {(profile?.name || profile?.phone || '?')[0].toUpperCase()}
-        </Text>
-      </View>
-
-      {editing ? (
-        <View style={styles.editForm}>
-          <Text style={[styles.label, isTMA && { color: theme?.subtitle }]}>{t('profile.name')}</Text>
-          <TextInput
-            style={[styles.input, isTMA && { backgroundColor: theme?.secondaryBg, borderColor: theme?.separator, color: theme?.text }]}
-            value={name}
-            onChangeText={setName}
-            placeholder={t('profile.nameHint')}
-            placeholderTextColor={isTMA ? theme?.hint : '#999'}
-          />
-          <Text style={[styles.label, isTMA && { color: theme?.subtitle }]}>Phone Number</Text>
-          <TextInput
-            style={[styles.input, isTMA && { backgroundColor: theme?.secondaryBg, borderColor: theme?.separator, color: theme?.text }]}
-            value={phone}
-            onChangeText={setPhone}
-            placeholder="+251911234567"
-            placeholderTextColor={isTMA ? theme?.hint : '#999'}
-            keyboardType="phone-pad"
-            autoCapitalize="none"
-          />
-          <View style={styles.editActions}>
-            <TouchableOpacity
-              style={[styles.cancelBtn, isTMA && { backgroundColor: theme?.secondaryBg }]}
-              onPress={() => setEditing(false)}
-            >
-              <Text style={[styles.cancelText, isTMA && { color: theme?.text }]}>{t('common.cancel')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.saveBtn, isTMA && { backgroundColor: theme?.button }]}
-              onPress={handleSave}
-            >
-              <Text style={[styles.saveText, isTMA && { color: theme?.buttonText }]}>{t('common.save')}</Text>
-            </TouchableOpacity>
+  return (
+    <ResponsiveContainer style={styles.container}>
+    <FlatList
+      style={{ flex: 1 }}
+      data={myListings?.data || []}
+      keyExtractor={(item) => item.id}
+      renderItem={({ item }) => <ListingCard listing={item} />}
+      ListHeaderComponent={
+        <View style={styles.header}>
+          <View style={styles.avatar}>
+            <Text style={styles.avatarText}>
+              {(profile?.name || profile?.phone || '?')[0].toUpperCase()}
+            </Text>
           </View>
-        </View>
-      ) : (
-        <>
-          <Text style={[styles.name, isTMA && { color: theme?.text }]}>
-            {profile?.name || t('profile.name')}
-          </Text>
-          <Text style={[styles.phone, isTMA && { color: theme?.accent }]}>{profile?.phone}</Text>
 
-          {user?.id && (
-            <View style={styles.trustSection}>
-              <TrustBadge userId={user.id} size="large" />
-            </View>
-          )}
-
-          {verification?.status === 'approved' ? (
-            <View style={[styles.verifiedBadge, isTMA && { backgroundColor: (theme?.accent || '#2E7D32') + '18' }]}>
-              <Ionicons name="checkmark-circle" size={16} color={isTMA ? theme?.accent : '#2E7D32'} />
-              <Text style={[styles.verifiedBadgeText, isTMA && { color: theme?.accent }]}>{t('profile.verified')}</Text>
-            </View>
-          ) : verification?.status === 'pending' ? (
-            <View style={styles.pendingBadge}>
-              <Ionicons name="time-outline" size={16} color="#E65100" />
-              <Text style={styles.pendingBadgeText}>{t('profile.pending')}</Text>
+          {editing ? (
+            <View style={styles.editForm}>
+              <Text style={styles.label}>{t('profile.name')}</Text>
+              <TextInput
+                style={styles.input}
+                value={name}
+                onChangeText={setName}
+                placeholder={t('profile.nameHint')}
+                placeholderTextColor="#999"
+              />
+              <Text style={styles.label}>Phone Number</Text>
+              <TextInput
+                style={styles.input}
+                value={phone}
+                onChangeText={setPhone}
+                placeholder="+251911234567"
+                placeholderTextColor="#999"
+                keyboardType="phone-pad"
+                autoCapitalize="none"
+              />
+              <View style={styles.editActions}>
+                <TouchableOpacity style={styles.cancelBtn} onPress={() => setEditing(false)}>
+                  <Text style={styles.cancelText}>{t('common.cancel')}</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={styles.saveBtn} onPress={handleSave}>
+                  <Text style={styles.saveText}>{t('common.save')}</Text>
+                </TouchableOpacity>
+              </View>
             </View>
           ) : (
+            <>
+              <Text style={styles.name}>{profile?.name || t('profile.name')}</Text>
+              <Text style={styles.phone}>{profile?.phone}</Text>
+              {user?.id && (
+                <View style={styles.trustSection}>
+                  <TrustBadge userId={user.id} size="large" />
+                </View>
+              )}
+
+              {verification?.status === 'approved' ? (
+                <View style={styles.verifiedBadge}>
+                  <Ionicons name="checkmark-circle" size={18} color="#2E7D32" />
+                  <Text style={styles.verifiedBadgeText}>{t('profile.verified')}</Text>
+                </View>
+              ) : verification?.status === 'pending' ? (
+                <View style={styles.pendingBadge}>
+                  <Ionicons name="time-outline" size={18} color="#E65100" />
+                  <Text style={styles.pendingBadgeText}>{t('profile.pending')}</Text>
+                </View>
+              ) : (
+                <TouchableOpacity
+                  style={styles.verifyBtn}
+                  onPress={() => router.push('/verification')}
+                >
+                  <Ionicons name="shield-checkmark-outline" size={18} color="#fff" />
+                  <Text style={styles.verifyBtnText}>{t('profile.getVerified')}</Text>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity style={styles.editBtn} onPress={() => setEditing(true)}>
+                <Ionicons name="pencil-outline" size={16} color="#2E7D32" />
+                <Text style={styles.editText}>{t('profile.editProfile')}</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          <TouchableOpacity style={styles.langBtn} onPress={toggleLang}>
+            <Ionicons name="language-outline" size={20} color="#333" />
+            <Text style={styles.langText}>{t('profile.language')}</Text>
+            <Text style={styles.langValue}>{i18n.language === 'am' ? 'አማርኛ' : i18n.language === 'om' ? 'Afaan Oromoo' : 'English'}</Text>
+            <Ionicons name="swap-horizontal-outline" size={18} color="#2E7D32" />
+          </TouchableOpacity>
+
+          {isAdmin && (
             <TouchableOpacity
-              style={[styles.verifyBtn, isTMA && { backgroundColor: theme?.button }]}
-              onPress={() => router.push('/verification')}
+              style={styles.adminBtn}
+              onPress={() => router.push('/admin')}
             >
-              <Ionicons name="shield-checkmark-outline" size={16} color={isTMA ? theme?.buttonText : '#fff'} />
-              <Text style={[styles.verifyBtnText, isTMA && { color: theme?.buttonText }]}>{t('profile.getVerified')}</Text>
+              <Ionicons name="shield-checkmark" size={20} color="#fff" />
+              <Text style={styles.adminBtnText}>Admin Panel</Text>
+              <Ionicons name="chevron-forward" size={16} color="rgba(255,255,255,0.6)" />
             </TouchableOpacity>
           )}
-        </>
-      )}
 
-      {/* ─── Grouped settings menu ─────────────────────────────────── */}
-      {!editing && (
-        <>
-          {/* Section: Settings */}
-          <Text style={[styles.sectionLabel, isTMA && { color: theme?.sectionHeader }]}>
-            {t('tabs.profile')}
-          </Text>
-          <View style={[styles.menuGroup, isTMA && { backgroundColor: theme?.card }]}>
-            <MenuRow
-              icon="create-outline"
-              label={t('profile.editProfile')}
-              onPress={() => setEditing(true)}
-              isFirst
-            />
-            <MenuRow
-              icon="language-outline"
-              label={t('profile.language')}
-              value={langDisplay}
-              onPress={toggleLang}
-              isLast
-            />
-          </View>
+          <TouchableOpacity
+            style={styles.feedbackBtn}
+            onPress={() => router.push('/deposit-verification')}
+          >
+            <Ionicons name="wallet-outline" size={20} color="#333" />
+            <Text style={styles.feedbackText}>{t('depositVerification.title')}</Text>
+            <Ionicons name="chevron-forward" size={16} color="#ccc" />
+          </TouchableOpacity>
 
-          {/* Section: Services */}
-          <Text style={[styles.sectionLabel, isTMA && { color: theme?.sectionHeader }]}>
-            {i18n.language === 'am' ? 'አገልግሎቶች' : i18n.language === 'om' ? 'Tajaajila' : 'Services'}
-          </Text>
-          <View style={[styles.menuGroup, isTMA && { backgroundColor: theme?.card }]}>
-            <MenuRow
-              icon="wallet-outline"
-              label={t('depositVerification.title')}
-              onPress={() => router.push('/deposit-verification')}
-              isFirst
-            />
-            <MenuRow
-              icon="chatbubble-ellipses-outline"
-              label={i18n.language === 'am' ? 'አስተያየት ላክ' : i18n.language === 'om' ? 'Yaada Ergi' : 'Send Feedback'}
-              onPress={() => router.push('/feedback')}
-              isLast={!isAdmin}
-            />
-            {isAdmin && (
-              <MenuRow
-                icon="shield-checkmark"
-                iconColor={isTMA ? theme?.buttonText : '#fff'}
-                label="Admin Panel"
-                onPress={() => router.push('/admin')}
-                isLast
-              />
+          <TouchableOpacity
+            style={styles.feedbackBtn}
+            onPress={() => router.push('/feedback')}
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={20} color="#333" />
+            <Text style={styles.feedbackText}>
+              {i18n.language === 'am' ? 'አስተያየት ላክ' : i18n.language === 'om' ? 'Yaada Ergi' : 'Send Feedback'}
+            </Text>
+            <Ionicons name="chevron-forward" size={16} color="#ccc" />
+          </TouchableOpacity>
+
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+            <Ionicons name="log-out-outline" size={20} color="#D32F2F" />
+            <Text style={styles.logoutText}>{t('profile.logout')}</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.deleteAccountBtn}
+            onPress={handleDeleteAccount}
+            disabled={deleteAccountMutation.isPending}
+          >
+            {deleteAccountMutation.isPending ? (
+              <ActivityIndicator size="small" color="#D32F2F" />
+            ) : (
+              <>
+                <Ionicons name="trash-outline" size={20} color="#D32F2F" />
+                <Text style={styles.deleteAccountText}>{t('profile.deleteAccount')}</Text>
+              </>
             )}
-          </View>
+          </TouchableOpacity>
 
-          {/* Section: Account */}
-          <Text style={[styles.sectionLabel, isTMA && { color: theme?.sectionHeader }]}>
-            {i18n.language === 'am' ? 'መለያ' : i18n.language === 'om' ? 'Herrega' : 'Account'}
-          </Text>
-          <View style={[styles.menuGroup, isTMA && { backgroundColor: theme?.card }]}>
-            <MenuRow
-              icon="log-out-outline"
-              label={t('profile.logout')}
-              onPress={handleLogout}
-              destructive
-              isFirst
-            />
-            <MenuRow
-              icon="trash-outline"
-              label={t('profile.deleteAccount')}
-              onPress={handleDeleteAccount}
-              destructive
-              isLast
-            />
-          </View>
-
-          {/* My Listings */}
-          <Text style={[styles.sectionLabel, isTMA && { color: theme?.sectionHeader }, { marginTop: 20 }]}>
-            {t('listing.myListings')}
-          </Text>
-        </>
-      )}
-    </View>
-  );
-
-  return (
-    <ResponsiveContainer style={[styles.container, isTMA && { backgroundColor: theme?.secondaryBg }]}>
-      <FlatList
-        style={{ flex: 1 }}
-        data={editing ? [] : (myListings?.data || [])}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item }) => (
-          <View style={{ paddingHorizontal: isTMA ? 12 : 16, marginBottom: 8 }}>
-            <ListingCard listing={item} />
-          </View>
-        )}
-        ListHeaderComponent={ProfileHeader}
-        ListEmptyComponent={
-          !editing ? (
-            <Text style={[styles.emptyText, isTMA && { color: theme?.hint }]}>{t('listing.noListings')}</Text>
-          ) : null
-        }
-        contentContainerStyle={[styles.listContent, isTMA && { paddingBottom: 60 }]}
-      />
+          <Text style={styles.sectionHeader}>{t('listing.myListings')}</Text>
+        </View>
+      }
+      ListEmptyComponent={
+        <Text style={styles.emptyText}>{t('listing.noListings')}</Text>
+      }
+      contentContainerStyle={styles.listContent}
+    />
     </ResponsiveContainer>
   );
 }
-
-// ─── Styles ─────────────────────────────────────────────────────────────────
 
 const styles = StyleSheet.create({
   container: {
@@ -386,21 +292,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   avatar: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 36,
     backgroundColor: '#2E7D32',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 10,
+    marginBottom: 12,
   },
   avatarText: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: '700',
     color: '#fff',
   },
   name: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: '700',
     color: '#1a1a1a',
   },
@@ -408,6 +314,26 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#666',
     marginTop: 2,
+  },
+  telegram: {
+    fontSize: 14,
+    color: '#0088cc',
+    marginTop: 2,
+  },
+  editBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 20,
+  },
+  editText: {
+    fontSize: 13,
+    color: '#2E7D32',
+    fontWeight: '600',
   },
   editForm: {
     width: '100%',
@@ -459,77 +385,159 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#fff',
   },
-  trustSection: {
-    marginTop: 10,
+  langBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
     width: '100%',
-  },
-  verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: '#E8F5E9',
-    borderRadius: 16,
-  },
-  verifiedBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#2E7D32',
-  },
-  pendingBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 8,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    backgroundColor: '#FFF3E0',
-    borderRadius: 16,
-  },
-  pendingBadgeText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#E65100',
-  },
-  verifyBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    marginTop: 8,
-    paddingHorizontal: 18,
-    paddingVertical: 8,
-    backgroundColor: '#2E7D32',
-    borderRadius: 16,
-  },
-  verifyBtnText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#fff',
-  },
-  // Grouped menu
-  sectionLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#8e8e93',
-    textTransform: 'uppercase',
-    letterSpacing: 0.3,
-    alignSelf: 'flex-start',
-    marginTop: 20,
-    marginBottom: 6,
-    paddingHorizontal: 4,
-  },
-  menuGroup: {
-    width: '100%',
-    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     backgroundColor: '#fff',
-    overflow: 'hidden',
+    borderRadius: 12,
+    marginTop: 20,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  langText: {
+    fontSize: 15,
+    color: '#333',
+    flex: 1,
+  },
+  langValue: {
+    fontSize: 14,
+    color: '#666',
+  },
+  feedbackBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginTop: 10,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#eee',
+  },
+  feedbackText: {
+    fontSize: 15,
+    color: '#333',
+    flex: 1,
+  },
+  adminBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 12,
+    marginTop: 20,
+    gap: 10,
+  },
+  adminBtnText: {
+    fontSize: 15,
+    color: '#fff',
+    fontWeight: '700',
+    flex: 1,
+  },
+  logoutBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    marginTop: 10,
+    gap: 10,
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
+  },
+  logoutText: {
+    fontSize: 15,
+    color: '#D32F2F',
+    fontWeight: '600',
+  },
+  deleteAccountBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginTop: 10,
+    gap: 8,
+  },
+  deleteAccountText: {
+    fontSize: 13,
+    color: '#D32F2F',
+    fontWeight: '500',
+    textDecorationLine: 'underline',
+  },
+  sectionHeader: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#1a1a1a',
+    alignSelf: 'flex-start',
+    marginTop: 24,
+    marginBottom: 8,
   },
   emptyText: {
     textAlign: 'center',
     color: '#999',
     fontSize: 14,
     marginTop: 20,
+  },
+  trustSection: {
+    marginTop: 12,
+    width: '100%',
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#E8F5E9',
+    borderRadius: 20,
+  },
+  verifiedBadgeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#2E7D32',
+  },
+  pendingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#FFF3E0',
+    borderRadius: 20,
+  },
+  pendingBadgeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#E65100',
+  },
+  verifyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+    backgroundColor: '#2E7D32',
+    borderRadius: 20,
+  },
+  verifyBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#fff',
   },
 });

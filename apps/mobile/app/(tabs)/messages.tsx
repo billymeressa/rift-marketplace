@@ -1,4 +1,4 @@
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -6,11 +6,6 @@ import { useRouter } from 'expo-router';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import ResponsiveContainer from '../../components/ResponsiveContainer';
-import { isTelegramMiniApp } from '../../lib/telegram-webapp';
-import { getTMATheme } from '../../lib/telegram-theme';
-
-const isTMA = Platform.OS === 'web' && typeof window !== 'undefined' && isTelegramMiniApp();
-const theme = isTMA ? getTMATheme() : null;
 
 function formatTime(dateStr: string): string {
   const date = new Date(dateStr);
@@ -34,7 +29,7 @@ export default function MessagesScreen() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['conversations'],
     queryFn: () => api.getConversations(),
-    refetchInterval: 15000,
+    refetchInterval: 15000, // Poll every 15s for new messages
   });
 
   const conversations = data?.data || [];
@@ -45,28 +40,13 @@ export default function MessagesScreen() {
 
     return (
       <TouchableOpacity
-        style={[
-          styles.conversationItem,
-          isTMA && {
-            backgroundColor: theme?.bg,
-            borderBottomColor: theme?.separator,
-            paddingHorizontal: 14,
-            paddingVertical: 12,
-          },
-          isUnread && (isTMA
-            ? { backgroundColor: (theme?.accent || '#2E7D32') + '0A' }
-            : styles.unreadItem
-          ),
-        ]}
+        style={[styles.conversationItem, isUnread && styles.unreadItem]}
         onPress={() => router.push(`/chat/${item.id}`)}
         activeOpacity={0.7}
       >
         {/* Avatar */}
-        <View style={[
-          styles.avatar,
-          isTMA && { width: 44, height: 44, borderRadius: 22, backgroundColor: theme?.accent },
-        ]}>
-          <Text style={[styles.avatarText, isTMA && { fontSize: 16 }]}>
+        <View style={styles.avatar}>
+          <Text style={styles.avatarText}>
             {(item.otherUser?.name || '?')[0].toUpperCase()}
           </Text>
         </View>
@@ -74,48 +54,30 @@ export default function MessagesScreen() {
         {/* Content */}
         <View style={styles.itemContent}>
           <View style={styles.itemHeader}>
-            <Text
-              style={[
-                styles.userName,
-                isTMA && { color: theme?.text },
-                isUnread && (isTMA ? { fontWeight: '700', color: theme?.text } : styles.unreadText),
-              ]}
-              numberOfLines={1}
-            >
+            <Text style={[styles.userName, isUnread && styles.unreadText]} numberOfLines={1}>
               {item.otherUser?.name || 'Seller'}
             </Text>
-            <Text style={[
-              styles.timeText,
-              isTMA && { color: theme?.hint },
-              isUnread && (isTMA ? { color: theme?.accent, fontWeight: '600' } : styles.unreadTime),
-            ]}>
+            <Text style={[styles.timeText, isUnread && styles.unreadTime]}>
               {item.lastMessage ? formatTime(item.lastMessage.createdAt) : ''}
             </Text>
           </View>
 
-          <Text style={[styles.listingContext, isTMA && { color: theme?.hint }]} numberOfLines={1}>
+          <Text style={styles.listingContext} numberOfLines={1}>
             {item.listingTitle}
           </Text>
 
           <View style={styles.lastMessageRow}>
             {item.lastMessage ? (
-              <Text
-                style={[
-                  styles.lastMessage,
-                  isTMA && { color: theme?.subtitle },
-                  isUnread && (isTMA ? { fontWeight: '600', color: theme?.text } : styles.unreadText),
-                ]}
-                numberOfLines={1}
-              >
+              <Text style={[styles.lastMessage, isUnread && styles.unreadText]} numberOfLines={1}>
                 {lastMsgIsMe ? `${t('messages.you')}: ` : ''}
                 {item.lastMessage.body}
               </Text>
             ) : (
-              <Text style={[styles.lastMessage, isTMA && { color: theme?.hint }]} numberOfLines={1}>—</Text>
+              <Text style={styles.lastMessage} numberOfLines={1}>—</Text>
             )}
 
             {isUnread && (
-              <View style={[styles.badge, isTMA && { backgroundColor: theme?.accent }]}>
+              <View style={styles.badge}>
                 <Text style={styles.badgeText}>{item.unreadCount}</Text>
               </View>
             )}
@@ -127,14 +89,14 @@ export default function MessagesScreen() {
 
   if (isLoading) {
     return (
-      <View style={[styles.loader, isTMA && { backgroundColor: theme?.bg }]}>
-        <ActivityIndicator size="large" color={isTMA ? theme?.accent : '#2E7D32'} />
+      <View style={styles.loader}>
+        <ActivityIndicator size="large" color="#2E7D32" />
       </View>
     );
   }
 
   return (
-    <ResponsiveContainer style={[styles.container, isTMA && { backgroundColor: theme?.bg }]}>
+    <ResponsiveContainer style={styles.container}>
       <FlatList
         data={conversations}
         keyExtractor={(item) => item.id}
@@ -143,16 +105,12 @@ export default function MessagesScreen() {
         refreshing={isLoading}
         ListEmptyComponent={
           <View style={styles.emptyContainer}>
-            <Ionicons name="chatbubbles-outline" size={56} color={isTMA ? theme?.separator : '#ccc'} />
-            <Text style={[styles.emptyTitle, isTMA && { color: theme?.subtitle }]}>
-              {t('messages.noConversations')}
-            </Text>
-            <Text style={[styles.emptyHint, isTMA && { color: theme?.hint }]}>
-              {t('messages.noConversationsHint')}
-            </Text>
+            <Ionicons name="chatbubbles-outline" size={64} color="#ccc" />
+            <Text style={styles.emptyTitle}>{t('messages.noConversations')}</Text>
+            <Text style={styles.emptyHint}>{t('messages.noConversationsHint')}</Text>
           </View>
         }
-        contentContainerStyle={conversations.length === 0 ? styles.emptyList : [styles.listContent, isTMA && { paddingBottom: 60 }]}
+        contentContainerStyle={conversations.length === 0 ? styles.emptyList : styles.listContent}
       />
     </ResponsiveContainer>
   );
@@ -262,15 +220,15 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: 80,
-    gap: 10,
+    gap: 12,
   },
   emptyTitle: {
-    fontSize: 17,
+    fontSize: 18,
     fontWeight: '600',
     color: '#666',
   },
   emptyHint: {
-    fontSize: 13,
+    fontSize: 14,
     color: '#999',
     textAlign: 'center',
     paddingHorizontal: 40,

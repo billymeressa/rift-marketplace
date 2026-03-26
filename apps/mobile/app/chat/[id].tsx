@@ -9,7 +9,6 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
-import { useTelegramBackButton } from '../../lib/telegram-webapp';
 
 function formatMessageTime(dateStr: string): string {
   return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -40,9 +39,6 @@ export default function ChatScreen() {
   const queryClient = useQueryClient();
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
-
-  // Telegram BackButton — navigate back instead of closing TMA
-  useEffect(() => useTelegramBackButton(() => router.back()), []);
 
   const [inputText, setInputText] = useState('');
   const [phoneWarningVisible, setPhoneWarningVisible] = useState(false);

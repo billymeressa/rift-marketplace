@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView,
   StyleSheet, ActivityIndicator, Alert, KeyboardAvoidingView, Platform,
@@ -8,7 +8,6 @@ import { useTranslation } from 'react-i18next';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { api } from '../lib/api';
-import { useTelegramBackButton } from '../lib/telegram-webapp';
 
 export default function MessageComposeScreen() {
   const { listingId } = useLocalSearchParams<{ listingId: string }>();
@@ -16,9 +15,6 @@ export default function MessageComposeScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [message, setMessage] = useState('');
-
-  // Telegram BackButton — navigate back instead of closing TMA
-  useEffect(() => useTelegramBackButton(() => router.back()), []);
 
   const { data: listing, isLoading } = useQuery({
     queryKey: ['listing', listingId],
