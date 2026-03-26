@@ -9,7 +9,9 @@ dotenv.config();
 
 const pool = new pg.Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: false,
+  ssl: process.env.DATABASE_URL?.includes('render.com')
+    ? { rejectUnauthorized: false }
+    : false,
 });
 
 // ─── Demo traders ─────────────────────────────────────────────────────────────

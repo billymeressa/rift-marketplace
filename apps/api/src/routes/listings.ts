@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/client.js';
 import { listings, users } from '../db/schema.js';
-import { eq, and, desc, ilike, or, sql, ne, SQL } from 'drizzle-orm';
+import { eq, and, desc, ilike, or, sql, ne, SQL, inArray } from 'drizzle-orm';
 import { sendPushNotifications } from '../lib/notify.js';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
 
@@ -44,7 +44,12 @@ router.get('/', async (req, res) => {
       conditions.push(eq(listings.type, req.query.type as string));
     }
     if (req.query.productCategory) {
-      conditions.push(eq(listings.productCategory, req.query.productCategory as string));
+      const cats = (req.query.productCategory as string).split(',').map(c => c.trim()).filter(Boolean);
+      if (cats.length === 1) {
+        conditions.push(eq(listings.productCategory, cats[0]));
+      } else if (cats.length > 1) {
+        conditions.push(inArray(listings.productCategory, cats));
+      }
     }
     if (req.query.region) {
       conditions.push(eq(listings.region, req.query.region as string));
