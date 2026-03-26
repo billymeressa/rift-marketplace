@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, useWindowDimensions, FlatList, Alert } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, useWindowDimensions, FlatList, Alert, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -55,26 +55,33 @@ export default function ListingDetailScreen() {
   });
 
   const handleDelete = () => {
+    const doDelete = async () => {
+      setIsDeleting(true);
+      try {
+        await api.deleteListing(id!);
+        queryClient.invalidateQueries({ queryKey: ['listings'] });
+        queryClient.invalidateQueries({ queryKey: ['myListings'] });
+        router.back();
+      } catch {
+        Alert.alert(t('common.error'), 'Failed to delete listing. Please try again.');
+        setIsDeleting(false);
+      }
+    };
+
+    // On web (Telegram Mini App) Alert.alert doesn't support multi-button dialogs
+    if (Platform.OS === 'web') {
+      if (window.confirm('Delete this listing? This cannot be undone.')) {
+        doDelete();
+      }
+      return;
+    }
+
     Alert.alert(
-      lang === 'am' ? 'ዝርዝር ሰርዝ' : 'Delete Listing',
-      lang === 'am' ? 'እርግጠኛ ነዎት? ይህ ሊቀለበስ አይችልም።' : 'Are you sure you want to delete this listing? This cannot be undone.',
+      'Delete Listing',
+      'Are you sure? This cannot be undone.',
       [
         { text: t('common.cancel'), style: 'cancel' },
-        {
-          text: t('common.delete'),
-          style: 'destructive',
-          onPress: async () => {
-            setIsDeleting(true);
-            try {
-              await api.deleteListing(id!);
-              queryClient.invalidateQueries({ queryKey: ['listings'] });
-              router.back();
-            } catch {
-              Alert.alert(t('common.error'), 'Failed to delete listing. Please try again.');
-              setIsDeleting(false);
-            }
-          },
-        },
+        { text: 'Delete', style: 'destructive', onPress: doDelete },
       ]
     );
   };
