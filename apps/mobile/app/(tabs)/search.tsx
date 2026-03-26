@@ -77,7 +77,7 @@ export default function SearchScreen() {
         keyExtractor={(item) => item.id}
         numColumns={numColumns}
         renderItem={({ item }) => (
-          <View style={numColumns > 1 ? { flex: 1 / numColumns, maxWidth: `${100 / numColumns}%` as any } : undefined}>
+          <View style={numColumns > 1 ? { flex: 1 / numColumns, maxWidth: `${100 / numColumns}%` as any, marginBottom: 2 } : { marginBottom: 2 }}>
             <ListingCard listing={item} />
           </View>
         )}

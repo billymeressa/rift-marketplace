@@ -176,7 +176,7 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id}
         numColumns={numColumns}
         renderItem={({ item }) => (
-          <View style={{ flex: 1, margin: cardGutter / 2, alignSelf: 'flex-start' }}>
+          <View style={{ flex: 1, marginHorizontal: cardGutter / 2, marginBottom: 2, alignSelf: 'flex-start' }}>
             <ListingCard listing={item} />
           </View>
         )}
