@@ -146,17 +146,15 @@ export default function LoadingScreen({ onReady }: { onReady?: () => void }) {
     }).start();
   }, [state]);
 
-  // Complete progress when server responds
+  // Complete progress when server responds, then auto-advance
   useEffect(() => {
-    if (serverReady) {
-      progressAnim.stopAnimation(() => {
-        Animated.timing(progressAnim, {
-          toValue: 1,
-          duration: 400,
-          useNativeDriver: false,
-        }).start(() => onReady?.());
-      });
-    }
+    if (!serverReady) return;
+    progressAnim.stopAnimation();
+    Animated.timing(progressAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: false,
+    }).start(() => onReady?.());
   }, [serverReady]);
 
   // Show skip button after 45 seconds
