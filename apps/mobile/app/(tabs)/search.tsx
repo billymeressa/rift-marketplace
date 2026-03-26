@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import { View, TextInput, FlatList, Text, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, TextInput, FlatList, Text, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -71,6 +71,7 @@ export default function SearchScreen() {
       )}
 
       <FlatList
+        style={styles.flatList}
         key={`search-cols-${numColumns}`}
         data={listings}
         keyExtractor={(item) => item.id}
@@ -117,6 +118,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderBottomWidth: 1,
     borderBottomColor: '#eee',
+    ...(Platform.OS === 'web' ? { position: 'sticky' as any, top: 0, zIndex: 10 } : {}),
   },
   searchBox: {
     flex: 1,
@@ -165,6 +167,9 @@ const styles = StyleSheet.create({
     color: '#666',
     paddingHorizontal: 16,
     paddingTop: 8,
+  },
+  flatList: {
+    flex: 1,
   },
   list: {
     paddingTop: 8,
