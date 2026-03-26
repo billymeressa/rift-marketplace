@@ -16,20 +16,17 @@ const theme = isTMA ? getTMATheme() : null;
 const API_URL = process.env.EXPO_PUBLIC_API_URL || '';
 const HEALTH_URL = API_URL.replace(/\/api\/v1$/, '') + '/health';
 
-// Cache key + TTL: if server was healthy within the last 10 minutes, skip the check.
-const CACHE_KEY = 'serverHealthyAt';
-const CACHE_TTL_MS = 10 * 60 * 1000;
-
-function isServerCachedHealthy(): boolean {
-  if (typeof sessionStorage === 'undefined') return false;
-  const ts = sessionStorage.getItem(CACHE_KEY);
-  if (!ts) return false;
-  return Date.now() - Number(ts) < CACHE_TTL_MS;
-}
-
-function markServerHealthy() {
-  if (typeof sessionStorage !== 'undefined') {
-    sessionStorage.setItem(CACHE_KEY, String(Date.now()));
+// Quick probe: try the health endpoint with a short timeout.
+// Returns true if the server is already awake, false if it's cold/sleeping.
+async function quickProbe(): Promise<boolean> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000); // 2 s max
+    const res = await fetch(HEALTH_URL, { signal: controller.signal });
+    clearTimeout(timeout);
+    return res.ok;
+  } catch {
+    return false;
   }
 }
 
@@ -42,8 +39,12 @@ const MESSAGES = [
 ];
 
 export default function LoadingScreen({ onReady }: { onReady?: () => void }) {
-  // If the server was confirmed healthy recently, skip the loading screen immediately.
-  const [skip] = useState(() => isServerCachedHealthy());
+  // Three states:
+  //   'probing'  — quick 2 s check running (render nothing yet)
+  //   'awake'    — server responded fast, skip straight to app
+  //   'sleeping' — server is cold, show the loading UI
+  const [state, setState] = useState<'probing' | 'awake' | 'sleeping'>('probing');
+  const skip = state === 'awake';
 
   const [messageIndex, setMessageIndex] = useState(0);
   const [serverReady, setServerReady] = useState(false);
@@ -53,101 +54,99 @@ export default function LoadingScreen({ onReady }: { onReady?: () => void }) {
   const progressAnim = useRef(new Animated.Value(0)).current;
   const dotAnim = useRef(new Animated.Value(0)).current;
 
-  // Skip immediately if server was recently healthy
+  // Quick probe: if the server is already awake, go straight to the app.
+  // Otherwise, flip to 'sleeping' and show the loading UI.
   useEffect(() => {
-    if (skip) onReady?.();
+    let cancelled = false;
+    quickProbe().then((awake) => {
+      if (cancelled) return;
+      if (awake) {
+        setState('awake');
+        onReady?.();
+      } else {
+        setState('sleeping');
+      }
+    });
+    return () => { cancelled = true; };
   }, []);
 
-  // Fade in on mount
+  // All animation/timer effects depend on state so they fire when probe resolves to 'sleeping'
+
+  // Fade in
   useEffect(() => {
-    if (skip) return;
+    if (state !== 'sleeping') return;
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 600,
       useNativeDriver: true,
     }).start();
-  }, []);
+  }, [state]);
 
   // Pulse the logo
   useEffect(() => {
-    if (skip) return;
+    if (state !== 'sleeping') return;
     const pulse = Animated.loop(
       Animated.sequence([
-        Animated.timing(pulseAnim, {
-          toValue: 1.05,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(pulseAnim, {
-          toValue: 1,
-          duration: 1200,
-          useNativeDriver: true,
-        }),
+        Animated.timing(pulseAnim, { toValue: 1.05, duration: 1200, useNativeDriver: true }),
+        Animated.timing(pulseAnim, { toValue: 1,    duration: 1200, useNativeDriver: true }),
       ])
     );
     pulse.start();
     return () => pulse.stop();
-  }, []);
+  }, [state]);
 
   // Animate dots
   useEffect(() => {
-    if (skip) return;
+    if (state !== 'sleeping') return;
     const dots = Animated.loop(
-      Animated.timing(dotAnim, {
-        toValue: 3,
-        duration: 1500,
-        useNativeDriver: false,
-      })
+      Animated.timing(dotAnim, { toValue: 3, duration: 1500, useNativeDriver: false })
     );
     dots.start();
     return () => dots.stop();
-  }, []);
+  }, [state]);
 
   // Cycle through messages
   useEffect(() => {
-    if (skip) return;
+    if (state !== 'sleeping') return;
     const interval = setInterval(() => {
       setMessageIndex((i) => (i + 1) % MESSAGES.length);
     }, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [state]);
 
   // Animate progress bar
   useEffect(() => {
-    if (skip) return;
-    // Simulate progress that slows down as it approaches 90%
+    if (state !== 'sleeping') return;
     Animated.timing(progressAnim, {
       toValue: 0.9,
       duration: 15000,
       useNativeDriver: false,
     }).start();
-  }, []);
+  }, [state]);
 
-  // Complete progress when server is ready
+  // Complete progress when server responds
   useEffect(() => {
     if (serverReady) {
-      progressAnim.stopAnimation((value) => {
+      progressAnim.stopAnimation(() => {
         Animated.timing(progressAnim, {
           toValue: 1,
           duration: 400,
           useNativeDriver: false,
-        }).start(() => {
-          onReady?.();
-        });
+        }).start(() => onReady?.());
       });
     }
   }, [serverReady]);
 
   // Show skip button after 45 seconds
   useEffect(() => {
-    if (skip) return;
+    if (state !== 'sleeping') return;
     const t = setTimeout(() => setShowSkip(true), 45000);
     return () => clearTimeout(t);
-  }, []);
+  }, [state]);
 
-  // Ping server health endpoint
+  // Retry ping while sleeping
   useEffect(() => {
-    if (skip) return;
+    if (state !== 'sleeping') return;
     let cancelled = false;
     let attempt = 0;
 
@@ -160,7 +159,6 @@ export default function LoadingScreen({ onReady }: { onReady?: () => void }) {
           const res = await fetch(HEALTH_URL, { signal: controller.signal });
           clearTimeout(timeout);
           if (res.ok && !cancelled) {
-            markServerHealthy();
             setServerReady(true);
             return;
           }
@@ -175,14 +173,15 @@ export default function LoadingScreen({ onReady }: { onReady?: () => void }) {
 
     ping();
     return () => { cancelled = true; };
-  }, []);
+  }, [state]);
 
   const progressWidth = progressAnim.interpolate({
     inputRange: [0, 1],
     outputRange: ['0%', '100%'],
   });
 
-  if (skip) return null;
+  // While probing, render nothing — avoids any flash of the loading screen
+  if (state !== 'sleeping') return null;
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim }, isTMA && { backgroundColor: theme?.bg }]}>
