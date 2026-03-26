@@ -128,8 +128,8 @@ export default function TabLayout() {
           ? {
               borderTopColor: '#E5E7EB',
               borderTopWidth: 1,
-              paddingBottom: 8,
-              height: 56,
+              paddingBottom: Math.max(insets.bottom, 8),
+              height: tabBarHeight,
               overflow: 'visible',
               backgroundColor: '#FFFFFF',
               ...(isMobile ? {} : {
