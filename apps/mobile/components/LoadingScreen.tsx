@@ -16,15 +16,37 @@ const theme = isTMA ? getTMATheme() : null;
 const API_URL = process.env.EXPO_PUBLIC_API_URL || '';
 const HEALTH_URL = API_URL.replace(/\/api\/v1$/, '') + '/health';
 
+const CACHE_KEY = 'xz_server_awake';
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+function isRecentlyCached(): boolean {
+  try {
+    const ts = sessionStorage.getItem(CACHE_KEY);
+    return !!ts && Date.now() - Number(ts) < CACHE_TTL;
+  } catch {
+    return false;
+  }
+}
+
+function markServerAwake() {
+  try { sessionStorage.setItem(CACHE_KEY, String(Date.now())); } catch {}
+}
+
 // Quick probe: try the health endpoint with a short timeout.
 // Returns true if the server is already awake, false if it's cold/sleeping.
 async function quickProbe(): Promise<boolean> {
+  // If server was recently confirmed awake in this session, skip the network check
+  if (isRecentlyCached()) return true;
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 2000); // 2 s max
+    const timeout = setTimeout(() => controller.abort(), 3000); // 3 s max
     const res = await fetch(HEALTH_URL, { signal: controller.signal });
     clearTimeout(timeout);
-    return res.ok;
+    if (res.ok) {
+      markServerAwake();
+      return true;
+    }
+    return false;
   } catch {
     return false;
   }
@@ -159,6 +181,7 @@ export default function LoadingScreen({ onReady }: { onReady?: () => void }) {
           const res = await fetch(HEALTH_URL, { signal: controller.signal });
           clearTimeout(timeout);
           if (res.ok && !cancelled) {
+            markServerAwake();
             setServerReady(true);
             return;
           }
