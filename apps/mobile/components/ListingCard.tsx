@@ -18,7 +18,7 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hours / 24)}d`;
 }
 
-export default function ListingCard({ listing }: ListingCardProps) {
+export default function ListingCard({ listing, onDelete }: ListingCardProps) {
   const { i18n } = useTranslation();
   const router = useRouter();
   const lang = i18n.language as 'en' | 'am' | 'om';
@@ -83,6 +83,13 @@ export default function ListingCard({ listing }: ListingCardProps) {
 
         {metaLine.length > 0 && (
           <Text style={styles.meta} numberOfLines={1}>{metaLine}</Text>
+        )}
+
+        {onDelete && (
+          <TouchableOpacity style={styles.deleteBtn} onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <Ionicons name="trash-outline" size={14} color="#D32F2F" />
+            <Text style={styles.deleteBtnText}>Delete</Text>
+          </TouchableOpacity>
         )}
 
       </View>
@@ -172,5 +179,23 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#999',
     marginTop: 1,
+  },
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#FFCDD2',
+    backgroundColor: '#FFF8F8',
+  },
+  deleteBtnText: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#D32F2F',
   },
 });

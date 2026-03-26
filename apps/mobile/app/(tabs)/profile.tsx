@@ -31,6 +31,30 @@ export default function ProfileScreen() {
     enabled: !!user?.id,
   });
 
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.deleteListing(id),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['myListings'] });
+      queryClient.invalidateQueries({ queryKey: ['listings'] });
+    },
+    onError: (error: any) => {
+      Alert.alert('', error.message || t('common.error'));
+    },
+  });
+
+  const handleDeleteListing = (id: string) => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Delete this listing? This cannot be undone.')) {
+        deleteMutation.mutate(id);
+      }
+      return;
+    }
+    Alert.alert('Delete Listing', 'Are you sure? This cannot be undone.', [
+      { text: t('common.cancel'), style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: () => deleteMutation.mutate(id) },
+    ]);
+  };
+
   const { data: verification } = useQuery({
     queryKey: ['myVerification'],
     queryFn: () => api.getMyVerification(),
@@ -133,7 +157,9 @@ export default function ProfileScreen() {
       style={{ flex: 1 }}
       data={myListings?.data || []}
       keyExtractor={(item) => item.id}
-      renderItem={({ item }) => <ListingCard listing={item} />}
+      renderItem={({ item }) => (
+        <ListingCard listing={item} onDelete={() => handleDeleteListing(item.id)} />
+      )}
       ListHeaderComponent={
         <View style={styles.header}>
           <View style={styles.avatar}>
