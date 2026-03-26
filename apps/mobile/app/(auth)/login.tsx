@@ -649,23 +649,6 @@ export default function AuthScreen() {
                   </View>
                 ) : (
                   <>
-                    <TouchableOpacity
-                      style={styles.sharePhoneBtn}
-                      onPress={async () => {
-                        const result = await requestContact();
-                        if (result && result !== 'shared') {
-                          setTmaPhone(result);
-                        }
-                        // 'shared' means phone went via webhook — we can't use it directly,
-                        // so treat it as no phone and let the user enter manually.
-                      }}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons name="phone-portrait-outline" size={20} color="#2AABEE" />
-                      <Text style={styles.sharePhoneBtnText}>Share via Telegram</Text>
-                      <Ionicons name="shield-checkmark-outline" size={16} color="#2E7D32" style={{ marginLeft: 'auto' }} />
-                    </TouchableOpacity>
-                    <Text style={styles.orDivider}>— or enter manually —</Text>
                     <View style={styles.phoneRow}>
                       <TouchableOpacity
                         style={styles.countryBtn}
