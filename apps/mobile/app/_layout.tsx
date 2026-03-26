@@ -9,6 +9,7 @@ import { getToken, getUser, saveToken, saveUser, removeToken, removeUser } from 
 import { setUnauthorizedHandler, api } from '../lib/api';
 import { registerForPushNotifications } from '../lib/notifications';
 import { isTelegramMiniApp, getTelegramInitData, telegramReady } from '../lib/telegram-webapp';
+import { getTMATheme } from '../lib/telegram-theme';
 import '../lib/i18n';
 import { initSentry } from '../lib/sentry';
 import LoadingScreen from '../components/LoadingScreen';
@@ -118,55 +119,66 @@ export default function RootLayout() {
     return <LoadingScreen onReady={() => setIsServerReady(true)} />;
   }
 
+  // In TMA mode, hide all React Navigation headers — Telegram provides its own
+  // header with native back button. This gives us full-screen real estate.
+  const isTMA = Platform.OS === 'web' && isTelegramMiniApp();
+  const showSubHeaders = !isTMA;
+  const theme = isTMA ? getTMATheme() : null;
+
   return (
     <QueryClientProvider client={queryClient}>
       <AuthContext.Provider value={{ token, user, isLoading, signIn, signOut }}>
-        <Stack screenOptions={{ headerShown: false }}>
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: isTMA ? { backgroundColor: theme?.bg || '#fff' } : undefined,
+          }}
+        >
           <Stack.Screen name="(auth)" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen
             name="listing/[id]"
-            options={{ headerShown: true, title: '', presentation: 'card' }}
+            options={{ headerShown: showSubHeaders, title: '', presentation: 'card' }}
           />
           <Stack.Screen
             name="listing/edit/[id]"
-            options={{ headerShown: true, title: 'Edit Listing', presentation: 'card' }}
+            options={{ headerShown: showSubHeaders, title: 'Edit Listing', presentation: 'card' }}
           />
           <Stack.Screen
             name="order/create"
-            options={{ headerShown: true, title: '', presentation: 'card' }}
+            options={{ headerShown: showSubHeaders, title: '', presentation: 'card' }}
           />
           <Stack.Screen
             name="order/[id]"
-            options={{ headerShown: true, title: '', presentation: 'card' }}
+            options={{ headerShown: showSubHeaders, title: '', presentation: 'card' }}
           />
           <Stack.Screen
             name="verification"
-            options={{ headerShown: true, title: '', presentation: 'card' }}
+            options={{ headerShown: showSubHeaders, title: '', presentation: 'card' }}
           />
           <Stack.Screen
             name="deposit-verification"
-            options={{ headerShown: true, title: '', presentation: 'card' }}
+            options={{ headerShown: showSubHeaders, title: '', presentation: 'card' }}
           />
           <Stack.Screen
             name="user/[id]"
-            options={{ headerShown: true, title: '', presentation: 'card' }}
+            options={{ headerShown: showSubHeaders, title: '', presentation: 'card' }}
           />
           <Stack.Screen
             name="review/create"
-            options={{ headerShown: true, title: '', presentation: 'card' }}
+            options={{ headerShown: showSubHeaders, title: '', presentation: 'card' }}
           />
           <Stack.Screen
             name="chat/[id]"
-            options={{ headerShown: true, title: '', presentation: 'card' }}
+            options={{ headerShown: showSubHeaders, title: '', presentation: 'card' }}
           />
           <Stack.Screen
             name="message-compose"
-            options={{ headerShown: true, title: '', presentation: 'card' }}
+            options={{ headerShown: showSubHeaders, title: '', presentation: 'card' }}
           />
           <Stack.Screen
             name="feedback"
-            options={{ headerShown: true, title: 'Send Feedback', presentation: 'modal' }}
+            options={{ headerShown: showSubHeaders, title: 'Send Feedback', presentation: 'modal' }}
           />
         </Stack>
       </AuthContext.Provider>

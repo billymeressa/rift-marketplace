@@ -9,8 +9,9 @@ import { useResponsive } from '../../hooks/useResponsive';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import { isTelegramMiniApp } from '../../lib/telegram-webapp';
+import { getTMATheme } from '../../lib/telegram-theme';
 
-// ─── Header ──────────────────────────────────────────────────────────────────
+// ─── Header (non-TMA only) ─────────────────────────────────────────────────
 
 function HeaderTitle() {
   return <Text style={headerStyles.title}>Nile Xport</Text>;
@@ -29,7 +30,7 @@ const headerStyles = StyleSheet.create({
   right: { paddingRight: 16 },
 });
 
-// ─── Unread badge ─────────────────────────────────────────────────────────────
+// ─── Unread badge ───────────────────────────────────────────────────────────
 
 function UnreadBadge({ count }: { count: number }) {
   if (count <= 0) return null;
@@ -56,13 +57,34 @@ const badgeStyles = StyleSheet.create({
   text: { color: '#fff', fontSize: 10, fontWeight: '700' },
 });
 
-// ─── Centre FAB (Post button) ─────────────────────────────────────────────────
+// ─── Centre FAB (Post button) ───────────────────────────────────────────────
 
-function PostIcon() {
+function PostIcon({ isTMA }: { isTMA: boolean }) {
+  const size = isTMA ? 48 : 60;
+  const iconSize = isTMA ? 26 : 32;
+  const theme = isTMA ? getTMATheme() : null;
+
   return (
-    <View style={fabStyles.wrapper}>
-      <View style={fabStyles.circle}>
-        <Ionicons name="add" size={32} color="#fff" />
+    <View style={[fabStyles.wrapper, isTMA && { top: -10 }]}>
+      <View style={[
+        fabStyles.circle,
+        {
+          width: size,
+          height: size,
+          borderRadius: size / 2,
+          backgroundColor: theme?.button || '#2E7D32',
+          borderWidth: isTMA ? 2.5 : 3,
+          borderColor: theme?.bg || '#fff',
+        },
+        isTMA && {
+          shadowColor: theme?.button || '#2E7D32',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.35,
+          shadowRadius: 8,
+          elevation: 8,
+        },
+      ]}>
+        <Ionicons name="add" size={iconSize} color={theme?.buttonText || '#fff'} />
       </View>
     </View>
   );
@@ -72,7 +94,6 @@ const fabStyles = StyleSheet.create({
   wrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    // lift the circle above the tab bar
     top: -16,
   },
   circle: {
@@ -82,10 +103,8 @@ const fabStyles = StyleSheet.create({
     backgroundColor: '#2E7D32',
     alignItems: 'center',
     justifyContent: 'center',
-    // white ring separates the circle from the tab bar
     borderWidth: 3,
     borderColor: '#fff',
-    // shadow
     shadowColor: '#2E7D32',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.45,
@@ -94,7 +113,7 @@ const fabStyles = StyleSheet.create({
   },
 });
 
-// ─── Layout ───────────────────────────────────────────────────────────────────
+// ─── Layout ─────────────────────────────────────────────────────────────────
 
 export default function TabLayout() {
   const { t } = useTranslation();
@@ -110,39 +129,64 @@ export default function TabLayout() {
   });
   const unreadCount = unreadData?.count ?? 0;
 
-  const tabBarHeight = 58 + Math.max(insets.bottom, 8);
   const isTMA = Platform.OS === 'web' && isTelegramMiniApp();
+  const theme = isTMA ? getTMATheme() : null;
+
+  // TMA: compact 50px tab bar, no bottom padding (Telegram handles safe area)
+  // Native: standard height with safe area insets
+  const tabBarHeight = isTMA ? 50 : 58 + Math.max(insets.bottom, 8);
+
+  const tmaTabBarStyle = {
+    height: 50,
+    paddingBottom: 0,
+    paddingTop: 4,
+    backgroundColor: theme?.bg || '#fff',
+    borderTopWidth: 0.5,
+    borderTopColor: theme?.separator || 'rgba(0,0,0,0.08)',
+    overflow: 'visible' as const,
+  };
+
+  const webTabBarStyle = {
+    borderTopColor: '#eee',
+    paddingBottom: 8,
+    height: 60,
+    overflow: 'visible' as const,
+    ...(isMobile ? {} : {
+      maxWidth: 1200,
+      alignSelf: 'center' as any,
+      width: '100%' as any,
+      borderTopWidth: 0,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: -1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 4,
+    }),
+  };
+
+  const nativeTabBarStyle = {
+    borderTopColor: '#eee',
+    paddingBottom: Math.max(insets.bottom, 8),
+    height: tabBarHeight,
+    overflow: 'visible' as const,
+  };
+
+  const tabBarStyle = isTMA
+    ? tmaTabBarStyle
+    : Platform.OS === 'web'
+      ? webTabBarStyle
+      : nativeTabBarStyle;
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#2E7D32',
-        tabBarInactiveTintColor: '#999',
+        tabBarActiveTintColor: isTMA ? (theme?.accent || '#2E7D32') : '#2E7D32',
+        tabBarInactiveTintColor: isTMA ? (theme?.hint || '#8e8e93') : '#999',
         headerShown: !isTMA,
-        tabBarStyle: Platform.OS === 'web'
-          ? {
-              borderTopColor: '#eee',
-              paddingBottom: 8,
-              height: 60,
-              overflow: 'visible',
-              ...(isMobile ? {} : {
-                maxWidth: 1200,
-                alignSelf: 'center' as any,
-                width: '100%' as any,
-                borderTopWidth: 0,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: -1 },
-                shadowOpacity: 0.05,
-                shadowRadius: 4,
-              }),
-            }
-          : {
-              borderTopColor: '#eee',
-              paddingBottom: Math.max(insets.bottom, 8),
-              height: tabBarHeight,
-              overflow: 'visible',
-            },
-        tabBarLabelStyle: isMobile ? undefined : { fontSize: 13 },
+        tabBarStyle: tabBarStyle as any,
+        // TMA: hide labels for a cleaner, compact look
+        tabBarShowLabel: isTMA ? false : (isMobile ? true : true),
+        tabBarLabelStyle: isTMA ? { display: 'none' as any } : (isMobile ? undefined : { fontSize: 13 }),
+        tabBarIconStyle: isTMA ? { marginTop: 2 } : undefined,
         headerTitle: () => <HeaderTitle />,
         headerRight: () => <HeaderRight />,
         headerStyle: Platform.OS === 'web' && !isMobile
@@ -160,8 +204,12 @@ export default function TabLayout() {
         name="index"
         options={{
           title: t('tabs.home'),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'home' : 'home-outline'}
+              size={isTMA ? 24 : 25}
+              color={color}
+            />
           ),
         }}
       />
@@ -171,8 +219,12 @@ export default function TabLayout() {
         name="orders"
         options={{
           title: t('tabs.orders'),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="receipt-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'receipt' : 'receipt-outline'}
+              size={isTMA ? 22 : 25}
+              color={color}
+            />
           ),
         }}
       />
@@ -182,8 +234,8 @@ export default function TabLayout() {
         name="create"
         options={{
           title: t('tabs.create'),
-          tabBarLabel: () => null,          // no label — the circle speaks for itself
-          tabBarIcon: () => <PostIcon />,
+          tabBarLabel: () => null,
+          tabBarIcon: () => <PostIcon isTMA={isTMA} />,
           tabBarItemStyle: { overflow: 'visible' },
         }}
       />
@@ -193,9 +245,13 @@ export default function TabLayout() {
         name="messages"
         options={{
           title: t('messages.title'),
-          tabBarIcon: ({ color, size }) => (
+          tabBarIcon: ({ color, focused }) => (
             <View>
-              <Ionicons name="chatbubble-outline" size={size} color={color} />
+              <Ionicons
+                name={focused ? 'chatbubble' : 'chatbubble-outline'}
+                size={isTMA ? 22 : 25}
+                color={color}
+              />
               <UnreadBadge count={unreadCount} />
             </View>
           ),
@@ -207,8 +263,12 @@ export default function TabLayout() {
         name="profile"
         options={{
           title: t('tabs.profile'),
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
+          tabBarIcon: ({ color, focused }) => (
+            <Ionicons
+              name={focused ? 'person' : 'person-outline'}
+              size={isTMA ? 22 : 25}
+              color={color}
+            />
           ),
         }}
       />
