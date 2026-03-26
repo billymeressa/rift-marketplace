@@ -29,6 +29,13 @@ declare global {
         colorScheme: 'light' | 'dark';
         themeParams: Record<string, string>;
         version: string;
+        BackButton: {
+          isVisible: boolean;
+          show(): void;
+          hide(): void;
+          onClick(fn: () => void): void;
+          offClick(fn: () => void): void;
+        };
       };
     };
   }
@@ -53,6 +60,22 @@ export function getTelegramInitData(): string {
 export function getTelegramUser() {
   if (typeof window === 'undefined') return null;
   return window.Telegram?.WebApp?.initDataUnsafe?.user ?? null;
+}
+
+/**
+ * Show Telegram's native back button and register a handler.
+ * Returns a cleanup function that hides the button and removes the handler.
+ */
+export function useTelegramBackButton(onBack: () => void): () => void {
+  if (typeof window === 'undefined' || !isTelegramMiniApp()) return () => {};
+  const btn = window.Telegram?.WebApp?.BackButton;
+  if (!btn) return () => {};
+  btn.show();
+  btn.onClick(onBack);
+  return () => {
+    btn.offClick(onBack);
+    btn.hide();
+  };
 }
 
 /** Call once the React app has mounted to hide Telegram's loading indicator. */

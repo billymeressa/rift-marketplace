@@ -1,6 +1,6 @@
 import { useState } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator } from 'react-native';
-import { useQuery } from '@tanstack/react-query';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, TextInput, ActivityIndicator, Alert, Platform } from 'react-native';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { adminApi } from '../../lib/api';
 
@@ -12,12 +12,38 @@ function formatDate(dateStr: string) {
 
 export default function AdminUsers() {
   const [search, setSearch] = useState('');
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
   const { data, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['admin', 'users'],
     queryFn: () => adminApi.getUsers(1, 200),
     staleTime: 30_000,
   });
+
+  const handleDelete = (user: any) => {
+    const doDelete = async () => {
+      setDeletingId(user.id);
+      try {
+        await adminApi.deleteUser(user.id);
+        queryClient.invalidateQueries({ queryKey: ['admin', 'users'] });
+      } catch (e: any) {
+        Alert.alert('Error', e.message || 'Failed to delete account');
+      } finally {
+        setDeletingId(null);
+      }
+    };
+
+    const msg = `Permanently delete ${user.name || user.phone || 'this user'} and all their data? This cannot be undone.`;
+    if (Platform.OS === 'web') {
+      if (window.confirm(msg)) doDelete();
+      return;
+    }
+    Alert.alert('Delete Account', msg, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: doDelete },
+    ]);
+  };
 
   const users = data?.data ?? [];
 
@@ -80,6 +106,16 @@ export default function AdminUsers() {
                   {user.preferredLanguage ? `  ·  ${user.preferredLanguage.toUpperCase()}` : ''}
                 </Text>
               </View>
+              <TouchableOpacity
+                style={styles.deleteBtn}
+                onPress={() => handleDelete(user)}
+                disabled={deletingId === user.id}
+              >
+                {deletingId === user.id
+                  ? <ActivityIndicator size="small" color="#D32F2F" />
+                  : <Ionicons name="trash-outline" size={18} color="#D32F2F" />
+                }
+              </TouchableOpacity>
             </View>
           )}
         />
@@ -115,4 +151,9 @@ const styles = StyleSheet.create({
   meta:  { fontSize: 11, color: '#aaa', marginTop: 3 },
   empty: { alignItems: 'center', marginTop: 80, gap: 12 },
   emptyText: { fontSize: 15, color: '#999' },
+  deleteBtn: {
+    padding: 8,
+    borderRadius: 8,
+    backgroundColor: '#FFF5F5',
+  },
 });

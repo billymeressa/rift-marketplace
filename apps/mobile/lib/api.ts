@@ -30,6 +30,8 @@ export const adminApi = {
     adminRequest<{ data: any[]; page: number; limit: number }>(
       `/admin/users?page=${page}&limit=${limit}`
     ),
+  deleteUser: (id: string) =>
+    adminRequest<{ message: string }>(`/admin/users/${id}`, { method: 'DELETE' }),
 };
 
 // ─── User-facing API ──────────────────────────────────────────────────────────

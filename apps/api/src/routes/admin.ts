@@ -1,6 +1,6 @@
 import { Router, Request, Response, NextFunction } from 'express';
 import { db } from '../db/client.js';
-import { conversations, messages, users, listings } from '../db/schema.js';
+import { conversations, messages, users, listings, orders, reviews, sellerVerifications, depositVerifications, feedback, otpCodes } from '../db/schema.js';
 import { eq, desc, inArray, or } from 'drizzle-orm';
 
 const router = Router();
@@ -171,6 +171,69 @@ router.get('/users', async (req, res) => {
   } catch (err) {
     console.error('Admin list users error:', err);
     res.status(500).json({ error: 'Failed to list users' });
+  }
+});
+
+// ─── DELETE /admin/users/:id ──────────────────────────────────────────────────
+// Permanently deletes any user account (including admin accounts) with full
+// cascade: messages, conversations, orders, reviews, listings, etc.
+
+router.delete('/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id as string;
+
+    const [user] = await db.select({ phone: users.phone })
+      .from(users).where(eq(users.id, userId)).limit(1);
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    await db.transaction(async (tx) => {
+      const userListings = await tx
+        .select({ id: listings.id })
+        .from(listings)
+        .where(eq(listings.userId, userId));
+      const listingIds = userListings.map((l) => l.id);
+
+      const userConversations = await tx
+        .select({ id: conversations.id })
+        .from(conversations)
+        .where(
+          or(
+            eq(conversations.buyerId, userId),
+            eq(conversations.sellerId, userId),
+            ...(listingIds.length > 0 ? [inArray(conversations.listingId, listingIds)] : [])
+          )
+        );
+
+      if (userConversations.length > 0) {
+        const convIds = userConversations.map((c) => c.id);
+        await tx.delete(messages).where(inArray(messages.conversationId, convIds));
+        await tx.delete(conversations).where(inArray(conversations.id, convIds));
+      }
+
+      await tx.delete(reviews).where(
+        or(eq(reviews.reviewerId, userId), eq(reviews.revieweeId, userId))
+      );
+      await tx.delete(orders).where(
+        or(eq(orders.buyerId, userId), eq(orders.sellerId, userId))
+      );
+      await tx.delete(listings).where(eq(listings.userId, userId));
+      await tx.delete(depositVerifications).where(eq(depositVerifications.userId, userId));
+      await tx.delete(sellerVerifications).where(eq(sellerVerifications.userId, userId));
+      await tx.delete(feedback).where(eq(feedback.userId, userId));
+      if (user.phone) {
+        await tx.delete(otpCodes).where(eq(otpCodes.phone, user.phone));
+      }
+      await tx.delete(users).where(eq(users.id, userId));
+    });
+
+    res.json({ message: 'Account permanently deleted' });
+  } catch (err) {
+    console.error('Admin delete user error:', err);
+    res.status(500).json({ error: 'Failed to delete account' });
   }
 });
 

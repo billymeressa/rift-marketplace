@@ -8,6 +8,7 @@ import LanguageToggle from '../../components/LanguageToggle';
 import { useResponsive } from '../../hooks/useResponsive';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
+import { isTelegramMiniApp } from '../../lib/telegram-webapp';
 
 // ─── Header ──────────────────────────────────────────────────────────────────
 
@@ -110,12 +111,14 @@ export default function TabLayout() {
   const unreadCount = unreadData?.count ?? 0;
 
   const tabBarHeight = 58 + Math.max(insets.bottom, 8);
+  const isTMA = Platform.OS === 'web' && isTelegramMiniApp();
 
   return (
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: '#2E7D32',
         tabBarInactiveTintColor: '#999',
+        headerShown: !isTMA,
         tabBarStyle: Platform.OS === 'web'
           ? {
               borderTopColor: '#eee',

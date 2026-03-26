@@ -1,9 +1,10 @@
-import { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, useWindowDimensions, FlatList } from 'react-native';
+import { useState, useEffect } from 'react';
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, useWindowDimensions, FlatList, Alert } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
+import { useTelegramBackButton } from '../../lib/telegram-webapp';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import TrustBadge from '../../components/TrustBadge';
@@ -40,13 +41,44 @@ export default function ListingDetailScreen() {
   const contentWidth = isMobile ? screenWidth : Math.min(screenWidth, detailMaxWidth);
   const galleryImageWidth = contentWidth - (isMobile ? 0 : 0);
 
+  const queryClient = useQueryClient();
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // In Telegram Mini App, show the native back button so pressing it navigates
+  // back within the app instead of closing the mini app.
+  useEffect(() => useTelegramBackButton(() => router.back()), []);
+
   const { data: listing, isLoading } = useQuery({
     queryKey: ['listing', id],
     queryFn: () => api.getListing(id!),
     enabled: !!id,
   });
 
-  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const handleDelete = () => {
+    Alert.alert(
+      'Delete Listing',
+      'Are you sure you want to delete this listing? This cannot be undone.',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            setIsDeleting(true);
+            try {
+              await api.deleteListing(id!);
+              queryClient.invalidateQueries({ queryKey: ['listings'] });
+              router.back();
+            } catch {
+              Alert.alert('Error', 'Failed to delete listing. Please try again.');
+              setIsDeleting(false);
+            }
+          },
+        },
+      ]
+    );
+  };
 
   if (isLoading) {
     return (
@@ -179,13 +211,26 @@ export default function ListingDetailScreen() {
           )}
 
           {currentUser?.id && listing.user?.id && currentUser.id === listing.user.id && (
-            <TouchableOpacity
-              style={styles.editBtn}
-              onPress={() => router.push(`/listing/edit/${listing.id}`)}
-            >
-              <Ionicons name="create-outline" size={20} color="#2E7D32" />
-              <Text style={styles.editBtnText}>{t('common.edit')} {t('listing.listing') || 'Listing'}</Text>
-            </TouchableOpacity>
+            <>
+              <TouchableOpacity
+                style={styles.editBtn}
+                onPress={() => router.push(`/listing/edit/${listing.id}`)}
+              >
+                <Ionicons name="create-outline" size={20} color="#2E7D32" />
+                <Text style={styles.editBtnText}>{t('common.edit')} {t('listing.listing') || 'Listing'}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.deleteBtn, isDeleting && styles.deleteBtnDisabled]}
+                onPress={handleDelete}
+                disabled={isDeleting}
+              >
+                {isDeleting
+                  ? <ActivityIndicator size="small" color="#D32F2F" />
+                  : <Ionicons name="trash-outline" size={20} color="#D32F2F" />
+                }
+                <Text style={styles.deleteBtnText}>Delete Listing</Text>
+              </TouchableOpacity>
+            </>
           )}
         </View>
       </View>
@@ -380,5 +425,25 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '700',
     color: '#2E7D32',
+  },
+  deleteBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#D32F2F',
+    backgroundColor: '#fff',
+    marginTop: 10,
+  },
+  deleteBtnDisabled: {
+    opacity: 0.5,
+  },
+  deleteBtnText: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#D32F2F',
   },
 });

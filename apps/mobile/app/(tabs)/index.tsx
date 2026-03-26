@@ -176,12 +176,12 @@ export default function HomeScreen() {
         keyExtractor={(item) => item.id}
         numColumns={numColumns}
         renderItem={({ item }) => (
-          <View style={{ flex: 1, margin: cardGutter / 2 }}>
+          <View style={{ flex: 1, margin: cardGutter / 2, alignSelf: 'flex-start' }}>
             <ListingCard listing={item} />
           </View>
         )}
         contentContainerStyle={[styles.list, { paddingHorizontal: cardGutter / 2 }]}
-        columnWrapperStyle={{ paddingHorizontal: cardGutter / 2 }}
+        columnWrapperStyle={{ paddingHorizontal: cardGutter / 2, alignItems: 'flex-start' }}
         ListHeaderComponent={ListHeader}
         refreshControl={
           !isSearching

@@ -91,7 +91,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
+    width: '100%',
     backgroundColor: '#fff',
     borderRadius: 12,
     overflow: 'hidden',
