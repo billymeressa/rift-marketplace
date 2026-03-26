@@ -85,7 +85,7 @@ export default function ProfileScreen() {
     });
   };
 
-  const isAdmin = user?.phone === process.env.EXPO_PUBLIC_ADMIN_PHONE;
+  const isAdmin = user?.role === 'admin' || profile?.role === 'admin';
 
   const handleLogout = () => {
     if (Platform.OS === 'web') {

@@ -42,6 +42,7 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
       phone: user.phone,
       telegramId: user.telegramId ?? null,
       name: user.name,
+      role: user.role ?? 'user',
       preferredLanguage: user.preferredLanguage,
       createdAt: user.createdAt.toISOString(),
     });

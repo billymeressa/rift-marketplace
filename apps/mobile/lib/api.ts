@@ -9,15 +9,33 @@ const API_URL = process.env.EXPO_PUBLIC_API_URL || `http://${DEFAULT_HOST}:3000/
 // ─── Admin API ────────────────────────────────────────────────────────────────
 const ADMIN_KEY = process.env.EXPO_PUBLIC_ADMIN_KEY || '';
 
-async function adminRequest<T>(endpoint: string): Promise<T> {
-  const res = await fetch(`${API_URL}${endpoint}`, {
-    headers: { 'X-Admin-Key': ADMIN_KEY, 'Content-Type': 'application/json' },
-  });
-  if (!res.ok) throw new Error(`Admin request failed: ${res.status}`);
+async function adminRequest<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
+  const token = await getToken();
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...((options.headers as Record<string, string>) || {}),
+  };
+  // Send both admin key and JWT so either form of auth works
+  if (ADMIN_KEY) headers['X-Admin-Key'] = ADMIN_KEY;
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+
+  const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+    throw new Error(err.error || `Admin request failed: ${res.status}`);
+  }
   return res.json();
 }
 
 export const adminApi = {
+  getStats: () =>
+    adminRequest<{
+      totalUsers: number; newUsersToday: number;
+      totalListings: number; activeListings: number;
+      totalOrders: number; pendingVerifications: number;
+      totalConversations: number; activeConversations: number;
+    }>('/admin/stats'),
+
   getConversations: (page = 1, limit = 50) =>
     adminRequest<{ data: any[]; page: number; limit: number }>(
       `/admin/conversations?page=${page}&limit=${limit}`
@@ -26,12 +44,35 @@ export const adminApi = {
     adminRequest<{ conversation: any; messages: any[] }>(
       `/admin/conversations/${id}`
     ),
-  getUsers: (page = 1, limit = 50) =>
+
+  getUsers: (page = 1, limit = 200) =>
     adminRequest<{ data: any[]; page: number; limit: number }>(
       `/admin/users?page=${page}&limit=${limit}`
     ),
   deleteUser: (id: string) =>
     adminRequest<{ message: string }>(`/admin/users/${id}`, { method: 'DELETE' }),
+
+  getListings: (params?: Record<string, string>) => {
+    const q = params ? '?' + new URLSearchParams(params).toString() : '';
+    return adminRequest<{ data: any[]; total: number; page: number; limit: number }>(
+      `/admin/listings${q}`
+    );
+  },
+  updateListingStatus: (id: string, status: 'active' | 'closed') =>
+    adminRequest<{ id: string; status: string }>(`/admin/listings/${id}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+
+  getVerifications: (status = 'pending', page = 1) =>
+    adminRequest<{ data: any[]; page: number; limit: number }>(
+      `/admin/verifications?status=${status}&page=${page}&limit=100`
+    ),
+  reviewVerification: (id: string, status: 'approved' | 'rejected', note?: string) =>
+    adminRequest<any>(`/admin/verifications/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status, note }),
+    }),
 };
 
 // ─── User-facing API ──────────────────────────────────────────────────────────

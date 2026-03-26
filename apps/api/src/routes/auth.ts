@@ -40,8 +40,12 @@ function generateOTP(): string {
   return crypto.randomInt(100000, 999999).toString();
 }
 
-function makeToken(user: { id: string; phone?: string | null }, expiresIn = '30d') {
-  return jwt.sign({ userId: user.id, phone: user.phone ?? null }, process.env.JWT_SECRET!, { expiresIn } as jwt.SignOptions);
+function makeToken(user: { id: string; phone?: string | null; role?: string }, expiresIn = '30d') {
+  return jwt.sign(
+    { userId: user.id, phone: user.phone ?? null, role: user.role ?? 'user' },
+    process.env.JWT_SECRET!,
+    { expiresIn } as jwt.SignOptions
+  );
 }
 
 function publicUser(user: any) {
@@ -50,6 +54,7 @@ function publicUser(user: any) {
     phone: user.phone ?? null,
     telegramId: user.telegramId ?? null,
     name: user.name,
+    role: user.role ?? 'user',
     preferredLanguage: user.preferredLanguage,
     createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
   };
