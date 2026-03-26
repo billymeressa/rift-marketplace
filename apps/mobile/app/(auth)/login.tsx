@@ -422,23 +422,33 @@ export default function AuthScreen() {
         await signIn(result.token, result.user);
       }
     } catch (err: any) {
-      setError(err.message || 'Sign-in failed. Please try again.');
+      if (err.message?.includes('expired')) {
+        setError('Session expired. Please close and reopen the app from Telegram.');
+      } else {
+        setError(err.message || 'Sign-in failed. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   // ── TMA step 2: submit profile details and create account ─────────────────
+  const hasVerifiedPhone = !!(tmaPhone && tmaPhone !== 'shared');
+  const hasManualPhone  = !!phone.trim();
+  const hasPhone        = hasVerifiedPhone || hasManualPhone;
+
   const handleTMAProfileSubmit = async () => {
     if (!name.trim()) { setError('Please enter your full name.'); return; }
+    // Phone is required — either from Telegram native share or manual entry
+    const resolvedPhone = hasVerifiedPhone
+      ? tmaPhone.trim()
+      : hasManualPhone ? `${country.dial}${phone.replace(/^0+/, '')}` : '';
+    if (!resolvedPhone) { setError('Please add your phone number.'); return; }
     setError('');
     setLoading(true);
     try {
       const initData = getTelegramInitData();
-      // If phone was shared via native dialog, pass it. If 'shared' (older API),
-      // the webhook already sent it to the bot — it'll be linked after account creation.
-      const phoneToSend = tmaPhone && tmaPhone !== 'shared' ? tmaPhone.trim() : undefined;
-      const result = await api.telegramMiniAppLogin(initData, name.trim(), phoneToSend);
+      const result = await api.telegramMiniAppLogin(initData, name.trim(), resolvedPhone);
       if (result.token && result.user) {
         await signIn(result.token, result.user);
       }
@@ -626,42 +636,65 @@ export default function AuthScreen() {
                 />
               </View>
 
-              {/* Phone number — native Telegram verification */}
+              {/* Phone number — required */}
               <View style={styles.field}>
-                <Text style={styles.label}>Phone Number</Text>
-                {tmaPhone ? (
+                <Text style={styles.label}>Phone Number *</Text>
+                {tmaPhone && tmaPhone !== 'shared' ? (
                   <View style={styles.phoneVerified}>
                     <Ionicons name="checkmark-circle" size={20} color="#2E7D32" />
                     <Text style={styles.phoneVerifiedText}>{tmaPhone}</Text>
+                    <TouchableOpacity onPress={() => setTmaPhone('')} style={{ marginLeft: 'auto' }}>
+                      <Ionicons name="close-circle-outline" size={18} color="#999" />
+                    </TouchableOpacity>
                   </View>
                 ) : (
-                  <TouchableOpacity
-                    style={styles.sharePhoneBtn}
-                    onPress={async () => {
-                      const phone = await requestContact();
-                      if (phone && phone !== 'shared') {
-                        setTmaPhone(phone);
-                      } else if (phone === 'shared') {
-                        // Older API: phone was shared via webhook but not returned directly.
-                        // The webhook will link it after account creation.
-                        setTmaPhone('shared');
-                      }
-                    }}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="phone-portrait-outline" size={20} color="#2AABEE" />
-                    <Text style={styles.sharePhoneBtnText}>Verify Phone Number</Text>
-                    <Ionicons name="shield-checkmark-outline" size={16} color="#2E7D32" style={{ marginLeft: 'auto' }} />
-                  </TouchableOpacity>
+                  <>
+                    <TouchableOpacity
+                      style={styles.sharePhoneBtn}
+                      onPress={async () => {
+                        const result = await requestContact();
+                        if (result && result !== 'shared') {
+                          setTmaPhone(result);
+                        }
+                        // 'shared' means phone went via webhook — we can't use it directly,
+                        // so treat it as no phone and let the user enter manually.
+                      }}
+                      activeOpacity={0.7}
+                    >
+                      <Ionicons name="phone-portrait-outline" size={20} color="#2AABEE" />
+                      <Text style={styles.sharePhoneBtnText}>Share via Telegram</Text>
+                      <Ionicons name="shield-checkmark-outline" size={16} color="#2E7D32" style={{ marginLeft: 'auto' }} />
+                    </TouchableOpacity>
+                    <Text style={styles.orDivider}>— or enter manually —</Text>
+                    <View style={styles.phoneRow}>
+                      <TouchableOpacity
+                        style={styles.countryBtn}
+                        onPress={() => setShowPicker(true)}
+                      >
+                        <Text style={styles.countryFlag}>{country.flag}</Text>
+                        <Text style={styles.countryDial}>{country.dial}</Text>
+                        <Ionicons name="chevron-down" size={14} color="#666" />
+                      </TouchableOpacity>
+                      <TextInput
+                        style={styles.phoneInput}
+                        value={phone}
+                        onChangeText={(v) => { setPhone(cleanPhoneInput(v, country)); setError(''); }}
+                        placeholder={country.example}
+                        placeholderTextColor="#999"
+                        keyboardType="phone-pad"
+                        returnKeyType="next"
+                      />
+                    </View>
+                  </>
                 )}
               </View>
 
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
               <TouchableOpacity
-                style={[styles.telegramSocialBtn, (!name.trim() || loading) && styles.buttonDisabled]}
+                style={[styles.telegramSocialBtn, (!name.trim() || !hasPhone || loading) && styles.buttonDisabled]}
                 onPress={handleTMAProfileSubmit}
-                disabled={!name.trim() || loading}
+                disabled={!name.trim() || !hasPhone || loading}
                 activeOpacity={0.85}
               >
                 {loading ? (
@@ -1016,5 +1049,11 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
     color: '#2E7D32',
+  },
+  orDivider: {
+    fontSize: 12,
+    color: '#aaa',
+    textAlign: 'center',
+    marginVertical: 10,
   },
 });

@@ -2,7 +2,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { PRODUCT_LABELS, REGION_LABELS, CONDITION_LABELS } from '../lib/options';
+import { REGION_LABELS, buildListingTitle } from '../lib/options';
 
 interface ListingCardProps {
   listing: any;
@@ -22,7 +22,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
   const router = useRouter();
   const lang = i18n.language as 'en' | 'am' | 'om';
 
-  const productLabel = PRODUCT_LABELS[listing.productCategory]?.[lang] || listing.productCategory;
+  const listingTitle = buildListingTitle(listing, lang);
   const regionLabel  = listing.region ? (REGION_LABELS[listing.region]?.[lang] || listing.region) : null;
 
   const images: string[] = listing.images || [];
@@ -37,9 +37,9 @@ export default function ListingCard({ listing }: ListingCardProps) {
     ? `${listing.currency === 'USD' ? '$' : ''}${Number(listing.price).toLocaleString()}${listing.currency === 'ETB' ? ' ETB' : ''}`
     : null;
 
+  // Grade is now part of the title — meta shows region + quantity only
   const metaParts: string[] = [];
   if (regionLabel)                      metaParts.push(regionLabel);
-  if (listing.grade)                    metaParts.push(`G${listing.grade}`);
   if (listing.quantity && listing.unit) metaParts.push(`${Number(listing.quantity).toLocaleString()} ${listing.unit}`);
   const metaLine = metaParts.join('  ·  ');
 
@@ -72,7 +72,7 @@ export default function ListingCard({ listing }: ListingCardProps) {
 
       {/* Body */}
       <View style={styles.body}>
-        <Text style={styles.product} numberOfLines={2}>{productLabel}</Text>
+        <Text style={styles.product} numberOfLines={2}>{listingTitle}</Text>
 
         {priceStr ? (
           <Text style={styles.price} numberOfLines={1}>{priceStr}</Text>
@@ -84,12 +84,6 @@ export default function ListingCard({ listing }: ListingCardProps) {
           <Text style={styles.meta} numberOfLines={1}>{metaLine}</Text>
         )}
 
-        {listing.user?.name && (
-          <View style={styles.sellerRow}>
-            <Ionicons name="person-outline" size={10} color="#ccc" />
-            <Text style={styles.sellerName} numberOfLines={1}>{listing.user.name}</Text>
-          </View>
-        )}
       </View>
     </TouchableOpacity>
   );
@@ -177,19 +171,5 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#999',
     marginTop: 1,
-  },
-  sellerRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 3,
-    marginTop: 5,
-    paddingTop: 5,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: '#f0f0f0',
-  },
-  sellerName: {
-    fontSize: 11,
-    color: '#bbb',
-    flex: 1,
   },
 });

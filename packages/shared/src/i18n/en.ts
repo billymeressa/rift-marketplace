@@ -84,8 +84,6 @@ export const en = {
     name: 'Name',
     nameHint: 'Your display name',
     phone: 'Phone',
-    telegramUsername: 'Telegram Username',
-    telegramHint: '@username',
     language: 'Language',
     logout: 'Logout',
     logoutConfirm: 'Are you sure you want to logout?',

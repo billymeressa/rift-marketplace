@@ -62,7 +62,6 @@ export interface ListingUser {
   id: string;
   name: string;
   phone: string;
-  telegramUsername?: string;
 }
 
 export interface ListingFilters {

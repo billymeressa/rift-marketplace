@@ -2,7 +2,6 @@ export interface User {
   id: string;
   phone: string;
   name: string;
-  telegramUsername?: string;
   preferredLanguage: 'en' | 'am';
   createdAt: string;
 }
@@ -23,6 +22,5 @@ export interface AuthResponse {
 
 export interface UpdateProfileInput {
   name?: string;
-  telegramUsername?: string;
   preferredLanguage?: 'en' | 'am';
 }

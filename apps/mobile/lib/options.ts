@@ -149,6 +149,71 @@ export const PRODUCT_LABELS  = buildLabelMap(PRODUCT_OPTIONS);
 export const REGION_LABELS   = buildLabelMap(REGION_OPTIONS);
 export const CONDITION_LABELS = buildLabelMap(CONDITION_OPTIONS);
 
+// ─── Listing title builder ────────────────────────────────────────────────────
+// Produces a descriptive, human-readable title from the structured listing fields.
+// Formula: [G{n}] [{Condition}] [{Product}][ — {Region}]
+// Examples:
+//   G1 Washed Coffee — Sidama
+//   Organic Sesame — Tigray
+//   Natural Honey — Amhara
+//   Cattle — Oromia
+
+// Short English labels for conditions that have long display strings
+const CONDITION_SHORT_EN: Record<string, string> = {
+  natural:   'Natural',
+  honey:     'Honey',
+  raw:       'Raw',
+  processed: 'Processed',
+  washed:    'Washed',
+  organic:   'Organic',
+  fresh:     'Fresh',
+  dried:     'Dried',
+};
+
+export function buildListingTitle(
+  listing: {
+    productCategory?: string | null;
+    grade?: number | null;
+    process?: string | null;
+    region?: string | null;
+  },
+  lang: 'en' | 'am' | 'om' = 'en',
+  opts: { includeRegion?: boolean } = {},
+): string {
+  const { includeRegion = false } = opts;
+  const category = listing.productCategory ?? '';
+  const product  = PRODUCT_LABELS[category]?.[lang] ?? category;
+  const profile  = getProductProfile(category);
+  const parts: string[] = [];
+
+  // Grade prefix — only for product types that support grading
+  if (profile.showGrade && listing.grade) {
+    parts.push(`G${listing.grade}`);
+  }
+
+  // Condition/process — 'raw' is the silent default, skip it
+  if (listing.process && listing.process !== 'raw' && profile.conditions.length > 0) {
+    const condOpt = profile.conditions.find(c => c.value === listing.process);
+    if (condOpt) {
+      const label = lang === 'en'
+        ? (CONDITION_SHORT_EN[listing.process] ?? condOpt.en)
+        : condOpt[lang];
+      parts.push(label);
+    }
+  }
+
+  parts.push(product);
+
+  let title = parts.join(' ');
+
+  if (includeRegion && listing.region) {
+    const regionLabel = REGION_LABELS[listing.region]?.[lang];
+    if (regionLabel) title += ` — ${regionLabel}`;
+  }
+
+  return title || product;
+}
+
 // Normalize user input to a consistent key: lowercase, spaces → underscores, trim
 export function normalizeValue(input: string): string {
   return input.trim().toLowerCase().replace(/[\s-]+/g, '_').replace(/[^a-z0-9_]/g, '');

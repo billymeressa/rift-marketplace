@@ -1,7 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, StyleSheet,
-  ActivityIndicator, KeyboardAvoidingView, Platform,
+  ActivityIndicator, KeyboardAvoidingView, Platform, Animated,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -12,6 +12,15 @@ import { useAuth } from '../../lib/auth';
 
 function formatMessageTime(dateStr: string): string {
   return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+// Detects phone numbers in a message:
+//   Ethiopian local  — 09xx or 07xx followed by 7 digits (spaces/dashes allowed)
+//   International    — + then 9–15 digits (spaces/dashes allowed)
+function containsPhoneNumber(text: string): boolean {
+  const ethiopianLocal  = /\b0[79]\d[\s\-]?\d{3}[\s\-]?\d{3,4}\b/;
+  const international   = /\+\d[\d\s\-]{8,14}\d/;
+  return ethiopianLocal.test(text) || international.test(text);
 }
 
 function formatDateHeader(dateStr: string): string {
@@ -32,6 +41,28 @@ export default function ChatScreen() {
   const flatListRef = useRef<FlatList>(null);
 
   const [inputText, setInputText] = useState('');
+  const [phoneWarningVisible, setPhoneWarningVisible] = useState(false);
+  const warningHeight = useRef(new Animated.Value(0)).current;
+  const warningOpacity = useRef(new Animated.Value(0)).current;
+
+  // Animate warning banner in/out when phone number is detected in draft
+  useEffect(() => {
+    const detected = containsPhoneNumber(inputText);
+    if (detected === phoneWarningVisible) return;
+    setPhoneWarningVisible(detected);
+    Animated.parallel([
+      Animated.spring(warningHeight, {
+        toValue: detected ? 1 : 0,
+        useNativeDriver: false,
+        bounciness: 4,
+      }),
+      Animated.timing(warningOpacity, {
+        toValue: detected ? 1 : 0,
+        duration: 200,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [inputText]);
 
   // Fetch messages
   const { data, isLoading } = useQuery({
@@ -170,6 +201,42 @@ export default function ChatScreen() {
             </View>
           }
         />
+
+        {/* Phone-number warning banner */}
+        <Animated.View
+          style={[
+            styles.phoneWarning,
+            {
+              opacity: warningOpacity,
+              maxHeight: warningHeight.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, 120],
+              }),
+            },
+          ]}
+          pointerEvents={phoneWarningVisible ? 'auto' : 'none'}
+        >
+          <View style={styles.phoneWarningInner}>
+            <Ionicons name="shield-checkmark-outline" size={18} color="#E65100" style={{ marginTop: 1 }} />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.phoneWarningTitle}>Keep your deal safe</Text>
+              <Text style={styles.phoneWarningBody}>
+                Share contact details only after confirming an order on the app.
+              </Text>
+            </View>
+          </View>
+          {conversation?.listingId && (
+            <TouchableOpacity
+              style={styles.phoneWarningCta}
+              onPress={() => router.push(`/order/create?listingId=${conversation.listingId}`)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="cart-outline" size={14} color="#E65100" />
+              <Text style={styles.phoneWarningCtaText}>Start an order instead</Text>
+              <Ionicons name="chevron-forward" size={14} color="#E65100" />
+            </TouchableOpacity>
+          )}
+        </Animated.View>
 
         {/* Input bar */}
         <View style={styles.inputBar}>
@@ -326,6 +393,49 @@ const styles = StyleSheet.create({
   },
   sendBtnDisabled: {
     backgroundColor: '#A5D6A7',
+  },
+  phoneWarning: {
+    overflow: 'hidden',
+    backgroundColor: '#FFF3E0',
+    borderTopWidth: 1,
+    borderTopColor: '#FFE0B2',
+    paddingHorizontal: 14,
+    paddingTop: 10,
+    paddingBottom: 4,
+  },
+  phoneWarningInner: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: 8,
+  },
+  phoneWarningTitle: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#E65100',
+    marginBottom: 2,
+  },
+  phoneWarningBody: {
+    fontSize: 12,
+    color: '#BF360C',
+    lineHeight: 17,
+  },
+  phoneWarningCta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    alignSelf: 'flex-start',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#FFCC80',
+    marginBottom: 8,
+  },
+  phoneWarningCtaText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#E65100',
   },
   emptyChat: {
     alignItems: 'center',

@@ -2,7 +2,7 @@ import { pgTable, uuid, varchar, text, smallint, decimal, timestamp, jsonb, uniq
 
 export const otpCodes = pgTable('otp_codes', {
   id: uuid('id').primaryKey().defaultRandom(),
-  phone: varchar('phone', { length: 15 }).notNull(),
+  phone: varchar('phone', { length: 20 }).notNull(),
   code: varchar('code', { length: 6 }).notNull(),
   purpose: varchar('purpose', { length: 20 }).notNull(), // 'auth'
   session: varchar('session', { length: 50 }),
@@ -13,7 +13,7 @@ export const otpCodes = pgTable('otp_codes', {
 
 export const users = pgTable('users', {
   id: uuid('id').primaryKey().defaultRandom(),
-  phone: varchar('phone', { length: 15 }).unique(),                // nullable — TMA users may have no phone
+  phone: varchar('phone', { length: 20 }).unique(),                // nullable — TMA users may have no phone
   telegramId: varchar('telegram_id', { length: 30 }).unique(),     // Telegram user ID (TMA auth)
   name: varchar('name', { length: 100 }).notNull().default(''),
   telegramUsername: varchar('telegram_username', { length: 50 }),
@@ -33,7 +33,7 @@ export const listings = pgTable('listings', {
   description: text('description'),
   region: varchar('region', { length: 50 }),
   grade: smallint('grade'),
-  process: varchar('process', { length: 10 }),
+  process: varchar('process', { length: 30 }),
   transactionType: varchar('transaction_type', { length: 12 }),
   quantity: decimal('quantity'),
   unit: varchar('unit', { length: 15 }),

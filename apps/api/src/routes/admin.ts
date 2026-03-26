@@ -159,7 +159,6 @@ router.get('/users', async (req, res) => {
     const rows = await db
       .select({
         id: users.id, name: users.name, phone: users.phone,
-        telegramUsername: users.telegramUsername,
         preferredLanguage: users.preferredLanguage,
         createdAt: users.createdAt,
       })

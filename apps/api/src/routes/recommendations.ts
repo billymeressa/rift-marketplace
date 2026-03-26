@@ -87,7 +87,6 @@ router.get('/', authMiddleware, async (req: AuthRequest, res) => {
         updatedAt: listings.updatedAt,
         userName: users.name,
         userPhone: users.phone,
-        userTelegram: users.telegramUsername,
       })
       .from(listings)
       .leftJoin(users, eq(listings.userId, users.id))
@@ -159,7 +158,6 @@ router.get('/', authMiddleware, async (req: AuthRequest, res) => {
           id: item.userId,
           name: item.userName,
           phone: item.userPhone,
-          telegramUsername: item.userTelegram,
         },
       })),
     });

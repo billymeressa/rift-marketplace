@@ -55,7 +55,7 @@ export default function MessagesScreen() {
         <View style={styles.itemContent}>
           <View style={styles.itemHeader}>
             <Text style={[styles.userName, isUnread && styles.unreadText]} numberOfLines={1}>
-              {item.otherUser?.name || item.otherUser?.phone}
+              {item.otherUser?.name || 'Seller'}
             </Text>
             <Text style={[styles.timeText, isUnread && styles.unreadTime]}>
               {item.lastMessage ? formatTime(item.lastMessage.createdAt) : ''}

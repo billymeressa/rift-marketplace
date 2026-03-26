@@ -69,11 +69,9 @@ export default function MessageComposeScreen() {
           {listing?.user && (
             <View style={styles.recipientRow}>
               <View style={styles.recipientAvatar}>
-                <Text style={styles.recipientAvatarText}>
-                  {(listing.user.name || '?')[0].toUpperCase()}
-                </Text>
+                <Text style={styles.recipientAvatarText}>S</Text>
               </View>
-              <Text style={styles.recipientName}>{listing.user.name || listing.user.phone}</Text>
+              <Text style={styles.recipientName}>Seller</Text>
             </View>
           )}
 

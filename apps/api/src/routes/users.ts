@@ -2,15 +2,25 @@ import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/client.js';
 import { users, listings, orders, reviews, sellerVerifications } from '../db/schema.js';
-import { eq, desc, and, sql } from 'drizzle-orm';
+import { eq, desc, and, sql, ne } from 'drizzle-orm';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
 
 const router = Router();
 
+function normalizePhone(phone: string): string {
+  let p = phone.replace(/[\s\-()]/g, '');
+  if (p.startsWith('0') && !p.startsWith('00') && !p.startsWith('+')) {
+    p = '+251' + p.slice(1);
+  } else if (!p.startsWith('+')) {
+    p = '+' + p;
+  }
+  return p;
+}
+
 const updateProfileSchema = z.object({
   name: z.string().min(1).max(100).optional(),
-  telegramUsername: z.string().max(50).optional(),
-  preferredLanguage: z.enum(['en', 'am']).optional(),
+  phone: z.string().min(7).max(16).optional(),
+  preferredLanguage: z.enum(['en', 'am', 'om']).optional(),
 });
 
 // GET /users/me
@@ -30,8 +40,8 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
     res.json({
       id: user.id,
       phone: user.phone,
+      telegramId: user.telegramId ?? null,
       name: user.name,
-      telegramUsername: user.telegramUsername,
       preferredLanguage: user.preferredLanguage,
       createdAt: user.createdAt.toISOString(),
     });
@@ -44,11 +54,32 @@ router.get('/me', authMiddleware, async (req: AuthRequest, res) => {
 // PUT /users/me
 router.put('/me', authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const data = updateProfileSchema.parse(req.body);
+    const { phone: rawPhone, ...rest } = updateProfileSchema.parse(req.body);
+
+    const updateData: Record<string, any> = { ...rest };
+
+    if (rawPhone !== undefined) {
+      const normalized = normalizePhone(rawPhone);
+      if (!/^\+[1-9]\d{6,14}$/.test(normalized)) {
+        res.status(400).json({ error: 'Invalid phone number format' });
+        return;
+      }
+      // Check uniqueness — exclude current user
+      const [conflict] = await db
+        .select({ id: users.id })
+        .from(users)
+        .where(and(eq(users.phone, normalized), ne(users.id, req.userId!)))
+        .limit(1);
+      if (conflict) {
+        res.status(409).json({ error: 'This phone number is already in use.' });
+        return;
+      }
+      updateData.phone = normalized;
+    }
 
     const [user] = await db
       .update(users)
-      .set(data)
+      .set(updateData)
       .where(eq(users.id, req.userId!))
       .returning();
 
@@ -56,7 +87,6 @@ router.put('/me', authMiddleware, async (req: AuthRequest, res) => {
       id: user.id,
       phone: user.phone,
       name: user.name,
-      telegramUsername: user.telegramUsername,
       preferredLanguage: user.preferredLanguage,
       createdAt: user.createdAt.toISOString(),
     });

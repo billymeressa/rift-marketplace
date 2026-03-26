@@ -93,7 +93,6 @@ router.get('/', async (req, res) => {
           updatedAt: listings.updatedAt,
           userName: users.name,
           userPhone: users.phone,
-          userTelegram: users.telegramUsername,
         })
         .from(listings)
         .leftJoin(users, eq(listings.userId, users.id))
@@ -120,7 +119,6 @@ router.get('/', async (req, res) => {
           id: item.userId,
           name: item.userName,
           phone: item.userPhone,
-          telegramUsername: item.userTelegram,
         },
       })),
       page,
@@ -196,12 +194,36 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
     const data = createListingSchema.parse(req.body);
 
     const autoTitle = data.title || (() => {
+      // Readable English labels for the stored title (used in chat context + search)
+      const CONDITION_SHORT: Record<string, string> = {
+        washed: 'Washed', natural: 'Natural', honey: 'Honey',
+        organic: 'Organic', processed: 'Processed', fresh: 'Fresh', dried: 'Dried',
+      };
+      const REGION_EN: Record<string, string> = {
+        addis_ababa: 'Addis Ababa', oromia: 'Oromia', amhara: 'Amhara',
+        snnpr: 'South Ethiopia', tigray: 'Tigray', somali: 'Somali',
+        afar: 'Afar', benishangul: 'Benishangul-Gumuz', gambela: 'Gambela',
+        harari: 'Harari', dire_dawa: 'Dire Dawa', sidama: 'Sidama',
+        south_west: 'South West Ethiopia', central: 'Central Ethiopia',
+      };
+      // Convert snake_case product key to Title Case (e.g. green_coffee → Green Coffee)
+      const productName = data.productCategory
+        .replace(/_/g, ' ')
+        .replace(/\b\w/g, (c: string) => c.toUpperCase());
+
       const parts: string[] = [];
       if (data.grade) parts.push(`G${data.grade}`);
-      parts.push(data.productCategory);
-      if (data.quantity && data.unit) parts.push(`${data.quantity} ${data.unit}`);
-      if (data.region) parts.push(data.region);
-      return (data.type === 'sell' ? 'Selling: ' : 'Buying: ') + parts.join(' · ');
+      if (data.process && data.process !== 'raw' && CONDITION_SHORT[data.process]) {
+        parts.push(CONDITION_SHORT[data.process]);
+      }
+      parts.push(productName);
+
+      let title = parts.join(' ');
+      if (data.region) {
+        const region = REGION_EN[data.region] ?? data.region.replace(/_/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+        title += ` — ${region}`;
+      }
+      return title;
     })();
 
     const [listing] = await db

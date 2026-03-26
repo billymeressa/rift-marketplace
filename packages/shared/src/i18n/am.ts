@@ -86,8 +86,6 @@ export const am: TranslationKeys = {
     name: 'ስም',
     nameHint: 'የሚታየው ስምዎ',
     phone: 'ስልክ',
-    telegramUsername: 'የቴሌግራም ስም',
-    telegramHint: '@username',
     language: 'ቋንቋ',
     logout: 'ውጣ',
     logoutConfirm: 'መውጣት እንደሚፈልጉ እርግጠኛ ነዎት?',

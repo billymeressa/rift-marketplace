@@ -18,7 +18,7 @@ export default function ProfileScreen() {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
-  const [telegram, setTelegram] = useState('');
+  const [phone, setPhone] = useState('');
 
   const { data: profile } = useQuery({
     queryKey: ['profile'],
@@ -39,7 +39,7 @@ export default function ProfileScreen() {
   useEffect(() => {
     if (profile) {
       setName(profile.name || '');
-      setTelegram(profile.telegramUsername || '');
+      setPhone(profile.phone || '');
     }
   }, [profile]);
 
@@ -57,7 +57,7 @@ export default function ProfileScreen() {
   const handleSave = () => {
     updateMutation.mutate({
       name: name.trim(),
-      telegramUsername: telegram.trim() || undefined,
+      phone: phone.trim() || undefined,
     });
   };
 
@@ -152,13 +152,14 @@ export default function ProfileScreen() {
                 placeholder={t('profile.nameHint')}
                 placeholderTextColor="#999"
               />
-              <Text style={styles.label}>{t('profile.telegramUsername')}</Text>
+              <Text style={styles.label}>Phone Number</Text>
               <TextInput
                 style={styles.input}
-                value={telegram}
-                onChangeText={setTelegram}
-                placeholder={t('profile.telegramHint')}
+                value={phone}
+                onChangeText={setPhone}
+                placeholder="+251911234567"
                 placeholderTextColor="#999"
+                keyboardType="phone-pad"
                 autoCapitalize="none"
               />
               <View style={styles.editActions}>
@@ -174,10 +175,6 @@ export default function ProfileScreen() {
             <>
               <Text style={styles.name}>{profile?.name || t('profile.name')}</Text>
               <Text style={styles.phone}>{profile?.phone}</Text>
-              {profile?.telegramUsername && (
-                <Text style={styles.telegram}>@{profile.telegramUsername}</Text>
-              )}
-
               {user?.id && (
                 <View style={styles.trustSection}>
                   <TrustBadge userId={user.id} size="large" />

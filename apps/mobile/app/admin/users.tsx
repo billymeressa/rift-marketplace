@@ -77,7 +77,6 @@ export default function AdminUsers() {
                 <Text style={styles.phone}>{user.phone}</Text>
                 <Text style={styles.meta}>
                   Joined {formatDate(user.createdAt)}
-                  {user.telegramUsername ? `  ·  @${user.telegramUsername}` : ''}
                   {user.preferredLanguage ? `  ·  ${user.preferredLanguage.toUpperCase()}` : ''}
                 </Text>
               </View>

@@ -49,7 +49,6 @@ function publicUser(user: any) {
     id: user.id,
     phone: user.phone ?? null,
     telegramId: user.telegramId ?? null,
-    telegramUsername: user.telegramUsername ?? null,
     name: user.name,
     preferredLanguage: user.preferredLanguage,
     createdAt: user.createdAt instanceof Date ? user.createdAt.toISOString() : user.createdAt,
@@ -294,32 +293,54 @@ router.post('/telegram-mini-app', async (req, res) => {
 
       const normalizedPhone = phone?.trim() ? normalizePhone(phone.trim()) : null;
 
-      // Check if phone is already used by a different account
+      if (normalizedPhone && !isValidInternationalPhone(normalizedPhone)) {
+        res.status(400).json({ error: 'Invalid phone number format. Please check and try again.' });
+        return;
+      }
+
+      // Check if phone is already used by another account
       if (normalizedPhone) {
-        const [phoneConflict] = await db.select({ id: users.id }).from(users)
-          .where(eq(users.phone, normalizedPhone)).limit(1);
+        const [phoneConflict] = await db
+          .select({ id: users.id, telegramId: users.telegramId })
+          .from(users)
+          .where(eq(users.phone, normalizedPhone))
+          .limit(1);
+
         if (phoneConflict) {
-          res.status(409).json({ error: 'This phone number is already linked to another account. Leave it blank or use a different number.' });
+          if (phoneConflict.telegramId && phoneConflict.telegramId !== telegramId) {
+            // Phone is owned by a completely different Telegram user — hard conflict
+            res.status(409).json({ error: 'This phone number is already linked to another account. Leave it blank or use a different number.' });
+            return;
+          }
+              // Either: (a) OTP-only account with no Telegram ID, or
+          //         (b) same Telegram ID (delete didn't fully clean up).
+          // In both cases, link/update this Telegram identity to the existing account.
+          [userRow] = await db
+            .update(users)
+            .set({
+              telegramId,
+              name: name.trim(),
+              preferredLanguage: preferredLang,
+            })
+            .where(eq(users.id, phoneConflict.id))
+            .returning();
+          res.json({ token: makeToken(userRow), user: publicUser(userRow) });
           return;
         }
+      }
+
+      // Phone is required for new accounts
+      if (!normalizedPhone) {
+        res.status(400).json({ error: 'Phone number is required to create an account.' });
+        return;
       }
 
       [userRow] = await db.insert(users).values({
         telegramId,
         name: name.trim(),
         phone: normalizedPhone,
-        telegramUsername: tgUser.username ?? null,
         preferredLanguage: preferredLang,
       }).returning();
-    } else {
-      // Returning user — update telegramUsername if it changed
-      if (!userRow.telegramUsername && tgUser.username) {
-        [userRow] = await db
-          .update(users)
-          .set({ telegramUsername: tgUser.username })
-          .where(eq(users.id, userRow.id))
-          .returning();
-      }
     }
 
     res.json({ token: makeToken(userRow), user: publicUser(userRow) });
@@ -351,43 +372,57 @@ router.delete('/account', authMiddleware, async (req: AuthRequest, res) => {
       return;
     }
 
-    // Delete in FK-safe order:
+    // Delete everything in a transaction so it's all-or-nothing
+    await db.transaction(async (tx) => {
+      // 1. Find all listing IDs owned by this user
+      const userListings = await tx
+        .select({ id: listings.id })
+        .from(listings)
+        .where(eq(listings.userId, userId));
+      const listingIds = userListings.map((l) => l.id);
 
-    // 1. Messages in conversations the user is part of
-    const userConversations = await db
-      .select({ id: conversations.id })
-      .from(conversations)
-      .where(or(eq(conversations.buyerId, userId), eq(conversations.sellerId, userId)));
+      // 2. Find conversations where user is participant OR conversation references user's listings
+      const userConversations = await tx
+        .select({ id: conversations.id })
+        .from(conversations)
+        .where(
+          or(
+            eq(conversations.buyerId, userId),
+            eq(conversations.sellerId, userId),
+            ...(listingIds.length > 0 ? [inArray(conversations.listingId, listingIds)] : [])
+          )
+        );
 
-    if (userConversations.length > 0) {
-      const convIds = userConversations.map((c) => c.id);
-      await db.delete(messages).where(inArray(messages.conversationId, convIds));
-      await db.delete(conversations).where(inArray(conversations.id, convIds));
-    }
+      if (userConversations.length > 0) {
+        const convIds = userConversations.map((c) => c.id);
+        await tx.delete(messages).where(inArray(messages.conversationId, convIds));
+        await tx.delete(conversations).where(inArray(conversations.id, convIds));
+      }
 
-    // 2. Reviews written by or about the user
-    await db.delete(reviews).where(
-      or(eq(reviews.reviewerId, userId), eq(reviews.revieweeId, userId))
-    );
+      // 3. Reviews written by or about the user (must precede orders due to reviews.orderId FK)
+      await tx.delete(reviews).where(
+        or(eq(reviews.reviewerId, userId), eq(reviews.revieweeId, userId))
+      );
 
-    // 3. Orders as buyer or seller
-    await db.delete(orders).where(
-      or(eq(orders.buyerId, userId), eq(orders.sellerId, userId))
-    );
+      // 4. Orders as buyer or seller
+      await tx.delete(orders).where(
+        or(eq(orders.buyerId, userId), eq(orders.sellerId, userId))
+      );
 
-    // 4. Listings
-    await db.delete(listings).where(eq(listings.userId, userId));
+      // 5. Listings
+      await tx.delete(listings).where(eq(listings.userId, userId));
 
-    // 5. Ancillary records
-    await db.delete(depositVerifications).where(eq(depositVerifications.userId, userId));
-    await db.delete(sellerVerifications).where(eq(sellerVerifications.userId, userId));
-    await db.delete(feedback).where(eq(feedback.userId, userId));
-    if (user.phone) {
-      await db.delete(otpCodes).where(eq(otpCodes.phone, user.phone));
-    }
+      // 6. Ancillary records
+      await tx.delete(depositVerifications).where(eq(depositVerifications.userId, userId));
+      await tx.delete(sellerVerifications).where(eq(sellerVerifications.userId, userId));
+      await tx.delete(feedback).where(eq(feedback.userId, userId));
+      if (user.phone) {
+        await tx.delete(otpCodes).where(eq(otpCodes.phone, user.phone));
+      }
 
-    // 6. Finally, the user row itself
-    await db.delete(users).where(eq(users.id, userId));
+      // 7. Finally, the user row itself
+      await tx.delete(users).where(eq(users.id, userId));
+    });
 
     res.json({ message: 'Account permanently deleted' });
   } catch (err) {

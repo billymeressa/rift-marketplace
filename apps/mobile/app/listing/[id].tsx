@@ -10,7 +10,7 @@ import TrustBadge from '../../components/TrustBadge';
 import { useResponsive } from '../../hooks/useResponsive';
 import {
   PRODUCT_LABELS, REGION_LABELS, CONDITION_LABELS,
-  buildLabelMap, TRANSACTION_OPTIONS, prettifyValue,
+  buildLabelMap, TRANSACTION_OPTIONS, prettifyValue, buildListingTitle,
 } from '../../lib/options';
 
 const TRANSACTION_LABELS = buildLabelMap(TRANSACTION_OPTIONS);
@@ -113,7 +113,9 @@ export default function ListingDetailScreen() {
             </Text>
           </View>
 
-          <Text style={styles.title}>{listing.title}</Text>
+          <Text style={styles.title}>
+            {buildListingTitle(listing, lang, { includeRegion: true })}
+          </Text>
 
           <View style={styles.metaGrid}>
             <DetailRow label={t('listing.product')} value={getLabel('product', listing.productCategory, lang)} />
@@ -139,31 +141,20 @@ export default function ListingDetailScreen() {
 
           <View style={styles.posterSection}>
             <View style={styles.posterAvatar}>
-              <Text style={styles.posterAvatarText}>
-                {(listing.user?.name || '?')[0].toUpperCase()}
-              </Text>
+              <Ionicons name="storefront-outline" size={22} color="#fff" />
             </View>
             <View style={{ flex: 1 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Text style={styles.posterName}>{listing.user?.name || t('listing.postedBy')}</Text>
+                <Text style={styles.posterName}>Seller</Text>
                 {listing.user?.id && <TrustBadge userId={listing.user.id} />}
               </View>
               <Text style={styles.posterDate}>
-                {new Date(listing.createdAt).toLocaleDateString()}
+                Posted {new Date(listing.createdAt).toLocaleDateString()}
               </Text>
             </View>
           </View>
 
-          {currentUser?.id && listing.user?.id && currentUser.id !== listing.user.id && (
-            <TouchableOpacity
-              style={styles.messageBtn}
-              onPress={() => router.push(`/message-compose?listingId=${listing.id}&sellerId=${listing.user.id}`)}
-            >
-              <Ionicons name="chatbubble-ellipses-outline" size={20} color="#fff" />
-              <Text style={styles.messageBtnText}>{t('messages.sendMessage')}</Text>
-            </TouchableOpacity>
-          )}
-
+          {/* Order / offer is the primary CTA */}
           {currentUser?.id && listing.user?.id && currentUser.id !== listing.user.id && (
             <TouchableOpacity
               style={styles.orderBtn}
@@ -173,6 +164,17 @@ export default function ListingDetailScreen() {
               <Text style={styles.orderBtnText}>
                 {isBuy ? t('order.makeOffer') : t('order.createOrder')}
               </Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Message is secondary */}
+          {currentUser?.id && listing.user?.id && currentUser.id !== listing.user.id && (
+            <TouchableOpacity
+              style={styles.messageBtn}
+              onPress={() => router.push(`/message-compose?listingId=${listing.id}&sellerId=${listing.user.id}`)}
+            >
+              <Ionicons name="chatbubble-ellipses-outline" size={20} color="#2E7D32" />
+              <Text style={styles.messageBtnText}>{t('messages.sendMessage')}</Text>
             </TouchableOpacity>
           )}
 
@@ -348,16 +350,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#2E7D32',
+    backgroundColor: '#fff',
     gap: 8,
     paddingVertical: 16,
     borderRadius: 12,
-    backgroundColor: '#2E7D32',
+    marginTop: 10,
     marginBottom: 12,
   },
   messageBtnText: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#fff',
+    color: '#2E7D32',
   },
   editBtn: {
     flexDirection: 'row',

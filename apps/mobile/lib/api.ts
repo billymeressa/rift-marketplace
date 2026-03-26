@@ -35,6 +35,7 @@ export const adminApi = {
 // ─── User-facing API ──────────────────────────────────────────────────────────
 // Global sign-out callback registered by the auth provider
 let _onUnauthorized: (() => void) | null = null;
+let _isSigningOut = false;
 export function setUnauthorizedHandler(handler: () => void) {
   _onUnauthorized = handler;
 }
@@ -60,10 +61,13 @@ export async function apiRequest<T>(
 
   if (!response.ok) {
     // Expired/invalid token — sign out so the app redirects to login
-    if (response.status === 401) {
+    if (response.status === 401 && !_isSigningOut) {
+      _isSigningOut = true;
       await removeToken();
       await removeUser();
       _onUnauthorized?.();
+      // Reset after a short delay to allow re-auth
+      setTimeout(() => { _isSigningOut = false; }, 2000);
     }
     const error = await response.json().catch(() => ({ error: 'Request failed' }));
     throw new Error(error.error || `HTTP ${response.status}`);

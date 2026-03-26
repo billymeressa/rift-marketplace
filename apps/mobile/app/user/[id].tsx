@@ -69,7 +69,6 @@ export default function UserProfileScreen() {
           <Text style={styles.avatarText}>{avatarLetter}</Text>
         </View>
         <Text style={styles.name}>{userName}</Text>
-        {userPhone ? <Text style={styles.phone}>{userPhone}</Text> : null}
       </View>
 
       {/* Trust Badge */}
