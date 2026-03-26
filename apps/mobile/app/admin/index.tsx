@@ -55,14 +55,14 @@ export default function AdminDashboard() {
       <Text style={styles.heading}>Overview</Text>
 
       {loading ? (
-        <ActivityIndicator size="large" color="#2E7D32" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#1B4332" style={{ marginTop: 40 }} />
       ) : (
         <>
           <StatCard
             icon="people"
             label="Total Users"
             value={users.length}
-            color="#2E7D32"
+            color="#1B4332"
             onPress={() => router.push('/admin/users')}
           />
           <StatCard
@@ -76,7 +76,7 @@ export default function AdminDashboard() {
             icon="pulse"
             label="Active Last 24 h"
             value={recentConvs.length}
-            color="#E65100"
+            color="#1E40AF"
             onPress={() => router.push('/admin/conversations')}
           />
           <StatCard
@@ -131,9 +131,9 @@ export default function AdminDashboard() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9F9F9' },
+  container: { flex: 1, backgroundColor: '#F8F9FA' },
   content:   { padding: 16, paddingBottom: 60 },
-  heading:   { fontSize: 13, fontWeight: '700', color: '#999', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 },
+  heading:   { fontSize: 13, fontWeight: '700', color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 12 },
   statCard: {
     flexDirection: 'row', alignItems: 'center', gap: 14,
     backgroundColor: '#fff', borderRadius: 12, padding: 16,
@@ -143,9 +143,9 @@ const styles = StyleSheet.create({
   },
   statIcon:  { width: 40, height: 40, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
   statText:  { flex: 1 },
-  statValue: { fontSize: 24, fontWeight: '800', color: '#1a1a1a' },
+  statValue: { fontSize: 24, fontWeight: '800', color: '#1A1D21' },
   statLabel: { fontSize: 13, color: '#888', marginTop: 1 },
-  sectionTitle: { fontSize: 13, fontWeight: '700', color: '#999', letterSpacing: 1, textTransform: 'uppercase', marginTop: 24, marginBottom: 10 },
+  sectionTitle: { fontSize: 13, fontWeight: '700', color: '#9CA3AF', letterSpacing: 1, textTransform: 'uppercase', marginTop: 24, marginBottom: 10 },
   convRow: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     backgroundColor: '#fff', borderRadius: 12, padding: 14, marginBottom: 8,
@@ -154,12 +154,12 @@ const styles = StyleSheet.create({
   },
   convAvatar: {
     width: 38, height: 38, borderRadius: 19,
-    backgroundColor: '#2E7D32', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#1B4332', alignItems: 'center', justifyContent: 'center',
   },
   convAvatarText: { color: '#fff', fontWeight: '700', fontSize: 16 },
-  convNames:   { fontSize: 14, fontWeight: '700', color: '#1a1a1a' },
+  convNames:   { fontSize: 14, fontWeight: '700', color: '#1A1D21' },
   convListing: { fontSize: 12, color: '#888', marginTop: 1 },
   convPreview: { fontSize: 12, color: '#aaa', marginTop: 2, fontStyle: 'italic' },
   viewAll: { alignItems: 'center', paddingVertical: 14 },
-  viewAllText: { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
+  viewAllText: { fontSize: 14, color: '#1B4332', fontWeight: '600' },
 });

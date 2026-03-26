@@ -15,7 +15,7 @@ export default function TrustBadge({ userId, size = 'small' }: TrustBadgeProps) 
   });
 
   if (isLoading) {
-    return <ActivityIndicator size="small" color="#2E7D32" />;
+    return <ActivityIndicator size="small" color="#1B4332" />;
   }
 
   if (!data) return null;
@@ -24,7 +24,7 @@ export default function TrustBadge({ userId, size = 'small' }: TrustBadgeProps) 
     return (
       <View style={styles.largeCard}>
         <View style={styles.largeScoreRow}>
-          <Ionicons name="shield-checkmark" size={28} color="#2E7D32" />
+          <Ionicons name="shield-checkmark" size={28} color="#1B4332" />
           <Text style={styles.largeScore}>{data.score}</Text>
         </View>
         <View style={styles.verifiedRow}>
@@ -53,10 +53,10 @@ export default function TrustBadge({ userId, size = 'small' }: TrustBadgeProps) 
 
   return (
     <View style={styles.smallRow}>
-      <Ionicons name="shield-checkmark" size={16} color="#2E7D32" />
+      <Ionicons name="shield-checkmark" size={16} color="#1B4332" />
       <Text style={styles.smallScore}>{data.score}</Text>
       {data.verified && (
-        <Ionicons name="checkmark-circle" size={14} color="#2E7D32" />
+        <Ionicons name="checkmark-circle" size={14} color="#1B4332" />
       )}
     </View>
   );
@@ -119,7 +119,7 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
   },
   statLabel: {
     fontSize: 12,

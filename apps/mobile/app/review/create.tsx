@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     textAlign: 'center',
     marginBottom: 32,
   },
@@ -130,12 +130,12 @@ const styles = StyleSheet.create({
   },
   textArea: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#1a1a1a',
+    color: '#1A1D21',
     backgroundColor: '#FAFAFA',
     minHeight: 100,
     textAlignVertical: 'top',

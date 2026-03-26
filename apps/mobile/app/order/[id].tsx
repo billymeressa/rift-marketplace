@@ -115,7 +115,7 @@ export default function OrderDetailScreen() {
   if (isLoading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+        <ActivityIndicator size="large" color="#1B4332" />
       </View>
     );
   }
@@ -583,12 +583,12 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#999',
+    color: '#9CA3AF',
   },
   title: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     marginBottom: 8,
   },
   productBadgeWrap: {
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
   },
   productBadge: {
     fontSize: 12,
-    color: '#666',
+    color: '#6B7280',
     backgroundColor: '#F0F0F0',
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -617,12 +617,12 @@ const styles = StyleSheet.create({
   },
   infoLabel: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
   },
   infoValue: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     flexShrink: 1,
     textAlign: 'right',
     maxWidth: '60%',
@@ -648,7 +648,7 @@ const styles = StyleSheet.create({
   },
   escrowText: {
     fontSize: 13,
-    color: '#666',
+    color: '#6B7280',
     fontStyle: 'italic',
   },
   timelineSection: {
@@ -672,7 +672,7 @@ const styles = StyleSheet.create({
   timelineLine: {
     width: 2,
     flex: 1,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#E5E7EB',
     marginTop: 4,
   },
   timelineContent: {
@@ -683,12 +683,12 @@ const styles = StyleSheet.create({
   timelineStatus: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     textTransform: 'capitalize',
   },
   timelineDate: {
     fontSize: 12,
-    color: '#999',
+    color: '#9CA3AF',
     marginTop: 2,
   },
   actionsSection: {
@@ -761,7 +761,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     marginBottom: 20,
   },
   modalLabel: {
@@ -773,12 +773,12 @@ const styles = StyleSheet.create({
   },
   modalInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#1a1a1a',
+    color: '#1A1D21',
     backgroundColor: '#FAFAFA',
   },
   modalTextArea: {
@@ -794,13 +794,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F3F4F6',
     alignItems: 'center',
   },
   modalCancelText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#666',
+    color: '#6B7280',
   },
   modalSubmitBtn: {
     flex: 1,

@@ -149,9 +149,9 @@ export default function SuggestInput({ field, value, onChange, seedOptions, plac
 const styles = StyleSheet.create({
   container: { position: 'relative', zIndex: 10 },
   input: {
-    borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 10,
+    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, color: '#1a1a1a', backgroundColor: '#FAFAFA',
+    fontSize: 15, color: '#1A1D21', backgroundColor: '#FAFAFA',
   },
   selectedChip: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
@@ -160,10 +160,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 12,
   },
   selectedText: { fontSize: 15, color: '#1B4332', fontWeight: '600', flex: 1 },
-  clearBtn: { fontSize: 14, color: '#999', fontWeight: '700' },
+  clearBtn: { fontSize: 14, color: '#9CA3AF', fontWeight: '700' },
   dropdown: {
     backgroundColor: '#fff',
-    borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 10,
+    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10,
     marginTop: 4, maxHeight: 220,
     shadowColor: '#000', shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1, shadowRadius: 4, elevation: 4,
@@ -172,7 +172,7 @@ const styles = StyleSheet.create({
   option: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 14, paddingVertical: 11,
-    borderBottomWidth: 1, borderBottomColor: '#F5F5F5',
+    borderBottomWidth: 1, borderBottomColor: '#F3F4F6',
   },
   optionActive: { backgroundColor: '#ECFDF5' },
   optionText: { fontSize: 14, color: '#333' },
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   },
   addOption: {
     paddingHorizontal: 14, paddingVertical: 11,
-    borderTopWidth: 1, borderTopColor: '#E0E0E0',
+    borderTopWidth: 1, borderTopColor: '#E5E7EB',
   },
   addText: { fontSize: 14, color: '#1B4332', fontWeight: '600' },
 });

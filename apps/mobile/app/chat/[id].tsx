@@ -140,7 +140,7 @@ export default function ChatScreen() {
                 <Ionicons
                   name={item.readAt ? 'checkmark-done' : 'checkmark'}
                   size={14}
-                  color={item.readAt ? '#81C784' : 'rgba(255,255,255,0.5)'}
+                  color={item.readAt ? '#6EE7B7' : 'rgba(255,255,255,0.5)'}
                   style={{ marginLeft: 4 }}
                 />
               )}
@@ -154,7 +154,7 @@ export default function ChatScreen() {
   if (isLoading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+        <ActivityIndicator size="large" color="#1B4332" />
       </View>
     );
   }
@@ -179,7 +179,7 @@ export default function ChatScreen() {
             style={styles.contextBar}
             onPress={() => router.push(`/listing/${conversation.listingId}`)}
           >
-            <Ionicons name="pricetag-outline" size={14} color="#2E7D32" />
+            <Ionicons name="pricetag-outline" size={14} color="#1B4332" />
             <Text style={styles.contextText} numberOfLines={1}>
               {conversation.listingTitle}
             </Text>
@@ -217,7 +217,7 @@ export default function ChatScreen() {
           pointerEvents={phoneWarningVisible ? 'auto' : 'none'}
         >
           <View style={styles.phoneWarningInner}>
-            <Ionicons name="shield-checkmark-outline" size={18} color="#E65100" style={{ marginTop: 1 }} />
+            <Ionicons name="shield-checkmark-outline" size={18} color="#1E40AF" style={{ marginTop: 1 }} />
             <View style={{ flex: 1 }}>
               <Text style={styles.phoneWarningTitle}>Keep your deal safe</Text>
               <Text style={styles.phoneWarningBody}>
@@ -231,9 +231,9 @@ export default function ChatScreen() {
               onPress={() => router.push(`/order/create?listingId=${conversation.listingId}`)}
               activeOpacity={0.8}
             >
-              <Ionicons name="cart-outline" size={14} color="#E65100" />
+              <Ionicons name="cart-outline" size={14} color="#1E40AF" />
               <Text style={styles.phoneWarningCtaText}>Start an order instead</Text>
-              <Ionicons name="chevron-forward" size={14} color="#E65100" />
+              <Ionicons name="chevron-forward" size={14} color="#1E40AF" />
             </TouchableOpacity>
           )}
         </Animated.View>
@@ -268,7 +268,7 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F3F4F6',
   },
   loader: {
     flex: 1,
@@ -283,7 +283,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     backgroundColor: '#ECFDF5',
     borderBottomWidth: 1,
-    borderBottomColor: '#C8E6C9',
+    borderBottomColor: '#BBF7D0',
   },
   contextText: {
     flex: 1,
@@ -303,7 +303,7 @@ const styles = StyleSheet.create({
   },
   dateHeaderText: {
     fontSize: 12,
-    color: '#999',
+    color: '#9CA3AF',
     backgroundColor: '#E8E8E8',
     paddingHorizontal: 12,
     paddingVertical: 4,
@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   messageTextOther: {
-    color: '#1a1a1a',
+    color: '#1A1D21',
   },
   messageFooter: {
     flexDirection: 'row',
@@ -359,7 +359,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
   },
   timeOther: {
-    color: '#999',
+    color: '#9CA3AF',
   },
   inputBar: {
     flexDirection: 'row',
@@ -374,12 +374,12 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
     borderRadius: 20,
     paddingHorizontal: 16,
     paddingVertical: 10,
     fontSize: 15,
-    color: '#1a1a1a',
+    color: '#1A1D21',
     backgroundColor: '#FAFAFA',
     maxHeight: 100,
   },
@@ -392,11 +392,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   sendBtnDisabled: {
-    backgroundColor: '#A5D6A7',
+    backgroundColor: '#BBF7D0',
   },
   phoneWarning: {
     overflow: 'hidden',
-    backgroundColor: '#FFF3E0',
+    backgroundColor: '#EFF6FF',
     borderTopWidth: 1,
     borderTopColor: '#FFE0B2',
     paddingHorizontal: 14,
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
   phoneWarningTitle: {
     fontSize: 13,
     fontWeight: '700',
-    color: '#E65100',
+    color: '#1E40AF',
     marginBottom: 2,
   },
   phoneWarningBody: {
@@ -435,7 +435,7 @@ const styles = StyleSheet.create({
   phoneWarningCtaText: {
     fontSize: 12,
     fontWeight: '600',
-    color: '#E65100',
+    color: '#1E40AF',
   },
   emptyChat: {
     alignItems: 'center',
@@ -445,7 +445,7 @@ const styles = StyleSheet.create({
   },
   emptyChatText: {
     fontSize: 14,
-    color: '#999',
+    color: '#9CA3AF',
     textAlign: 'center',
     paddingHorizontal: 40,
   },

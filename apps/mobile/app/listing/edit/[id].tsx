@@ -161,7 +161,7 @@ export default function EditListingScreen() {
   if (isLoading || !ready) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+        <ActivityIndicator size="large" color="#1B4332" />
       </View>
     );
   }
@@ -304,7 +304,7 @@ export default function EditListingScreen() {
 
       {/* Delete */}
       <TouchableOpacity style={styles.deleteBtn} onPress={handleDelete}>
-        <Ionicons name="trash-outline" size={18} color="#D32F2F" />
+        <Ionicons name="trash-outline" size={18} color="#DC2626" />
         <Text style={styles.deleteText}>{t('common.delete')} {t('listing.listing') || 'Listing'}</Text>
       </TouchableOpacity>
 
@@ -324,33 +324,33 @@ const styles = StyleSheet.create({
   typeRow: { flexDirection: 'row', gap: 10 },
   typeBtn: {
     flex: 1, paddingVertical: 12, borderRadius: 10,
-    backgroundColor: '#F5F5F5', alignItems: 'center',
-    borderWidth: 1, borderColor: '#E0E0E0',
+    backgroundColor: '#F3F4F6', alignItems: 'center',
+    borderWidth: 1, borderColor: '#E5E7EB',
   },
   typeBuyActive:  { backgroundColor: '#ECFDF5', borderColor: '#1B4332' },
-  typeSellActive: { backgroundColor: '#FFF3E0', borderColor: '#E65100' },
-  typeText:       { fontSize: 15, fontWeight: '600', color: '#666' },
-  typeTextActive: { color: '#1a1a1a' },
+  typeSellActive: { backgroundColor: '#EFF6FF', borderColor: '#1E40AF' },
+  typeText:       { fontSize: 15, fontWeight: '600', color: '#6B7280' },
+  typeTextActive: { color: '#1A1D21' },
   chips:     { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     paddingHorizontal: 14, paddingVertical: 8,
-    borderRadius: 20, backgroundColor: '#F5F5F5',
-    borderWidth: 1, borderColor: '#E0E0E0',
+    borderRadius: 20, backgroundColor: '#F3F4F6',
+    borderWidth: 1, borderColor: '#E5E7EB',
   },
   chipActive:     { backgroundColor: '#ECFDF5', borderColor: '#1B4332' },
-  chipText:       { fontSize: 13, color: '#666' },
+  chipText:       { fontSize: 13, color: '#6B7280' },
   chipTextActive: { color: '#1B4332', fontWeight: '600' },
   textInput: {
-    borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 10,
+    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, color: '#1a1a1a', backgroundColor: '#FAFAFA',
+    fontSize: 15, color: '#1A1D21', backgroundColor: '#FAFAFA',
   },
   textArea:   { minHeight: 80, textAlignVertical: 'top' },
   row:        { flexDirection: 'row', gap: 12 },
   half:       { flex: 1 },
-  required:   { color: '#D32F2F', fontSize: 14 },
-  errorText:  { color: '#D32F2F', fontSize: 12, marginTop: 4, marginLeft: 2 },
-  inputError: { borderColor: '#D32F2F', backgroundColor: '#FFF5F5' },
+  required:   { color: '#DC2626', fontSize: 14 },
+  errorText:  { color: '#DC2626', fontSize: 12, marginTop: 4, marginLeft: 2 },
+  inputError: { borderColor: '#DC2626', backgroundColor: '#FFF5F5' },
   submitBtn: {
     backgroundColor: '#1B4332', paddingVertical: 16,
     borderRadius: 12, alignItems: 'center', marginTop: 24,
@@ -361,5 +361,5 @@ const styles = StyleSheet.create({
     flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
     gap: 8, paddingVertical: 16, marginTop: 12,
   },
-  deleteText: { color: '#D32F2F', fontSize: 15, fontWeight: '600' },
+  deleteText: { color: '#DC2626', fontSize: 15, fontWeight: '600' },
 });

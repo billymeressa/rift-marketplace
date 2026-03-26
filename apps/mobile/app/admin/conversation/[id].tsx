@@ -42,7 +42,7 @@ export default function AdminConversationThread() {
   if (isLoading) {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+        <ActivityIndicator size="large" color="#1B4332" />
       </View>
     );
   }
@@ -73,7 +73,7 @@ export default function AdminConversationThread() {
       </View>
 
       <View style={styles.listingBar}>
-        <Ionicons name="pricetag-outline" size={13} color="#2E7D32" />
+        <Ionicons name="pricetag-outline" size={13} color="#1B4332" />
         <Text style={styles.listingTitle} numberOfLines={1}>
           {conv.listing?.title ?? 'Unknown listing'}
         </Text>
@@ -119,12 +119,12 @@ export default function AdminConversationThread() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F0F2F5' },
   center:    { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  errorText: { fontSize: 15, color: '#999' },
+  errorText: { fontSize: 15, color: '#9CA3AF' },
   emptyText: { fontSize: 15, color: '#bbb' },
 
   infoBar: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    backgroundColor: '#1a1a1a', paddingHorizontal: 20, paddingVertical: 12,
+    backgroundColor: '#1A1D21', paddingHorizontal: 20, paddingVertical: 12,
     gap: 12,
   },
   infoBlock:  { flex: 1 },
@@ -134,9 +134,9 @@ const styles = StyleSheet.create({
 
   listingBar: {
     flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#E8F5E9', paddingHorizontal: 16, paddingVertical: 8,
+    backgroundColor: '#ECFDF5', paddingHorizontal: 16, paddingVertical: 8,
   },
-  listingTitle: { fontSize: 13, color: '#2E7D32', fontWeight: '600', flex: 1 },
+  listingTitle: { fontSize: 13, color: '#1B4332', fontWeight: '600', flex: 1 },
 
   msgList: { padding: 12, paddingBottom: 32 },
 
@@ -150,10 +150,10 @@ const styles = StyleSheet.create({
 
   bubble:      { maxWidth: '78%', borderRadius: 16, paddingHorizontal: 14, paddingVertical: 10 },
   bubbleLeft:  { backgroundColor: '#fff',    borderBottomLeftRadius: 4 },
-  bubbleRight: { backgroundColor: '#2E7D32', borderBottomRightRadius: 4 },
+  bubbleRight: { backgroundColor: '#1B4332', borderBottomRightRadius: 4 },
 
   msgBody:      { fontSize: 15, lineHeight: 21 },
-  msgBodyLeft:  { color: '#1a1a1a' },
+  msgBodyLeft:  { color: '#1A1D21' },
   msgBodyRight: { color: '#fff' },
 
   msgTime:  { fontSize: 11, color: '#aaa', marginTop: 3 },

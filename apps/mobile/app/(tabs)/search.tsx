@@ -61,7 +61,7 @@ export default function SearchScreen() {
           style={[styles.filterBtn, activeFilterCount > 0 && styles.filterBtnActive]}
           onPress={() => setShowFilters(true)}
         >
-          <Ionicons name="options-outline" size={20} color={activeFilterCount > 0 ? '#2E7D32' : '#666'} />
+          <Ionicons name="options-outline" size={20} color={activeFilterCount > 0 ? '#1B4332' : '#6B7280'} />
           {activeFilterCount > 0 && (
             <View style={styles.filterBadge}>
               <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
@@ -78,7 +78,7 @@ export default function SearchScreen() {
             tab === 'sell' ? (i18n.language === 'am' ? 'ለሽያጭ' : i18n.language === 'om' ? 'Gurguramaa' : 'For Sale') :
                              (i18n.language === 'am' ? 'ፈልጓል' : i18n.language === 'om' ? 'Barbaada' : 'Wanted');
           const isActive = typeTab === tab;
-          const color = tab === 'sell' ? '#2E7D32' : tab === 'buy' ? '#E65100' : '#555';
+          const color = tab === 'sell' ? '#1B4332' : tab === 'buy' ? '#1E40AF' : '#555';
           return (
             <TouchableOpacity
               key={tab}
@@ -110,7 +110,7 @@ export default function SearchScreen() {
         columnWrapperStyle={numColumns > 1 ? { gap: 0 } : undefined}
         ListEmptyComponent={
           isLoading ? (
-            <ActivityIndicator size="large" color="#2E7D32" style={styles.loader} />
+            <ActivityIndicator size="large" color="#1B4332" style={styles.loader} />
           ) : (
             <View style={styles.empty}>
               <Ionicons name="search-outline" size={48} color="#ddd" />
@@ -133,7 +133,7 @@ export default function SearchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#F8F9FA',
   },
   searchRow: {
     flexDirection: 'row',
@@ -142,14 +142,14 @@ const styles = StyleSheet.create({
     gap: 10,
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#E5E7EB',
     ...(Platform.OS === 'web' ? { position: 'sticky' as any, top: 0, zIndex: 10 } : {}),
   },
   searchBox: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F3F4F6',
     borderRadius: 10,
     paddingHorizontal: 12,
     gap: 8,
@@ -158,24 +158,24 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 15,
     paddingVertical: 10,
-    color: '#1a1a1a',
+    color: '#1A1D21',
   },
   filterBtn: {
     width: 44,
     height: 44,
     borderRadius: 10,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     justifyContent: 'center',
   },
   filterBtnActive: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#ECFDF5',
   },
   filterBadge: {
     position: 'absolute',
     top: 4,
     right: 4,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     borderRadius: 8,
     width: 16,
     height: 16,
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: '#fff',
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#E5E7EB',
   },
   typeTab: {
     flex: 1,
@@ -203,11 +203,11 @@ const styles = StyleSheet.create({
   typeTabText: {
     fontSize: 13,
     fontWeight: '500',
-    color: '#999',
+    color: '#9CA3AF',
   },
   resultCount: {
     fontSize: 13,
-    color: '#666',
+    color: '#6B7280',
     paddingHorizontal: 16,
     paddingTop: 8,
   },
@@ -228,6 +228,6 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#999',
+    color: '#9CA3AF',
   },
 });

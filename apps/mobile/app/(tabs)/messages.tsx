@@ -90,7 +90,7 @@ export default function MessagesScreen() {
   if (isLoading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+        <ActivityIndicator size="large" color="#1B4332" />
       </View>
     );
   }
@@ -119,7 +119,7 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#F8F9FA',
   },
   loader: {
     flex: 1,
@@ -170,17 +170,17 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 15,
     fontWeight: '500',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     flex: 1,
     marginRight: 8,
   },
   unreadText: {
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
   },
   timeText: {
     fontSize: 12,
-    color: '#999',
+    color: '#9CA3AF',
   },
   unreadTime: {
     color: '#1B4332',
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   },
   lastMessage: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
     flex: 1,
     marginRight: 8,
   },
@@ -225,11 +225,11 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: '600',
-    color: '#666',
+    color: '#6B7280',
   },
   emptyHint: {
     fontSize: 14,
-    color: '#999',
+    color: '#9CA3AF',
     textAlign: 'center',
     paddingHorizontal: 40,
   },

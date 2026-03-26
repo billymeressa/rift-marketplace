@@ -111,7 +111,7 @@ export default function DepositVerificationScreen() {
   if (isLoading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+        <ActivityIndicator size="large" color="#1B4332" />
       </View>
     );
   }
@@ -123,7 +123,7 @@ export default function DepositVerificationScreen() {
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={styles.statusCard}>
-          <Ionicons name="checkmark-circle" size={64} color="#2E7D32" />
+          <Ionicons name="checkmark-circle" size={64} color="#1B4332" />
           <Text style={[styles.statusTitle, { color: '#1B4332' }]}>
             {t('depositVerification.verified')}
           </Text>
@@ -225,9 +225,9 @@ export default function DepositVerificationScreen() {
           <Ionicons
             name={isExpired ? 'time-outline' : 'close-circle'}
             size={56}
-            color="#D32F2F"
+            color="#DC2626"
           />
-          <Text style={[styles.statusTitle, { color: '#D32F2F' }]}>
+          <Text style={[styles.statusTitle, { color: '#DC2626' }]}>
             {isExpired ? t('depositVerification.expired') : t('depositVerification.failed')}
           </Text>
           <Text style={styles.statusSubtext}>
@@ -321,12 +321,12 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
     lineHeight: 20,
     marginBottom: 20,
   },
@@ -339,12 +339,12 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#1a1a1a',
+    color: '#1A1D21',
     backgroundColor: '#FAFAFA',
   },
   chipRow: {
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
     backgroundColor: '#FAFAFA',
   },
   chipSelected: {
@@ -400,7 +400,7 @@ const styles = StyleSheet.create({
   },
   statusSubtext: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
     textAlign: 'center',
     lineHeight: 20,
     paddingHorizontal: 20,
@@ -416,7 +416,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   accountBadge: {
-    backgroundColor: '#FFF3E0',
+    backgroundColor: '#EFF6FF',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 10,
@@ -426,7 +426,7 @@ const styles = StyleSheet.create({
   accountBadgeText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#E65100',
+    color: '#1E40AF',
   },
   infoRow: {
     flexDirection: 'row',
@@ -436,6 +436,6 @@ const styles = StyleSheet.create({
   },
   infoText: {
     fontSize: 13,
-    color: '#666',
+    color: '#6B7280',
   },
 });

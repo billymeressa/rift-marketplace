@@ -132,7 +132,7 @@ export default function CreateScreen() {
       {/* Success banner */}
       {posted && (
         <View style={styles.successBanner}>
-          <Ionicons name="checkmark-circle" size={22} color="#2E7D32" />
+          <Ionicons name="checkmark-circle" size={22} color="#1B4332" />
           <Text style={styles.successText}>{t('listing.postSuccess')}</Text>
         </View>
       )}
@@ -167,7 +167,7 @@ export default function CreateScreen() {
       {/* Prompt when no product selected */}
       {!hasProduct && (
         <View style={styles.promptBox}>
-          <Ionicons name="information-circle-outline" size={18} color="#2E7D32" />
+          <Ionicons name="information-circle-outline" size={18} color="#1B4332" />
           <Text style={styles.promptText}>Select a product to see relevant fields</Text>
         </View>
       )}

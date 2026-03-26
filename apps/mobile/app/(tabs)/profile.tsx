@@ -209,12 +209,12 @@ export default function ProfileScreen() {
 
               {verification?.status === 'approved' ? (
                 <View style={styles.verifiedBadge}>
-                  <Ionicons name="checkmark-circle" size={18} color="#2E7D32" />
+                  <Ionicons name="checkmark-circle" size={18} color="#1B4332" />
                   <Text style={styles.verifiedBadgeText}>{t('profile.verified')}</Text>
                 </View>
               ) : verification?.status === 'pending' ? (
                 <View style={styles.pendingBadge}>
-                  <Ionicons name="time-outline" size={18} color="#E65100" />
+                  <Ionicons name="time-outline" size={18} color="#1E40AF" />
                   <Text style={styles.pendingBadgeText}>{t('profile.pending')}</Text>
                 </View>
               ) : (
@@ -228,7 +228,7 @@ export default function ProfileScreen() {
               )}
 
               <TouchableOpacity style={styles.editBtn} onPress={() => setEditing(true)}>
-                <Ionicons name="pencil-outline" size={16} color="#2E7D32" />
+                <Ionicons name="pencil-outline" size={16} color="#1B4332" />
                 <Text style={styles.editText}>{t('profile.editProfile')}</Text>
               </TouchableOpacity>
             </>
@@ -238,7 +238,7 @@ export default function ProfileScreen() {
             <Ionicons name="language-outline" size={20} color="#333" />
             <Text style={styles.langText}>{t('profile.language')}</Text>
             <Text style={styles.langValue}>{i18n.language === 'am' ? 'አማርኛ' : i18n.language === 'om' ? 'Afaan Oromoo' : 'English'}</Text>
-            <Ionicons name="swap-horizontal-outline" size={18} color="#2E7D32" />
+            <Ionicons name="swap-horizontal-outline" size={18} color="#1B4332" />
           </TouchableOpacity>
 
           {isAdmin && (
@@ -273,7 +273,7 @@ export default function ProfileScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-            <Ionicons name="log-out-outline" size={20} color="#D32F2F" />
+            <Ionicons name="log-out-outline" size={20} color="#DC2626" />
             <Text style={styles.logoutText}>{t('profile.logout')}</Text>
           </TouchableOpacity>
 
@@ -283,10 +283,10 @@ export default function ProfileScreen() {
             disabled={deleteAccountMutation.isPending}
           >
             {deleteAccountMutation.isPending ? (
-              <ActivityIndicator size="small" color="#D32F2F" />
+              <ActivityIndicator size="small" color="#DC2626" />
             ) : (
               <>
-                <Ionicons name="trash-outline" size={20} color="#D32F2F" />
+                <Ionicons name="trash-outline" size={20} color="#DC2626" />
                 <Text style={styles.deleteAccountText}>{t('profile.deleteAccount')}</Text>
               </>
             )}
@@ -307,7 +307,7 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#F8F9FA',
   },
   listContent: {
     paddingBottom: 80,
@@ -334,11 +334,11 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
   },
   phone: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
     marginTop: 2,
   },
   telegram: {
@@ -374,12 +374,12 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 10,
     fontSize: 15,
-    color: '#1a1a1a',
+    color: '#1A1D21',
     backgroundColor: '#fff',
   },
   editActions: {
@@ -391,13 +391,13 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F3F4F6',
     alignItems: 'center',
   },
   cancelText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: '#6B7280',
   },
   saveBtn: {
     flex: 1,
@@ -422,7 +422,7 @@ const styles = StyleSheet.create({
     marginTop: 20,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: '#E5E7EB',
   },
   langText: {
     fontSize: 15,
@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   },
   langValue: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
   },
   feedbackBtn: {
     flexDirection: 'row',
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#eee',
+    borderColor: '#E5E7EB',
   },
   feedbackText: {
     fontSize: 15,
@@ -457,7 +457,7 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: 14,
     paddingHorizontal: 16,
-    backgroundColor: '#1a1a1a',
+    backgroundColor: '#1A1D21',
     borderRadius: 12,
     marginTop: 20,
     gap: 10,
@@ -479,11 +479,11 @@ const styles = StyleSheet.create({
     marginTop: 10,
     gap: 10,
     borderWidth: 1,
-    borderColor: '#FFCDD2',
+    borderColor: '#FEE2E2',
   },
   logoutText: {
     fontSize: 15,
-    color: '#D32F2F',
+    color: '#DC2626',
     fontWeight: '600',
   },
   deleteAccountBtn: {
@@ -499,21 +499,21 @@ const styles = StyleSheet.create({
   },
   deleteAccountText: {
     fontSize: 13,
-    color: '#D32F2F',
+    color: '#DC2626',
     fontWeight: '500',
     textDecorationLine: 'underline',
   },
   sectionHeader: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     alignSelf: 'flex-start',
     marginTop: 24,
     marginBottom: 8,
   },
   emptyText: {
     textAlign: 'center',
-    color: '#999',
+    color: '#9CA3AF',
     fontSize: 14,
     marginTop: 20,
   },
@@ -543,13 +543,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#FFF3E0',
+    backgroundColor: '#EFF6FF',
     borderRadius: 20,
   },
   pendingBadgeText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#E65100',
+    color: '#1E40AF',
   },
   verifyBtn: {
     flexDirection: 'row',

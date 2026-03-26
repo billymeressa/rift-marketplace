@@ -11,8 +11,6 @@ import { registerForPushNotifications } from '../lib/notifications';
 import { isTelegramMiniApp, getTelegramInitData, telegramReady } from '../lib/telegram-webapp';
 import '../lib/i18n';
 import { initSentry } from '../lib/sentry';
-import LoadingScreen from '../components/LoadingScreen';
-
 initSentry();
 
 export { ErrorBoundary } from 'expo-router';
@@ -27,7 +25,6 @@ export default function RootLayout() {
   const [token, setToken] = useState<string | null>(null);
   const [user, setUser] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isServerReady, setIsServerReady] = useState(false);
   const router = useRouter();
   const segments = useSegments();
 
@@ -38,13 +35,7 @@ export default function RootLayout() {
     }
   }, []);
 
-  // Attempt authentication only AFTER the server health-check passes.
-  // On Render's free tier the server can be cold for 30 s — calling the
-  // login API before it's awake would fail and incorrectly show
-  // "Create your account" to returning users.
   useEffect(() => {
-    if (!isServerReady) return;
-
     (async () => {
       // ── Telegram Mini App: auto-login via initData ──────────────────────────
       if (Platform.OS === 'web' && isTelegramMiniApp()) {
@@ -75,7 +66,7 @@ export default function RootLayout() {
         SplashScreen.hideAsync();
       }
     })();
-  }, [isServerReady]);
+  }, []);
 
   useEffect(() => {
     if (isLoading) return;
@@ -114,9 +105,7 @@ export default function RootLayout() {
     setUnauthorizedHandler(signOut);
   }, [signOut]);
 
-  if (isLoading || !isServerReady) {
-    return <LoadingScreen onReady={() => setIsServerReady(true)} />;
-  }
+  if (isLoading) return null;
 
   return (
     <QueryClientProvider client={queryClient}>

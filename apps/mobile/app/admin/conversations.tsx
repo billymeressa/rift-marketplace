@@ -55,7 +55,7 @@ export default function AdminConversations() {
       </View>
 
       {isLoading ? (
-        <ActivityIndicator size="large" color="#2E7D32" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#1B4332" style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={filtered}
@@ -118,14 +118,14 @@ export default function AdminConversations() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9F9F9' },
+  container: { flex: 1, backgroundColor: '#F8F9FA' },
   searchBar: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     margin: 12, paddingHorizontal: 14, paddingVertical: 10,
     backgroundColor: '#fff', borderRadius: 12,
-    borderWidth: 1, borderColor: '#eee',
+    borderWidth: 1, borderColor: '#E5E7EB',
   },
-  searchInput: { flex: 1, fontSize: 14, color: '#1a1a1a' },
+  searchInput: { flex: 1, fontSize: 14, color: '#1A1D21' },
   list: { paddingHorizontal: 12, paddingBottom: 40 },
   card: {
     flexDirection: 'row', alignItems: 'flex-start', gap: 12,
@@ -135,17 +135,17 @@ const styles = StyleSheet.create({
   },
   avatar: {
     width: 40, height: 40, borderRadius: 20,
-    backgroundColor: '#1a1a1a', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#1A1D21', alignItems: 'center', justifyContent: 'center',
     marginTop: 2,
   },
   avatarText: { color: '#fff', fontWeight: '700', fontSize: 16 },
   cardHeader: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 2 },
-  names:        { fontSize: 14, fontWeight: '700', color: '#1a1a1a', flex: 1 },
+  names:        { fontSize: 14, fontWeight: '700', color: '#1A1D21', flex: 1 },
   time:         { fontSize: 11, color: '#bbb', marginLeft: 8 },
-  listingTitle: { fontSize: 12, color: '#2E7D32', fontWeight: '600', marginBottom: 2 },
+  listingTitle: { fontSize: 12, color: '#1B4332', fontWeight: '600', marginBottom: 2 },
   preview:      { fontSize: 12, color: '#888', marginBottom: 4 },
   phones:       { flexDirection: 'row', alignItems: 'center', gap: 4 },
   phoneText:    { fontSize: 11, color: '#bbb' },
   empty: { alignItems: 'center', marginTop: 80, gap: 12 },
-  emptyText: { fontSize: 15, color: '#999' },
+  emptyText: { fontSize: 15, color: '#9CA3AF' },
 });

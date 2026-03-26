@@ -35,7 +35,7 @@ export default function Root({ children }: { children: React.ReactNode }) {
             html, body, #root {
               height: 100dvh;
               overflow: hidden;
-              background-color: #F5F5F5;
+              background-color: #F3F4F6;
             }
             * { box-sizing: border-box; }
             body {

@@ -142,7 +142,7 @@ export default function ImagePickerSection({ images, onChange, maxImages = 5 }: 
         {/* Uploading indicator */}
         {uploading && (
           <View style={styles.addBtn}>
-            <ActivityIndicator size="small" color="#2E7D32" />
+            <ActivityIndicator size="small" color="#1B4332" />
             <Text style={styles.addText}>Uploading...</Text>
           </View>
         )}
@@ -204,7 +204,7 @@ const styles = StyleSheet.create({
     height: IMAGE_SIZE,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
     borderStyle: 'dashed',
     alignItems: 'center',
     justifyContent: 'center',
@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
   },
   hint: {
     fontSize: 12,
-    color: '#999',
+    color: '#9CA3AF',
     marginTop: 6,
   },
 });

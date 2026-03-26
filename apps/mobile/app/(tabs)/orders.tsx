@@ -123,7 +123,7 @@ export default function OrdersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F3F4F6',
   },
   tabRow: {
     flexDirection: 'row',
@@ -137,10 +137,10 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F3F4F6',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
   },
   tabBtnActive: {
     backgroundColor: '#ECFDF5',
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#666',
+    color: '#6B7280',
   },
   tabTextActive: {
     color: '#1B4332',
@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 16,
-    color: '#999',
+    color: '#9CA3AF',
   },
   loadMoreBtn: {
     alignItems: 'center',
@@ -181,7 +181,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
   },
   loadMoreText: {
     fontSize: 14,

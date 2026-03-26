@@ -166,7 +166,7 @@ function CountryPicker({
               <Text style={pickerStyles.countryName}>{item.name}</Text>
               <Text style={pickerStyles.dial}>{item.dial}</Text>
               {item.code === selected.code && (
-                <Ionicons name="checkmark" size={18} color="#2E7D32" />
+                <Ionicons name="checkmark" size={18} color="#1B4332" />
               )}
             </TouchableOpacity>
           )}
@@ -182,26 +182,26 @@ const pickerStyles = StyleSheet.create({
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
     paddingHorizontal: 20, paddingTop: 20, paddingBottom: 12,
-    borderBottomWidth: 1, borderBottomColor: '#eee',
+    borderBottomWidth: 1, borderBottomColor: '#E5E7EB',
   },
-  title: { fontSize: 18, fontWeight: '700', color: '#1a1a1a' },
+  title: { fontSize: 18, fontWeight: '700', color: '#1A1D21' },
   closeBtn: { padding: 4 },
   searchBox: {
     flexDirection: 'row', alignItems: 'center', gap: 10,
     marginHorizontal: 16, marginVertical: 12,
-    backgroundColor: '#F5F5F5', borderRadius: 12,
+    backgroundColor: '#F3F4F6', borderRadius: 12,
     paddingHorizontal: 14, paddingVertical: 10,
   },
-  searchInput: { flex: 1, fontSize: 15, color: '#1a1a1a' },
+  searchInput: { flex: 1, fontSize: 15, color: '#1A1D21' },
   row: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
     paddingHorizontal: 20, paddingVertical: 14,
     borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: '#f0f0f0',
   },
-  rowSelected: { backgroundColor: '#F1F8E9' },
+  rowSelected: { backgroundColor: '#F0FDF4' },
   flag: { fontSize: 22, width: 32 },
-  countryName: { flex: 1, fontSize: 15, color: '#1a1a1a' },
-  dial: { fontSize: 15, color: '#666', fontWeight: '600', marginRight: 8 },
+  countryName: { flex: 1, fontSize: 15, color: '#1A1D21' },
+  dial: { fontSize: 15, color: '#6B7280', fontWeight: '600', marginRight: 8 },
 });
 
 // ─── Main Auth Screen ─────────────────────────────────────────────────────────
@@ -641,7 +641,7 @@ export default function AuthScreen() {
                 <Text style={styles.label}>Phone Number *</Text>
                 {tmaPhone && tmaPhone !== 'shared' ? (
                   <View style={styles.phoneVerified}>
-                    <Ionicons name="checkmark-circle" size={20} color="#2E7D32" />
+                    <Ionicons name="checkmark-circle" size={20} color="#1B4332" />
                     <Text style={styles.phoneVerifiedText}>{tmaPhone}</Text>
                     <TouchableOpacity onPress={() => setTmaPhone('')} style={{ marginLeft: 'auto' }}>
                       <Ionicons name="close-circle-outline" size={18} color="#999" />
@@ -732,7 +732,7 @@ export default function AuthScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.backLink} onPress={handleBack}>
-                <Ionicons name="arrow-back" size={16} color="#2E7D32" />
+                <Ionicons name="arrow-back" size={16} color="#1B4332" />
                 <Text style={styles.backText}>Change phone number</Text>
               </TouchableOpacity>
             </View>
@@ -780,7 +780,7 @@ export default function AuthScreen() {
 
               {loading && (
                 <View style={styles.verifyingRow}>
-                  <ActivityIndicator size="small" color="#2E7D32" />
+                  <ActivityIndicator size="small" color="#1B4332" />
                   <Text style={styles.verifyingText}>Verifying...</Text>
                 </View>
               )}
@@ -798,7 +798,7 @@ export default function AuthScreen() {
               </TouchableOpacity>
 
               <TouchableOpacity style={styles.backLink} onPress={handleBack}>
-                <Ionicons name="arrow-back" size={16} color="#2E7D32" />
+                <Ionicons name="arrow-back" size={16} color="#1B4332" />
                 <Text style={styles.backText}>Change phone number</Text>
               </TouchableOpacity>
             </View>
@@ -819,7 +819,7 @@ export default function AuthScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { flexGrow: 1 },
-  scrollDesktop: { backgroundColor: '#F5F5F5', justifyContent: 'center' },
+  scrollDesktop: { backgroundColor: '#F3F4F6', justifyContent: 'center' },
   langToggle: { position: 'absolute', top: 60, right: 20, zIndex: 10 },
   content: {
     flex: 1, justifyContent: 'center',
@@ -830,9 +830,9 @@ const styles = StyleSheet.create({
     textAlign: 'center', marginBottom: 8,
   },
   progress: { flexDirection: 'row', gap: 8, justifyContent: 'center', marginBottom: 24 },
-  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E0E0E0' },
+  dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E5E7EB' },
   dotActive: { backgroundColor: '#1B4332', width: 24 },
-  dotDone: { backgroundColor: '#A5D6A7' },
+  dotDone: { backgroundColor: '#BBF7D0' },
   subtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 28 },
   title: { fontSize: 16, color: '#555', textAlign: 'center', marginBottom: 8, fontWeight: '600' },
   stepSubtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 24, fontWeight: '600' },
@@ -907,13 +907,13 @@ const styles = StyleSheet.create({
   tmaName: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     marginBottom: 10,
     textAlign: 'center',
   },
   tmaNote: {
     fontSize: 13,
-    color: '#666',
+    color: '#6B7280',
     textAlign: 'center',
     lineHeight: 19,
   },
@@ -924,7 +924,7 @@ const styles = StyleSheet.create({
   tmaProfileTitle: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     marginTop: 12,
     marginBottom: 4,
   },
@@ -941,12 +941,12 @@ const styles = StyleSheet.create({
   label: { fontSize: 14, fontWeight: '600', color: '#333', marginBottom: 8 },
   input: {
     fontSize: 16, paddingHorizontal: 16, paddingVertical: 14,
-    borderRadius: 12, borderWidth: 1, borderColor: '#E0E0E0', color: '#1a1a1a',
+    borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB', color: '#1A1D21',
   },
   // Phone row with country picker
   phoneRow: {
     flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1, borderColor: '#E0E0E0', borderRadius: 12,
+    borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 12,
     backgroundColor: '#fff', overflow: 'hidden',
   },
   countryBtn: {
@@ -956,13 +956,13 @@ const styles = StyleSheet.create({
   },
   countryFlag: { fontSize: 20 },
   countryDial: { fontSize: 15, fontWeight: '600', color: '#333' },
-  divider: { width: 1, height: 28, backgroundColor: '#E0E0E0' },
+  divider: { width: 1, height: 28, backgroundColor: '#E5E7EB' },
   phoneInput: {
-    flex: 1, fontSize: 16, paddingHorizontal: 14, paddingVertical: 14, color: '#1a1a1a',
+    flex: 1, fontSize: 16, paddingHorizontal: 14, paddingVertical: 14, color: '#1A1D21',
   },
-  inputError: { borderColor: '#D32F2F' },
-  errorText: { fontSize: 12, color: '#D32F2F', marginTop: 6 },
-  errorTextCenter: { fontSize: 13, color: '#D32F2F', marginBottom: 12, textAlign: 'center' },
+  inputError: { borderColor: '#DC2626' },
+  errorText: { fontSize: 12, color: '#DC2626', marginTop: 6 },
+  errorTextCenter: { fontSize: 13, color: '#DC2626', marginBottom: 12, textAlign: 'center' },
   button: {
     backgroundColor: '#1B4332', paddingVertical: 16, borderRadius: 12,
     alignItems: 'center', minHeight: 52, justifyContent: 'center', marginTop: 4,
@@ -985,12 +985,12 @@ const styles = StyleSheet.create({
   otpRow: { flexDirection: 'row', gap: 10, justifyContent: 'center', marginBottom: 24 },
   otpBox: {
     width: 48, height: 58, borderRadius: 12,
-    borderWidth: 1.5, borderColor: '#E0E0E0',
-    textAlign: 'center', fontSize: 24, fontWeight: '700', color: '#1a1a1a',
+    borderWidth: 1.5, borderColor: '#E5E7EB',
+    textAlign: 'center', fontSize: 24, fontWeight: '700', color: '#1A1D21',
     backgroundColor: '#FAFAFA',
   },
-  otpBoxFilled: { borderColor: '#1B4332', backgroundColor: '#F1F8E9' },
-  otpBoxError:  { borderColor: '#D32F2F', backgroundColor: '#FFF5F5' },
+  otpBoxFilled: { borderColor: '#1B4332', backgroundColor: '#F0FDF4' },
+  otpBoxError:  { borderColor: '#DC2626', backgroundColor: '#FFF5F5' },
   verifyingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 },
   verifyingText: { fontSize: 14, color: '#1B4332' },
   resendBtn: { alignItems: 'center', marginTop: 4 },
@@ -1021,9 +1021,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: '#F1F8E9',
+    backgroundColor: '#F0FDF4',
     borderWidth: 1.5,
-    borderColor: '#A5D6A7',
+    borderColor: '#BBF7D0',
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 20,

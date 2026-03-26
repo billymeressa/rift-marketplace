@@ -34,7 +34,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
       name: 'Nile Xport',
       importance: Notifications.AndroidImportance.MAX,
       vibrationPattern: [0, 250, 250, 250],
-      lightColor: '#2E7D32',
+      lightColor: '#1B4332',
     });
   }
 

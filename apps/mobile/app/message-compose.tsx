@@ -50,10 +50,10 @@ export default function MessageComposeScreen() {
         <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
           {/* Listing context */}
           {isLoading ? (
-            <ActivityIndicator size="small" color="#2E7D32" style={{ marginBottom: 16 }} />
+            <ActivityIndicator size="small" color="#1B4332" style={{ marginBottom: 16 }} />
           ) : listing ? (
             <View style={styles.listingCard}>
-              <Ionicons name="pricetag-outline" size={16} color="#2E7D32" />
+              <Ionicons name="pricetag-outline" size={16} color="#1B4332" />
               <View style={{ flex: 1 }}>
                 <Text style={styles.listingTitle} numberOfLines={2}>{listing.title}</Text>
                 {listing.price && (
@@ -129,7 +129,7 @@ const styles = StyleSheet.create({
   listingTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: '#1A1D21',
   },
   listingPrice: {
     fontSize: 13,
@@ -157,7 +157,7 @@ const styles = StyleSheet.create({
   recipientName: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: '#1A1D21',
   },
   label: {
     fontSize: 14,
@@ -166,12 +166,12 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#1a1a1a',
+    color: '#1A1D21',
     backgroundColor: '#FAFAFA',
     textAlignVertical: 'top',
     minHeight: 120,

@@ -69,7 +69,7 @@ export default function VerificationScreen() {
   if (isLoading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+        <ActivityIndicator size="large" color="#1B4332" />
       </View>
     );
   }
@@ -111,7 +111,7 @@ export default function VerificationScreen() {
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       {isRejected && (
         <View style={styles.rejectedBanner}>
-          <Ionicons name="close-circle" size={24} color="#D32F2F" />
+          <Ionicons name="close-circle" size={24} color="#DC2626" />
           <Text style={styles.rejectedText}>{t('verification.rejected')}</Text>
         </View>
       )}
@@ -191,7 +191,7 @@ const styles = StyleSheet.create({
   heading: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     marginBottom: 20,
   },
   sectionTitle: {
@@ -203,12 +203,12 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#1a1a1a',
+    color: '#1A1D21',
     backgroundColor: '#FAFAFA',
   },
   chipRow: {
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
     backgroundColor: '#FAFAFA',
   },
   chipSelected: {
@@ -269,7 +269,7 @@ const styles = StyleSheet.create({
   },
   statusSubdetail: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
   },
   rejectedBanner: {
     flexDirection: 'row',
@@ -283,6 +283,6 @@ const styles = StyleSheet.create({
   rejectedText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#D32F2F',
+    color: '#DC2626',
   },
 });

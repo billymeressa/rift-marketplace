@@ -84,7 +84,7 @@ export default function CreateOrderScreen() {
   if (isLoading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+        <ActivityIndicator size="large" color="#1B4332" />
       </View>
     );
   }
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: '#999',
+    color: '#9CA3AF',
   },
   listingContext: {
     backgroundColor: '#FAFAFA',
@@ -210,12 +210,12 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
   },
   listingTitle: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     marginBottom: 8,
   },
   listingMeta: {
@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   },
   productBadge: {
     fontSize: 12,
-    color: '#666',
+    color: '#6B7280',
     backgroundColor: '#F0F0F0',
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -245,12 +245,12 @@ const styles = StyleSheet.create({
   },
   textInput: {
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: '#1a1a1a',
+    color: '#1A1D21',
     backgroundColor: '#FAFAFA',
   },
   textArea: {

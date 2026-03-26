@@ -77,7 +77,7 @@ export default function AdminUsers() {
       </Text>
 
       {isLoading ? (
-        <ActivityIndicator size="large" color="#2E7D32" style={{ marginTop: 40 }} />
+        <ActivityIndicator size="large" color="#1B4332" style={{ marginTop: 40 }} />
       ) : (
         <FlatList
           data={filtered}
@@ -112,8 +112,8 @@ export default function AdminUsers() {
                 disabled={deletingId === user.id}
               >
                 {deletingId === user.id
-                  ? <ActivityIndicator size="small" color="#D32F2F" />
-                  : <Ionicons name="trash-outline" size={18} color="#D32F2F" />
+                  ? <ActivityIndicator size="small" color="#DC2626" />
+                  : <Ionicons name="trash-outline" size={18} color="#DC2626" />
                 }
               </TouchableOpacity>
             </View>
@@ -125,15 +125,15 @@ export default function AdminUsers() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F9F9F9' },
+  container: { flex: 1, backgroundColor: '#F8F9FA' },
   searchBar: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
     margin: 12, paddingHorizontal: 14, paddingVertical: 10,
     backgroundColor: '#fff', borderRadius: 12,
-    borderWidth: 1, borderColor: '#eee',
+    borderWidth: 1, borderColor: '#E5E7EB',
   },
-  searchInput: { flex: 1, fontSize: 14, color: '#1a1a1a' },
-  count: { fontSize: 12, color: '#999', paddingHorizontal: 16, marginBottom: 4 },
+  searchInput: { flex: 1, fontSize: 14, color: '#1A1D21' },
+  count: { fontSize: 12, color: '#9CA3AF', paddingHorizontal: 16, marginBottom: 4 },
   list: { paddingHorizontal: 12, paddingBottom: 40 },
   card: {
     flexDirection: 'row', alignItems: 'center', gap: 12,
@@ -143,14 +143,14 @@ const styles = StyleSheet.create({
   },
   avatar: {
     width: 42, height: 42, borderRadius: 21,
-    backgroundColor: '#1a1a1a', alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#1A1D21', alignItems: 'center', justifyContent: 'center',
   },
   avatarText: { color: '#fff', fontWeight: '700', fontSize: 17 },
-  name:  { fontSize: 15, fontWeight: '700', color: '#1a1a1a' },
-  phone: { fontSize: 13, color: '#2E7D32', fontWeight: '600', marginTop: 1 },
+  name:  { fontSize: 15, fontWeight: '700', color: '#1A1D21' },
+  phone: { fontSize: 13, color: '#1B4332', fontWeight: '600', marginTop: 1 },
   meta:  { fontSize: 11, color: '#aaa', marginTop: 3 },
   empty: { alignItems: 'center', marginTop: 80, gap: 12 },
-  emptyText: { fontSize: 15, color: '#999' },
+  emptyText: { fontSize: 15, color: '#9CA3AF' },
   deleteBtn: {
     padding: 8,
     borderRadius: 8,

@@ -38,11 +38,11 @@ const styles = StyleSheet.create({
   toggle: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#F5F5F5',
+    backgroundColor: '#F3F4F6',
     borderRadius: 8,
     overflow: 'hidden',
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
   },
   btn: {
     paddingHorizontal: 10,
@@ -52,19 +52,19 @@ const styles = StyleSheet.create({
     minWidth: 38,
   },
   btnActive: {
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#ECFDF5',
   },
   btnBorder: {
     borderRightWidth: 1,
-    borderRightColor: '#E0E0E0',
+    borderRightColor: '#E5E7EB',
   },
   lang: {
     fontSize: 13,
-    color: '#999',
+    color: '#9CA3AF',
     fontWeight: '500',
   },
   activeLang: {
-    color: '#2E7D32',
+    color: '#1B4332',
     fontWeight: '700',
   },
 });

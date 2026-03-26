@@ -46,7 +46,7 @@ export default function UserProfileScreen() {
   if (isLoading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#2E7D32" />
+        <ActivityIndicator size="large" color="#1B4332" />
       </View>
     );
   }
@@ -95,7 +95,7 @@ export default function UserProfileScreen() {
             )}
             {verification.status === 'verified' && (
               <View style={styles.verifiedRow}>
-                <Ionicons name="checkmark-circle" size={18} color="#2E7D32" />
+                <Ionicons name="checkmark-circle" size={18} color="#1B4332" />
                 <Text style={styles.verifiedLabel}>
                   {t('verification.verifiedBadge')}
                 </Text>
@@ -119,7 +119,7 @@ export default function UserProfileScreen() {
         </View>
 
         {reviewsLoading ? (
-          <ActivityIndicator size="small" color="#2E7D32" style={styles.inlineLoader} />
+          <ActivityIndicator size="small" color="#1B4332" style={styles.inlineLoader} />
         ) : totalReviews === 0 ? (
           <Text style={styles.emptyText}>{t('review.noReviews')}</Text>
         ) : (
@@ -148,7 +148,7 @@ export default function UserProfileScreen() {
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>{t('listing.myListings')}</Text>
         {listingsLoading ? (
-          <ActivityIndicator size="small" color="#2E7D32" style={styles.inlineLoader} />
+          <ActivityIndicator size="small" color="#1B4332" style={styles.inlineLoader} />
         ) : listingList.length === 0 ? (
           <Text style={styles.emptyText}>{t('listing.noListings')}</Text>
         ) : (
@@ -176,7 +176,7 @@ export default function UserProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F9F9F9',
+    backgroundColor: '#F8F9FA',
   },
   content: {
     paddingBottom: 40,
@@ -209,11 +209,11 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 22,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
   },
   phone: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
     marginTop: 4,
   },
   trustSection: {
@@ -228,7 +228,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 17,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     marginBottom: 12,
   },
   verificationCard: {
@@ -237,16 +237,16 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 6,
     borderWidth: 1,
-    borderColor: '#E0E0E0',
+    borderColor: '#E5E7EB',
   },
   verificationName: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: '#1A1D21',
   },
   verificationDetail: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
   },
   verifiedRow: {
     flexDirection: 'row',
@@ -268,11 +268,11 @@ const styles = StyleSheet.create({
   ratingText: {
     fontSize: 18,
     fontWeight: '700',
-    color: '#1a1a1a',
+    color: '#1A1D21',
   },
   reviewCount: {
     fontSize: 14,
-    color: '#666',
+    color: '#6B7280',
   },
   reviewCard: {
     backgroundColor: '#fff',
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   },
   reviewDate: {
     fontSize: 12,
-    color: '#999',
+    color: '#9CA3AF',
     marginTop: 6,
   },
   inlineLoader: {
@@ -308,7 +308,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     textAlign: 'center',
-    color: '#999',
+    color: '#9CA3AF',
     fontSize: 14,
     marginTop: 8,
   },
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   listingTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#1a1a1a',
+    color: '#1A1D21',
     marginBottom: 6,
   },
   listingMeta: {
@@ -333,7 +333,7 @@ const styles = StyleSheet.create({
   },
   listingBadge: {
     fontSize: 12,
-    color: '#666',
+    color: '#6B7280',
     backgroundColor: '#F0F0F0',
     paddingHorizontal: 8,
     paddingVertical: 2,
