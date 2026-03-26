@@ -102,7 +102,7 @@ export default function OrdersScreen() {
 
       {isLoading && !isRefetching ? (
         <View style={styles.loader}>
-          <ActivityIndicator size="large" color="#2E7D32" />
+          <ActivityIndicator size="large" color="#1B4332" />
         </View>
       ) : (
         <FlatList
@@ -143,8 +143,8 @@ const styles = StyleSheet.create({
     borderColor: '#E0E0E0',
   },
   tabBtnActive: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#2E7D32',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#1B4332',
   },
   tabText: {
     fontSize: 14,
@@ -152,7 +152,7 @@ const styles = StyleSheet.create({
     color: '#666',
   },
   tabTextActive: {
-    color: '#2E7D32',
+    color: '#1B4332',
   },
   loader: {
     flex: 1,
@@ -186,6 +186,6 @@ const styles = StyleSheet.create({
   loadMoreText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#1B4332',
   },
 });

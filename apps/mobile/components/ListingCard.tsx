@@ -2,7 +2,7 @@ import { View, Text, Image, StyleSheet, TouchableOpacity } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { REGION_LABELS, buildListingTitle } from '../lib/options';
+import { REGION_LABELS, buildListingTitle, PRODUCT_LABELS, CONDITION_LABELS } from '../lib/options';
 
 interface ListingCardProps {
   listing: any;
@@ -15,7 +15,9 @@ function timeAgo(dateStr: string): string {
   if (mins < 60) return `${mins}m`;
   const hours = Math.floor(mins / 60);
   if (hours < 24) return `${hours}h`;
-  return `${Math.floor(hours / 24)}d`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d`;
+  return `${Math.floor(days / 30)}mo`;
 }
 
 export default function ListingCard({ listing, onDelete }: ListingCardProps) {
@@ -31,67 +33,83 @@ export default function ListingCard({ listing, onDelete }: ListingCardProps) {
   const isBuy = listing.type === 'buy';
 
   const typeLabel = isBuy
-    ? (lang === 'am' ? 'ፈልጓል'    : lang === 'om' ? 'BARBAADA'   : 'WANTED')
-    : (lang === 'am' ? 'ለሽያጭ'    : lang === 'om' ? 'GURGURAMAA' : 'FOR SALE');
+    ? (lang === 'am' ? 'ፈልጓል' : lang === 'om' ? 'BARBAADA' : 'WANTED')
+    : (lang === 'am' ? 'ለሽያጭ' : lang === 'om' ? 'GURGURAMAA' : 'FOR SALE');
 
   const priceStr = listing.price
     ? `${listing.currency === 'USD' ? '$' : ''}${Number(listing.price).toLocaleString()}${listing.currency === 'ETB' ? ' ETB' : ''}`
     : null;
 
-  // Grade is now part of the title — meta shows region + quantity only
-  const metaParts: string[] = [];
-  if (regionLabel)                      metaParts.push(regionLabel);
-  if (listing.quantity && listing.unit) metaParts.push(`${Number(listing.quantity).toLocaleString()} ${listing.unit}`);
-  const metaLine = metaParts.join('  ·  ');
+  const unitLabel = listing.unit || '';
+  const pricePerUnit = listing.price && listing.unit
+    ? `/${listing.unit}`
+    : '';
+
+  // Build compact spec line: region · quantity
+  const specParts: string[] = [];
+  if (regionLabel) specParts.push(regionLabel);
+  if (listing.quantity && listing.unit)
+    specParts.push(`${Number(listing.quantity).toLocaleString()} ${unitLabel}`);
+  const specLine = specParts.join('  ·  ');
+
+  // Process/condition label
+  const processLabel = listing.process
+    ? (CONDITION_LABELS[listing.process]?.[lang] || listing.process)
+    : null;
 
   return (
     <TouchableOpacity
       style={styles.card}
       onPress={() => router.push(`/listing/${listing.id}`)}
-      activeOpacity={0.82}
+      activeOpacity={0.7}
     >
-      {/* Image */}
-      <View style={styles.imageWrap}>
+      {/* Thumbnail */}
+      <View style={styles.thumbWrap}>
         {hasImage ? (
-          <Image source={{ uri: images[0] }} style={styles.image} resizeMode="cover" />
+          <Image source={{ uri: images[0] }} style={styles.thumb} resizeMode="cover" />
         ) : (
-          <View style={styles.imagePlaceholder}>
-            <Ionicons name="leaf-outline" size={28} color="#A5D6A7" />
+          <View style={styles.thumbPlaceholder}>
+            <Ionicons name="cube-outline" size={22} color="#9CA3AF" />
           </View>
         )}
-
-        {/* Buy/Sell badge — bottom-left overlay */}
-        <View style={[styles.badge, isBuy ? styles.badgeBuy : styles.badgeSell]}>
-          <Text style={styles.badgeText}>{typeLabel}</Text>
-        </View>
-
-        {/* Time — top-right overlay */}
-        <View style={styles.timePill}>
-          <Text style={styles.timePillText}>{timeAgo(listing.createdAt)}</Text>
-        </View>
       </View>
 
-      {/* Body */}
+      {/* Content */}
       <View style={styles.body}>
-        <Text style={styles.product} numberOfLines={2}>{listingTitle}</Text>
+        {/* Top row: type badge + time */}
+        <View style={styles.topRow}>
+          <View style={[styles.typeBadge, isBuy ? styles.buyBadge : styles.sellBadge]}>
+            <Text style={[styles.typeText, isBuy ? styles.buyText : styles.sellText]}>{typeLabel}</Text>
+          </View>
+          <Text style={styles.timeText}>{timeAgo(listing.createdAt)}</Text>
+        </View>
 
-        {priceStr ? (
-          <Text style={styles.price} numberOfLines={1}>{priceStr}</Text>
-        ) : (
-          <Text style={styles.priceEmpty}>Price on request</Text>
+        {/* Product title */}
+        <Text style={styles.title} numberOfLines={2}>{listingTitle}</Text>
+
+        {/* Spec line: region · quantity */}
+        {specLine.length > 0 && (
+          <Text style={styles.specLine} numberOfLines={1}>{specLine}</Text>
         )}
 
-        {metaLine.length > 0 && (
-          <Text style={styles.meta} numberOfLines={1}>{metaLine}</Text>
-        )}
+        {/* Price */}
+        <View style={styles.priceRow}>
+          {priceStr ? (
+            <Text style={styles.price} numberOfLines={1}>
+              {priceStr}<Text style={styles.perUnit}>{pricePerUnit}</Text>
+            </Text>
+          ) : (
+            <Text style={styles.rfq}>Request Quote</Text>
+          )}
+        </View>
 
+        {/* Delete button for own listings */}
         {onDelete && (
           <TouchableOpacity style={styles.deleteBtn} onPress={onDelete} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-            <Ionicons name="trash-outline" size={14} color="#D32F2F" />
-            <Text style={styles.deleteBtnText}>Delete</Text>
+            <Ionicons name="trash-outline" size={13} color="#DC2626" />
+            <Text style={styles.deleteBtnText}>Remove</Text>
           </TouchableOpacity>
         )}
-
       </View>
     </TouchableOpacity>
   );
@@ -100,102 +118,116 @@ export default function ListingCard({ listing, onDelete }: ListingCardProps) {
 const styles = StyleSheet.create({
   card: {
     width: '100%',
-    backgroundColor: '#fff',
-    borderRadius: 12,
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
     overflow: 'hidden',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 3,
+    marginBottom: 1,
   },
 
-  /* Image */
-  imageWrap: {
-    width: '100%',
-    aspectRatio: 1,
-    backgroundColor: '#F1F8E9',
+  /* Thumbnail */
+  thumbWrap: {
+    width: 88,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  image: {
+  thumb: {
     width: '100%',
     height: '100%',
   },
-  imagePlaceholder: {
+  thumbPlaceholder: {
     width: '100%',
     height: '100%',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F8E9',
+    backgroundColor: '#F9FAFB',
   },
-
-  /* Overlays */
-  badge: {
-    position: 'absolute',
-    bottom: 8,
-    left: 8,
-    paddingHorizontal: 7,
-    paddingVertical: 3,
-    borderRadius: 5,
-  },
-  badgeBuy:  { backgroundColor: 'rgba(245,127,23,0.90)' },
-  badgeSell: { backgroundColor: 'rgba(46,125,50,0.90)'  },
-  badgeText: { fontSize: 10, fontWeight: '800', color: '#fff', letterSpacing: 0.3 },
-
-  timePill: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-    backgroundColor: 'rgba(0,0,0,0.40)',
-    borderRadius: 10,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-  },
-  timePillText: { fontSize: 10, color: '#fff', fontWeight: '600' },
 
   /* Body */
   body: {
+    flex: 1,
     padding: 10,
-    gap: 3,
+    paddingLeft: 12,
+    gap: 2,
   },
-  product: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: '#1a1a1a',
-    lineHeight: 18,
+
+  topRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 2,
+  },
+
+  typeBadge: {
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 3,
+  },
+  sellBadge: { backgroundColor: '#ECFDF5' },
+  buyBadge:  { backgroundColor: '#EFF6FF' },
+  typeText:  { fontSize: 9, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
+  sellText:  { color: '#065F46' },
+  buyText:   { color: '#1E40AF' },
+
+  timeText: {
+    fontSize: 11,
+    color: '#9CA3AF',
+  },
+
+  title: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#1A1D21',
+    lineHeight: 19,
+  },
+
+  specLine: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 1,
+  },
+
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    marginTop: 3,
   },
   price: {
     fontSize: 15,
-    fontWeight: '800',
-    color: '#2E7D32',
-    marginTop: 2,
+    fontWeight: '700',
+    color: '#1B4332',
   },
-  priceEmpty: {
-    fontSize: 12,
-    color: '#bbb',
-    fontStyle: 'italic',
-    marginTop: 2,
-  },
-  meta: {
+  perUnit: {
     fontSize: 11,
-    color: '#999',
-    marginTop: 1,
+    fontWeight: '500',
+    color: '#6B7280',
   },
+  rfq: {
+    fontSize: 12,
+    color: '#D97706',
+    fontWeight: '600',
+    fontStyle: 'italic',
+  },
+
   deleteBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
-    marginTop: 8,
+    marginTop: 4,
     alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 4,
     borderWidth: 1,
-    borderColor: '#FFCDD2',
-    backgroundColor: '#FFF8F8',
+    borderColor: '#FEE2E2',
+    backgroundColor: '#FEF2F2',
   },
   deleteBtnText: {
     fontSize: 11,
     fontWeight: '600',
-    color: '#D32F2F',
+    color: '#DC2626',
   },
 });

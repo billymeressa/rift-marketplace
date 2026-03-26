@@ -14,7 +14,7 @@ const STATUS_COLORS: Record<string, string> = {
   payment_held: '#FF9800',
   shipped: '#9C27B0',
   delivered: '#4CAF50',
-  completed: '#2E7D32',
+  completed: '#1B4332',
   cancelled: '#9E9E9E',
   disputed: '#F44336',
 };

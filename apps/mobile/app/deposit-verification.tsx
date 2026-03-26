@@ -124,7 +124,7 @@ export default function DepositVerificationScreen() {
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
         <View style={styles.statusCard}>
           <Ionicons name="checkmark-circle" size={64} color="#2E7D32" />
-          <Text style={[styles.statusTitle, { color: '#2E7D32' }]}>
+          <Text style={[styles.statusTitle, { color: '#1B4332' }]}>
             {t('depositVerification.verified')}
           </Text>
           <Text style={styles.statusSubtext}>
@@ -361,8 +361,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
   },
   chipSelected: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#2E7D32',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#1B4332',
   },
   chipText: {
     fontSize: 14,
@@ -370,11 +370,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   chipTextSelected: {
-    color: '#2E7D32',
+    color: '#1B4332',
     fontWeight: '600',
   },
   submitBtn: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

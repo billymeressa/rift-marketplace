@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     color: '#999',
   },
   unreadTime: {
-    color: '#2E7D32',
+    color: '#1B4332',
     fontWeight: '600',
   },
   listingContext: {
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   badge: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     borderRadius: 10,
     minWidth: 20,
     height: 20,

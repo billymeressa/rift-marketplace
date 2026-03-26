@@ -196,7 +196,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -257,7 +257,7 @@ const styles = StyleSheet.create({
   verifiedLabel: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#1B4332',
   },
   ratingOverview: {
     flexDirection: 'row',
@@ -343,6 +343,6 @@ const styles = StyleSheet.create({
   listingPrice: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#1B4332',
   },
 });

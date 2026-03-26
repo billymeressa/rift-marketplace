@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
   price: {
     fontSize: 15,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#1B4332',
   },
   date: {
     fontSize: 12,

@@ -309,7 +309,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     borderRadius: 2,
   },
   message: {

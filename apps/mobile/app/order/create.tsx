@@ -261,7 +261,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#ECFDF5',
     borderRadius: 12,
     padding: 16,
     marginTop: 20,
@@ -274,10 +274,10 @@ const styles = StyleSheet.create({
   totalValue: {
     fontSize: 20,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#1B4332',
   },
   submitBtn: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

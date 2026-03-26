@@ -281,7 +281,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingHorizontal: 16,
     paddingVertical: 10,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#ECFDF5',
     borderBottomWidth: 1,
     borderBottomColor: '#C8E6C9',
   },
@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 13,
     fontWeight: '500',
-    color: '#2E7D32',
+    color: '#1B4332',
   },
   messagesList: {
     padding: 12,
@@ -327,7 +327,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   bubbleMe: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     borderBottomRightRadius: 4,
   },
   bubbleOther: {
@@ -387,7 +387,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     alignItems: 'center',
     justifyContent: 'center',
   },

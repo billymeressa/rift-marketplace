@@ -31,7 +31,7 @@ export default function TrustBadge({ userId, size = 'small' }: TrustBadgeProps) 
           <Ionicons
             name={data.verified ? 'checkmark-circle' : 'close-circle'}
             size={18}
-            color={data.verified ? '#2E7D32' : '#9E9E9E'}
+            color={data.verified ? '#1B4332' : '#9E9E9E'}
           />
           <Text style={[styles.verifiedText, !data.verified && styles.unverifiedText]}>
             {data.verified ? 'Verified' : 'Unverified'}
@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   smallScore: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#1B4332',
   },
   largeCard: {
     backgroundColor: '#fff',
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   largeScore: {
     fontSize: 28,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#1B4332',
   },
   verifiedRow: {
     flexDirection: 'row',
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   verifiedText: {
     fontSize: 14,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#1B4332',
   },
   unverifiedText: {
     color: '#9E9E9E',

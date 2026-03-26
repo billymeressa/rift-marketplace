@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -353,12 +353,12 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#ECFDF5',
     borderRadius: 20,
   },
   editText: {
     fontSize: 13,
-    color: '#2E7D32',
+    color: '#1B4332',
     fontWeight: '600',
   },
   editForm: {
@@ -403,7 +403,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     alignItems: 'center',
   },
   saveText: {
@@ -528,13 +528,13 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#E8F5E9',
+    backgroundColor: '#ECFDF5',
     borderRadius: 20,
   },
   verifiedBadgeText: {
     fontSize: 13,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#1B4332',
   },
   pendingBadge: {
     flexDirection: 'row',
@@ -558,7 +558,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     paddingHorizontal: 20,
     paddingVertical: 10,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     borderRadius: 20,
   },
   verifyBtnText: {

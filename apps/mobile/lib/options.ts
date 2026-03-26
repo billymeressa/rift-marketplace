@@ -224,6 +224,77 @@ export function prettifyValue(key: string): string {
   return key.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+// ─── B2B Category taxonomy ───────────────────────────────────────────────────
+// Hierarchical categories for structured navigation (mega-menu / category chips)
+
+export type CategoryGroup = {
+  key: string;
+  icon: string;               // Ionicons name
+  en: string; am: string; om: string;
+  products: string[];          // product values belonging to this category
+};
+
+export const CATEGORY_GROUPS: CategoryGroup[] = [
+  {
+    key: 'coffee_tea',
+    icon: 'cafe-outline',
+    en: 'Coffee & Tea', am: 'ቡና እና ሻይ', om: 'Buna fi Shaayii',
+    products: ['coffee', 'green_coffee', 'roasted_coffee', 'tea'],
+  },
+  {
+    key: 'oilseeds',
+    icon: 'ellipse-outline',
+    en: 'Oilseeds', am: 'የዘይት እህሎች', om: 'Zayita Midhaanii',
+    products: ['sesame', 'niger_seed', 'linseed', 'sunflower', 'groundnut', 'soybean'],
+  },
+  {
+    key: 'pulses',
+    icon: 'nutrition-outline',
+    en: 'Pulses & Legumes', am: 'ጥራጥሬ', om: 'Midhaani',
+    products: ['chickpea', 'lentils', 'haricot_bean', 'fava_bean', 'field_pea', 'mung_bean', 'kidney_bean'],
+  },
+  {
+    key: 'grains',
+    icon: 'leaf-outline',
+    en: 'Grains & Cereals', am: 'እህሎች', om: 'Midhaani fi Garbuu',
+    products: ['teff', 'white_teff', 'red_teff', 'wheat', 'maize', 'sorghum', 'barley', 'millet', 'rice'],
+  },
+  {
+    key: 'spices',
+    icon: 'flame-outline',
+    en: 'Spices', am: 'ቅመማ ቅመም', om: 'Mi\'eessuma',
+    products: ['korarima', 'black_cumin', 'fenugreek', 'turmeric', 'ginger', 'berbere', 'mitmita', 'chili_pepper'],
+  },
+  {
+    key: 'fruits_veg',
+    icon: 'grid-outline',
+    en: 'Fruits & Vegetables', am: 'ፍራፍሬ እና አትክልት', om: 'Fuduraalee fi Kuduraa',
+    products: ['banana', 'mango', 'avocado', 'papaya', 'orange', 'sugarcane', 'tomato', 'onion', 'potato', 'garlic', 'cabbage', 'carrot', 'sweet_potato', 'enset', 'moringa'],
+  },
+  {
+    key: 'livestock',
+    icon: 'paw-outline',
+    en: 'Livestock & Animal Products', am: 'እንስሳት እና ምርቶች', om: 'Horii fi Oomisha',
+    products: ['cattle', 'sheep', 'goat', 'poultry', 'honey', 'raw_milk', 'butter', 'eggs', 'hides_skins'],
+  },
+  {
+    key: 'cash_crops',
+    icon: 'trending-up-outline',
+    en: 'Cash Crops & Other', am: 'ገንዘብ ሰብሎች', om: 'Midhaan Daldalaa',
+    products: ['chat', 'cotton', 'frankincense', 'honey_wine'],
+  },
+  {
+    key: 'supplies',
+    icon: 'construct-outline',
+    en: 'Farm Supplies', am: 'የግብርና ግብዓት', om: 'Meeshaa Qonnaa',
+    products: ['fertilizer', 'seeds', 'farm_tools', 'animal_feed'],
+  },
+];
+
+// Reverse lookup: product value → category group key
+export const PRODUCT_TO_CATEGORY: Record<string, string> = {};
+CATEGORY_GROUPS.forEach(g => g.products.forEach(p => { PRODUCT_TO_CATEGORY[p] = g.key; }));
+
 // ─── Product groups ──────────────────────────────────────────────────────────
 
 export const COFFEE_PRODUCTS   = new Set(['coffee', 'green_coffee', 'roasted_coffee']);

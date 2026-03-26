@@ -82,11 +82,11 @@ export default function VerificationScreen() {
   if (isSubmitted) {
     const isPending = status === 'pending';
     const iconName = isPending ? 'time-outline' : 'checkmark-circle';
-    const iconColor = isPending ? '#FF9800' : '#2E7D32';
+    const iconColor = isPending ? '#FF9800' : '#1B4332';
     const statusText = isPending
       ? t('verification.pending')
       : t('verification.verified');
-    const statusColor = isPending ? '#FF9800' : '#2E7D32';
+    const statusColor = isPending ? '#FF9800' : '#1B4332';
 
     return (
       <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -225,8 +225,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FAFAFA',
   },
   chipSelected: {
-    backgroundColor: '#E8F5E9',
-    borderColor: '#2E7D32',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#1B4332',
   },
   chipText: {
     fontSize: 14,
@@ -234,11 +234,11 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   chipTextSelected: {
-    color: '#2E7D32',
+    color: '#1B4332',
     fontWeight: '600',
   },
   submitBtn: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

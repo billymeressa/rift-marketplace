@@ -155,11 +155,11 @@ const styles = StyleSheet.create({
   },
   selectedChip: {
     flexDirection: 'row', alignItems: 'center', gap: 8,
-    backgroundColor: '#E8F5E9', borderColor: '#2E7D32',
+    backgroundColor: '#ECFDF5', borderColor: '#1B4332',
     borderWidth: 1, borderRadius: 10,
     paddingHorizontal: 14, paddingVertical: 12,
   },
-  selectedText: { fontSize: 15, color: '#2E7D32', fontWeight: '600', flex: 1 },
+  selectedText: { fontSize: 15, color: '#1B4332', fontWeight: '600', flex: 1 },
   clearBtn: { fontSize: 14, color: '#999', fontWeight: '700' },
   dropdown: {
     backgroundColor: '#fff',
@@ -174,9 +174,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 11,
     borderBottomWidth: 1, borderBottomColor: '#F5F5F5',
   },
-  optionActive: { backgroundColor: '#E8F5E9' },
+  optionActive: { backgroundColor: '#ECFDF5' },
   optionText: { fontSize: 14, color: '#333' },
-  optionTextActive: { color: '#2E7D32', fontWeight: '600' },
+  optionTextActive: { color: '#1B4332', fontWeight: '600' },
   countBadge: {
     fontSize: 11, color: '#888', backgroundColor: '#F0F0F0',
     paddingHorizontal: 7, paddingVertical: 2, borderRadius: 8,
@@ -185,5 +185,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14, paddingVertical: 11,
     borderTopWidth: 1, borderTopColor: '#E0E0E0',
   },
-  addText: { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
+  addText: { fontSize: 14, color: '#1B4332', fontWeight: '600' },
 });

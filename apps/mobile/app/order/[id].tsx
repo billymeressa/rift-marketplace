@@ -630,7 +630,7 @@ const styles = StyleSheet.create({
   infoValueHighlight: {
     fontSize: 16,
     fontWeight: '700',
-    color: '#2E7D32',
+    color: '#1B4332',
   },
   statusSection: {
     marginBottom: 20,
@@ -666,7 +666,7 @@ const styles = StyleSheet.create({
     width: 10,
     height: 10,
     borderRadius: 5,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     marginTop: 4,
   },
   timelineLine: {
@@ -722,7 +722,7 @@ const styles = StyleSheet.create({
     color: '#fff',
   },
   acceptBtn: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
   },
   rejectBtn: {
     backgroundColor: '#F44336',
@@ -737,7 +737,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#9C27B0',
   },
   reviewBtn: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
   },
   cancelBtn: {
     backgroundColor: '#9E9E9E',
@@ -806,7 +806,7 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     alignItems: 'center',
   },
   modalSubmitText: {

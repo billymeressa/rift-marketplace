@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
     textAlignVertical: 'top',
   },
   submitBtn: {
-    backgroundColor: '#2E7D32',
+    backgroundColor: '#1B4332',
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',

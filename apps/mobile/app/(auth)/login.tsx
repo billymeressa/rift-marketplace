@@ -826,12 +826,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24, paddingTop: 120, paddingBottom: 48,
   },
   logo: {
-    fontSize: 36, fontWeight: '800', color: '#2E7D32',
+    fontSize: 36, fontWeight: '800', color: '#1B4332',
     textAlign: 'center', marginBottom: 8,
   },
   progress: { flexDirection: 'row', gap: 8, justifyContent: 'center', marginBottom: 24 },
   dot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#E0E0E0' },
-  dotActive: { backgroundColor: '#2E7D32', width: 24 },
+  dotActive: { backgroundColor: '#1B4332', width: 24 },
   dotDone: { backgroundColor: '#A5D6A7' },
   subtitle: { fontSize: 14, color: '#888', textAlign: 'center', marginBottom: 28 },
   title: { fontSize: 16, color: '#555', textAlign: 'center', marginBottom: 8, fontWeight: '600' },
@@ -964,7 +964,7 @@ const styles = StyleSheet.create({
   errorText: { fontSize: 12, color: '#D32F2F', marginTop: 6 },
   errorTextCenter: { fontSize: 13, color: '#D32F2F', marginBottom: 12, textAlign: 'center' },
   button: {
-    backgroundColor: '#2E7D32', paddingVertical: 16, borderRadius: 12,
+    backgroundColor: '#1B4332', paddingVertical: 16, borderRadius: 12,
     alignItems: 'center', minHeight: 52, justifyContent: 'center', marginTop: 4,
   },
   buttonDisabled: { opacity: 0.6 },
@@ -989,15 +989,15 @@ const styles = StyleSheet.create({
     textAlign: 'center', fontSize: 24, fontWeight: '700', color: '#1a1a1a',
     backgroundColor: '#FAFAFA',
   },
-  otpBoxFilled: { borderColor: '#2E7D32', backgroundColor: '#F1F8E9' },
+  otpBoxFilled: { borderColor: '#1B4332', backgroundColor: '#F1F8E9' },
   otpBoxError:  { borderColor: '#D32F2F', backgroundColor: '#FFF5F5' },
   verifyingRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 12 },
-  verifyingText: { fontSize: 14, color: '#2E7D32' },
+  verifyingText: { fontSize: 14, color: '#1B4332' },
   resendBtn: { alignItems: 'center', marginTop: 4 },
-  resendText: { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
+  resendText: { fontSize: 14, color: '#1B4332', fontWeight: '600' },
   resendDisabled: { color: '#aaa' },
   backLink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 20 },
-  backText: { fontSize: 14, color: '#2E7D32', fontWeight: '600' },
+  backText: { fontSize: 14, color: '#1B4332', fontWeight: '600' },
   // ── TMA phone verification ───────────────────────────────────────────────
   sharePhoneBtn: {
     flexDirection: 'row',
@@ -1031,7 +1031,7 @@ const styles = StyleSheet.create({
   phoneVerifiedText: {
     fontSize: 15,
     fontWeight: '600',
-    color: '#2E7D32',
+    color: '#1B4332',
   },
   orDivider: {
     fontSize: 12,

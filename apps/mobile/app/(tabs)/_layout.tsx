@@ -13,7 +13,12 @@ import { isTelegramMiniApp } from '../../lib/telegram-webapp';
 // ─── Header ──────────────────────────────────────────────────────────────────
 
 function HeaderTitle() {
-  return <Text style={headerStyles.title}>Nile Xport</Text>;
+  return (
+    <View style={headerStyles.titleRow}>
+      <Text style={headerStyles.title}>Nile</Text>
+      <Text style={headerStyles.titleAccent}>Xport</Text>
+    </View>
+  );
 }
 
 function HeaderRight() {
@@ -25,7 +30,9 @@ function HeaderRight() {
 }
 
 const headerStyles = StyleSheet.create({
-  title: { fontWeight: '700', fontSize: 18, color: '#1a1a1a' },
+  titleRow: { flexDirection: 'row', alignItems: 'baseline', gap: 3 },
+  title: { fontWeight: '800', fontSize: 18, color: '#1A1D21', letterSpacing: -0.3 },
+  titleAccent: { fontWeight: '800', fontSize: 18, color: '#1B4332', letterSpacing: -0.3 },
   right: { paddingRight: 16 },
 });
 
@@ -45,7 +52,7 @@ const badgeStyles = StyleSheet.create({
     position: 'absolute',
     top: -4,
     right: -8,
-    backgroundColor: '#D32F2F',
+    backgroundColor: '#DC2626',
     borderRadius: 8,
     minWidth: 16,
     height: 16,
@@ -62,7 +69,7 @@ function PostIcon() {
   return (
     <View style={fabStyles.wrapper}>
       <View style={fabStyles.circle}>
-        <Ionicons name="add" size={32} color="#fff" />
+        <Ionicons name="add" size={28} color="#fff" />
       </View>
     </View>
   );
@@ -72,32 +79,30 @@ const fabStyles = StyleSheet.create({
   wrapper: {
     alignItems: 'center',
     justifyContent: 'center',
-    // lift the circle above the tab bar
-    top: -16,
+    top: -14,
   },
   circle: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#2E7D32',
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: '#1B4332',
     alignItems: 'center',
     justifyContent: 'center',
-    // white ring separates the circle from the tab bar
     borderWidth: 3,
-    borderColor: '#fff',
-    // shadow
-    shadowColor: '#2E7D32',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.45,
-    shadowRadius: 10,
-    elevation: 12,
+    borderColor: '#FFFFFF',
+    shadowColor: '#1B4332',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
 });
 
 // ─── Layout ───────────────────────────────────────────────────────────────────
 
 export default function TabLayout() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const lang = i18n.language as 'en' | 'am' | 'om';
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsive();
   const { token } = useAuth();
@@ -110,21 +115,23 @@ export default function TabLayout() {
   });
   const unreadCount = unreadData?.count ?? 0;
 
-  const tabBarHeight = 58 + Math.max(insets.bottom, 8);
+  const tabBarHeight = 56 + Math.max(insets.bottom, 8);
   const isTMA = Platform.OS === 'web' && isTelegramMiniApp();
 
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#2E7D32',
-        tabBarInactiveTintColor: '#999',
+        tabBarActiveTintColor: '#1B4332',
+        tabBarInactiveTintColor: '#9CA3AF',
         headerShown: !isTMA,
         tabBarStyle: Platform.OS === 'web'
           ? {
-              borderTopColor: '#eee',
+              borderTopColor: '#E5E7EB',
+              borderTopWidth: 1,
               paddingBottom: 8,
-              height: 60,
+              height: 56,
               overflow: 'visible',
+              backgroundColor: '#FFFFFF',
               ...(isMobile ? {} : {
                 maxWidth: 1200,
                 alignSelf: 'center' as any,
@@ -132,36 +139,43 @@ export default function TabLayout() {
                 borderTopWidth: 0,
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: -1 },
-                shadowOpacity: 0.05,
+                shadowOpacity: 0.04,
                 shadowRadius: 4,
               }),
             }
           : {
-              borderTopColor: '#eee',
+              borderTopColor: '#E5E7EB',
               paddingBottom: Math.max(insets.bottom, 8),
               height: tabBarHeight,
               overflow: 'visible',
+              backgroundColor: '#FFFFFF',
             },
-        tabBarLabelStyle: isMobile ? undefined : { fontSize: 13 },
+        tabBarLabelStyle: {
+          fontSize: isMobile ? 11 : 12,
+          fontWeight: '500',
+        },
         headerTitle: () => <HeaderTitle />,
         headerRight: () => <HeaderRight />,
-        headerStyle: Platform.OS === 'web' && !isMobile
-          ? {
-              borderBottomWidth: 1,
-              borderBottomColor: '#eee',
-              shadowOpacity: 0,
-              elevation: 0,
-            }
-          : undefined,
+        headerStyle: {
+          backgroundColor: '#FFFFFF',
+          ...(Platform.OS === 'web' && !isMobile
+            ? {
+                borderBottomWidth: 1,
+                borderBottomColor: '#E5E7EB',
+                shadowOpacity: 0,
+                elevation: 0,
+              }
+            : {}),
+        },
       }}
     >
-      {/* 1 — Home */}
+      {/* 1 — Marketplace */}
       <Tabs.Screen
         name="index"
         options={{
-          title: t('tabs.home'),
+          title: lang === 'am' ? 'ገበያ' : lang === 'om' ? 'Gabaa' : 'Market',
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
+            <Ionicons name="storefront-outline" size={size} color={color} />
           ),
         }}
       />
@@ -172,7 +186,7 @@ export default function TabLayout() {
         options={{
           title: t('tabs.orders'),
           tabBarIcon: ({ color, size }) => (
-            <Ionicons name="receipt-outline" size={size} color={color} />
+            <Ionicons name="document-text-outline" size={size} color={color} />
           ),
         }}
       />
@@ -181,8 +195,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="create"
         options={{
-          title: t('tabs.create'),
-          tabBarLabel: () => null,          // no label — the circle speaks for itself
+          title: lang === 'am' ? 'ዝርዝር' : lang === 'om' ? 'Tarree' : 'List',
+          tabBarLabel: () => null,
           tabBarIcon: () => <PostIcon />,
           tabBarItemStyle: { overflow: 'visible' },
         }}
@@ -213,8 +227,9 @@ export default function TabLayout() {
         }}
       />
 
-      {/* Hidden — search is now inline on the home screen */}
+      {/* Hidden — search is inline on the home screen */}
       <Tabs.Screen name="search" options={{ href: null }} />
     </Tabs>
   );
 }
+

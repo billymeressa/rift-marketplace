@@ -86,7 +86,7 @@ export default function FeedbackScreen() {
               <Ionicons
                 name={ft.icon}
                 size={20}
-                color={type === ft.value ? '#2E7D32' : '#888'}
+                color={type === ft.value ? '#1B4332' : '#888'}
               />
               <Text style={[styles.typeText, type === ft.value && styles.typeTextActive]}>
                 {ft[lang]}
@@ -175,9 +175,9 @@ const styles = StyleSheet.create({
     borderRadius: 20, borderWidth: 1,
     borderColor: '#E0E0E0', backgroundColor: '#F5F5F5',
   },
-  typeBtnActive:  { backgroundColor: '#E8F5E9', borderColor: '#2E7D32' },
+  typeBtnActive:  { backgroundColor: '#ECFDF5', borderColor: '#1B4332' },
   typeText:       { fontSize: 13, color: '#888' },
-  typeTextActive: { color: '#2E7D32', fontWeight: '600' },
+  typeTextActive: { color: '#1B4332', fontWeight: '600' },
   npsRow: {
     flexDirection: 'row', flexWrap: 'wrap', gap: 8,
   },
@@ -186,7 +186,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', justifyContent: 'center',
     borderWidth: 1, borderColor: '#E0E0E0', backgroundColor: '#F5F5F5',
   },
-  npsBtnActive:  { backgroundColor: '#2E7D32', borderColor: '#2E7D32' },
+  npsBtnActive:  { backgroundColor: '#1B4332', borderColor: '#1B4332' },
   npsText:       { fontSize: 14, fontWeight: '600', color: '#555' },
   npsTextActive: { color: '#fff' },
   npsCaption:    { fontSize: 12, color: '#888', marginTop: 6 },
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
   },
   charCount:    { fontSize: 11, color: '#bbb', textAlign: 'right', marginTop: 4 },
   submitBtn: {
-    backgroundColor: '#2E7D32', paddingVertical: 16,
+    backgroundColor: '#1B4332', paddingVertical: 16,
     borderRadius: 12, alignItems: 'center', marginTop: 28,
   },
   submitDisabled: { opacity: 0.6 },
