@@ -7,9 +7,13 @@ import {
   Platform,
   TouchableOpacity,
 } from 'react-native';
+import { isTelegramMiniApp } from '../lib/telegram-webapp';
+import { getTMATheme } from '../lib/telegram-theme';
+
+const isTMA = Platform.OS === 'web' && typeof window !== 'undefined' && isTelegramMiniApp();
+const theme = isTMA ? getTMATheme() : null;
 
 const API_URL = process.env.EXPO_PUBLIC_API_URL || '';
-// Health endpoint is at the root, not under /api/v1
 const HEALTH_URL = API_URL.replace(/\/api\/v1$/, '') + '/health';
 
 const MESSAGES = [
@@ -146,7 +150,7 @@ export default function LoadingScreen({ onReady }: { onReady?: () => void }) {
   });
 
   return (
-    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+    <Animated.View style={[styles.container, { opacity: fadeAnim }, isTMA && { backgroundColor: theme?.bg }]}>
       <View style={styles.content}>
         {/* Logo / Brand */}
         <Animated.View style={[styles.logoContainer, { transform: [{ scale: pulseAnim }] }]}>
@@ -155,22 +159,22 @@ export default function LoadingScreen({ onReady }: { onReady?: () => void }) {
           </View>
         </Animated.View>
 
-        <Text style={styles.title}>Nile Xport</Text>
-        <Text style={styles.subtitle}>Ethiopia's Agricultural Export Marketplace</Text>
+        <Text style={[styles.title, isTMA && { color: theme?.text }]}>Nile Xport</Text>
+        <Text style={[styles.subtitle, isTMA && { color: theme?.hint }]}>Ethiopia's Agricultural Export Marketplace</Text>
 
         {/* Progress bar */}
         <View style={styles.progressContainer}>
-          <View style={styles.progressTrack}>
-            <Animated.View style={[styles.progressFill, { width: progressWidth }]} />
+          <View style={[styles.progressTrack, isTMA && { backgroundColor: theme?.separator }]}>
+            <Animated.View style={[styles.progressFill, { width: progressWidth }, isTMA && { backgroundColor: theme?.accent }]} />
           </View>
         </View>
 
         {/* Status message */}
-        <Text style={styles.message}>{MESSAGES[messageIndex]}</Text>
+        <Text style={[styles.message, isTMA && { color: theme?.subtitle }]}>{MESSAGES[messageIndex]}</Text>
 
         {/* Tip */}
-        <View style={styles.tipContainer}>
-          <Text style={styles.tip}>
+        <View style={[styles.tipContainer, isTMA && { backgroundColor: theme?.secondaryBg }]}>
+          <Text style={[styles.tip, isTMA && { color: theme?.hint }]}>
             First load may take up to 30 seconds{'\n'}while our server wakes up
           </Text>
         </View>
@@ -250,7 +254,7 @@ const styles = StyleSheet.create({
   },
   progressFill: {
     height: '100%',
-    backgroundColor: '#2f95dc',
+    backgroundColor: '#2E7D32',
     borderRadius: 2,
   },
   message: {
