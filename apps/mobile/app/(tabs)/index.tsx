@@ -75,7 +75,7 @@ function RecommendedSection() {
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { token } = useAuth();
   const { numColumns, isMobile, cardGutter } = useResponsive();
 
@@ -84,21 +84,24 @@ export default function HomeScreen() {
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [showFilters, setShowFilters] = useState(false);
   const [page, setPage] = useState(1);
+  const [typeTab, setTypeTab] = useState<'all' | 'sell' | 'buy'>('all');
 
   const isSearching = submittedSearch.length > 0 || Object.keys(filters).length > 0;
   const activeFilterCount = Object.keys(filters).length;
 
+  const typeParam = typeTab !== 'all' ? { type: typeTab } : {};
+
   // Feed mode: plain paginated feed
   const feedQuery = useQuery({
-    queryKey: ['listings', 'feed', page],
-    queryFn: () => api.getListings({ page: String(page), limit: '20' }),
+    queryKey: ['listings', 'feed', page, typeTab],
+    queryFn: () => api.getListings({ page: String(page), limit: '20', ...typeParam }),
     enabled: !isSearching,
   });
 
   // Search mode: filtered results (no pagination needed, API returns top matches)
   const searchQuery = useQuery({
-    queryKey: ['listings', 'search', submittedSearch, filters],
-    queryFn: () => api.getListings({ ...filters, search: submittedSearch, limit: '50' }),
+    queryKey: ['listings', 'search', submittedSearch, filters, typeTab],
+    queryFn: () => api.getListings({ ...filters, search: submittedSearch, limit: '50', ...typeParam }),
     enabled: isSearching,
   });
 
@@ -121,6 +124,11 @@ export default function HomeScreen() {
 
   const handleApplyFilters = (f: Record<string, string>) => {
     setFilters(f);
+    setPage(1);
+  };
+
+  const handleTypeTab = (tab: 'all' | 'sell' | 'buy') => {
+    setTypeTab(tab);
     setPage(1);
   };
 
@@ -156,6 +164,27 @@ export default function HomeScreen() {
             </View>
           )}
         </TouchableOpacity>
+      </View>
+
+      {/* Type toggle */}
+      <View style={styles.typeToggleRow}>
+        {(['all', 'sell', 'buy'] as const).map((tab) => {
+          const label =
+            tab === 'all'  ? (i18n.language === 'am' ? 'ሁሉም' : i18n.language === 'om' ? 'Hunda' : 'All') :
+            tab === 'sell' ? (i18n.language === 'am' ? 'ለሽያጭ' : i18n.language === 'om' ? 'Gurguramaa' : 'For Sale') :
+                             (i18n.language === 'am' ? 'ፈልጓል' : i18n.language === 'om' ? 'Barbaada' : 'Wanted');
+          const isActive = typeTab === tab;
+          const color = tab === 'sell' ? '#2E7D32' : tab === 'buy' ? '#E65100' : '#555';
+          return (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.typeTab, isActive && { borderBottomColor: color, borderBottomWidth: 2.5 }]}
+              onPress={() => handleTypeTab(tab)}
+            >
+              <Text style={[styles.typeTabText, isActive && { color, fontWeight: '700' }]}>{label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {/* Result count (search mode) */}
@@ -270,6 +299,24 @@ const styles = StyleSheet.create({
     width: 16, height: 16, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4,
   },
   filterBadgeText: { fontSize: 10, color: '#fff', fontWeight: '700' },
+  typeToggleRow: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  typeTab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderBottomWidth: 2.5,
+    borderBottomColor: 'transparent',
+  },
+  typeTabText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#999',
+  },
   resultCount: { fontSize: 13, color: '#666', paddingHorizontal: 16, paddingTop: 8 },
   // Feed
   list: { paddingTop: 4, paddingBottom: 80 },

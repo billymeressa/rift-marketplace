@@ -10,15 +10,19 @@ import ResponsiveContainer from '../../components/ResponsiveContainer';
 import { useResponsive } from '../../hooks/useResponsive';
 
 export default function SearchScreen() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [search, setSearch] = useState('');
   const [filters, setFilters] = useState<Record<string, string>>({});
   const [showFilters, setShowFilters] = useState(false);
   const [submittedSearch, setSubmittedSearch] = useState('');
+  const [typeTab, setTypeTab] = useState<'all' | 'sell' | 'buy'>('all');
   const { numColumns, isMobile } = useResponsive();
+
+  const typeParam = typeTab !== 'all' ? { type: typeTab } : {};
 
   const queryParams = {
     ...filters,
+    ...typeParam,
     ...(submittedSearch ? { search: submittedSearch } : {}),
     limit: '20',
   };
@@ -64,6 +68,27 @@ export default function SearchScreen() {
             </View>
           )}
         </TouchableOpacity>
+      </View>
+
+      {/* Type toggle */}
+      <View style={styles.typeToggleRow}>
+        {(['all', 'sell', 'buy'] as const).map((tab) => {
+          const label =
+            tab === 'all'  ? (i18n.language === 'am' ? 'ሁሉም' : i18n.language === 'om' ? 'Hunda' : 'All') :
+            tab === 'sell' ? (i18n.language === 'am' ? 'ለሽያጭ' : i18n.language === 'om' ? 'Gurguramaa' : 'For Sale') :
+                             (i18n.language === 'am' ? 'ፈልጓል' : i18n.language === 'om' ? 'Barbaada' : 'Wanted');
+          const isActive = typeTab === tab;
+          const color = tab === 'sell' ? '#2E7D32' : tab === 'buy' ? '#E65100' : '#555';
+          return (
+            <TouchableOpacity
+              key={tab}
+              style={[styles.typeTab, isActive && { borderBottomColor: color, borderBottomWidth: 2.5 }]}
+              onPress={() => setTypeTab(tab)}
+            >
+              <Text style={[styles.typeTabText, isActive && { color, fontWeight: '700' }]}>{label}</Text>
+            </TouchableOpacity>
+          );
+        })}
       </View>
 
       {(submittedSearch || activeFilterCount > 0) && (
@@ -161,6 +186,24 @@ const styles = StyleSheet.create({
     fontSize: 10,
     color: '#fff',
     fontWeight: '700',
+  },
+  typeToggleRow: {
+    flexDirection: 'row',
+    backgroundColor: '#fff',
+    borderBottomWidth: 1,
+    borderBottomColor: '#eee',
+  },
+  typeTab: {
+    flex: 1,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderBottomWidth: 2.5,
+    borderBottomColor: 'transparent',
+  },
+  typeTabText: {
+    fontSize: 13,
+    fontWeight: '500',
+    color: '#999',
   },
   resultCount: {
     fontSize: 13,
