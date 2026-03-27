@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
-import { useTelegramBackButton } from '../../lib/telegram-webapp';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import TrustBadge from '../../components/TrustBadge';
@@ -45,8 +44,6 @@ export default function ListingDetailScreen() {
   const queryClient = useQueryClient();
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isDeleting, setIsDeleting] = useState(false);
-
-  useEffect(() => useTelegramBackButton(() => router.back()), []);
 
   const { data: listing, isLoading } = useQuery({
     queryKey: ['listing', id],

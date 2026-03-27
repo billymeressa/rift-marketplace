@@ -9,6 +9,9 @@ import { getToken, getUser, saveToken, saveUser, removeToken, removeUser } from 
 import { setUnauthorizedHandler, api } from '../lib/api';
 import { registerForPushNotifications } from '../lib/notifications';
 import { isTelegramMiniApp, getTelegramInitData, telegramReady } from '../lib/telegram-webapp';
+
+// Screens where the TMA back button should be hidden (user is at a root screen)
+const ROOT_SEGMENTS = ['(tabs)', '(auth)'];
 import '../lib/i18n';
 import { initSentry } from '../lib/sentry';
 initSentry();
@@ -34,6 +37,27 @@ export default function RootLayout() {
       telegramReady();
     }
   }, []);
+
+  // ── Global TMA back button manager ─────────────────────────────────────────
+  // Show the Telegram back button on any non-root screen; hide it on root tabs
+  // and auth screens. This prevents Telegram from closing the app when the user
+  // presses the hardware/swipe back gesture.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !isTelegramMiniApp()) return;
+    const btn = window.Telegram?.WebApp?.BackButton;
+    if (!btn) return;
+
+    const isRootScreen = !segments[0] || ROOT_SEGMENTS.includes(segments[0] as string);
+
+    if (isRootScreen) {
+      btn.hide();
+    } else {
+      btn.show();
+      const handleBack = () => router.back();
+      btn.onClick(handleBack);
+      return () => btn.offClick(handleBack);
+    }
+  }, [segments]);
 
   useEffect(() => {
     (async () => {
