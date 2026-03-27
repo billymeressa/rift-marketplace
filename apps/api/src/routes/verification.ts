@@ -11,6 +11,9 @@ const submitVerificationSchema = z.object({
   businessName: z.string().min(1).max(200),
   businessType: z.enum(['exporter', 'cooperative', 'trader', 'farmer']),
   tradeLicenseRef: z.string().max(200).optional(),
+  tradeLicenseUrl: z.string().url().optional(),
+  exportLicenseUrl: z.string().url().optional(),
+  ecxMembershipUrl: z.string().url().optional(),
 });
 
 // GET /verification/me - Get my verification status
@@ -58,6 +61,9 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
           businessName: data.businessName,
           businessType: data.businessType,
           tradeLicenseRef: data.tradeLicenseRef,
+          tradeLicenseUrl: data.tradeLicenseUrl,
+          exportLicenseUrl: data.exportLicenseUrl,
+          ecxMembershipUrl: data.ecxMembershipUrl,
           verificationStatus: 'pending',
           updatedAt: new Date(),
         })
@@ -71,6 +77,9 @@ router.post('/', authMiddleware, async (req: AuthRequest, res) => {
           businessName: data.businessName,
           businessType: data.businessType,
           tradeLicenseRef: data.tradeLicenseRef,
+          tradeLicenseUrl: data.tradeLicenseUrl,
+          exportLicenseUrl: data.exportLicenseUrl,
+          ecxMembershipUrl: data.ecxMembershipUrl,
           verificationStatus: 'pending',
         })
         .returning();

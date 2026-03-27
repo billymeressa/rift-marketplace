@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Alert, Platform, TextInput, Modal, ScrollView,
+  ActivityIndicator, Alert, Platform, TextInput, Modal, ScrollView, Image, Linking,
 } from 'react-native';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -55,6 +55,33 @@ function ReviewModal({
               <Text style={modal.rowText}>Submitted {formatDate(item.createdAt)}</Text>
             </View>
           </View>
+
+          {/* Document thumbnails */}
+          {(item.tradeLicenseUrl || item.exportLicenseUrl || item.ecxMembershipUrl) && (
+            <View style={modal.docsSection}>
+              <Text style={modal.docsTitle}>Uploaded Documents</Text>
+              <View style={modal.docsRow}>
+                {[
+                  { label: 'Trade License', url: item.tradeLicenseUrl },
+                  { label: 'Export License', url: item.exportLicenseUrl },
+                  { label: 'ECX Membership', url: item.ecxMembershipUrl },
+                ].filter(d => d.url).map(d => (
+                  <TouchableOpacity
+                    key={d.label}
+                    style={modal.docThumb}
+                    onPress={() => Linking.openURL(d.url!).catch(() => {})}
+                    activeOpacity={0.8}
+                  >
+                    <Image source={{ uri: d.url! }} style={modal.docImage} resizeMode="cover" />
+                    <View style={modal.docOverlay}>
+                      <Ionicons name="expand-outline" size={14} color="#fff" />
+                    </View>
+                    <Text style={modal.docLabel} numberOfLines={1}>{d.label}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
 
           <Text style={modal.noteLabel}>Review Note (optional)</Text>
           <TextInput
@@ -116,6 +143,14 @@ const modal = StyleSheet.create({
   approveText: { fontSize: 15, fontWeight: '700', color: '#fff' },
   cancelBtn: { alignItems: 'center', paddingVertical: 12 },
   cancelText: { fontSize: 14, color: '#6B7280' },
+
+  docsSection: { marginBottom: 16 },
+  docsTitle:   { fontSize: 12, fontWeight: '700', color: '#6B7280', letterSpacing: 0.5, marginBottom: 10 },
+  docsRow:     { flexDirection: 'row', gap: 10 },
+  docThumb:    { flex: 1, alignItems: 'center' },
+  docImage:    { width: '100%', height: 80, borderRadius: 8, backgroundColor: '#F3F4F6' },
+  docOverlay:  { position: 'absolute', top: 6, right: 6, backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 4, padding: 2 },
+  docLabel:    { fontSize: 10, color: '#6B7280', marginTop: 4, textAlign: 'center' },
 });
 
 // ─── Main screen ──────────────────────────────────────────────────────────────

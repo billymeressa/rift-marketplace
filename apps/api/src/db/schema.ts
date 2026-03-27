@@ -70,6 +70,10 @@ export const sellerVerifications = pgTable('seller_verifications', {
   businessName: varchar('business_name', { length: 200 }),
   businessType: varchar('business_type', { length: 50 }),
   tradeLicenseRef: varchar('trade_license_ref', { length: 200 }),
+  // Document photo URLs (uploaded to Cloudinary)
+  tradeLicenseUrl: text('trade_license_url'),
+  exportLicenseUrl: text('export_license_url'),
+  ecxMembershipUrl: text('ecx_membership_url'),
   verificationStatus: varchar('verification_status', { length: 20 }).notNull().default('unverified'),
   reviewedAt: timestamp('reviewed_at', { withTimezone: true }),
   reviewNote: text('review_note'),

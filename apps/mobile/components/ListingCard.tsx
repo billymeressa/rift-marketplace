@@ -87,6 +87,14 @@ export default function ListingCard({ listing, onDelete }: ListingCardProps) {
         {/* Product title */}
         <Text style={styles.title} numberOfLines={2}>{listingTitle}</Text>
 
+        {/* Verified seller badge */}
+        {listing.sellerVerified && (
+          <View style={styles.verifiedBadge}>
+            <Ionicons name="shield-checkmark" size={10} color="#1B4332" />
+            <Text style={styles.verifiedText}>Verified Exporter</Text>
+          </View>
+        )}
+
         {/* Spec line: region · quantity */}
         {specLine.length > 0 && (
           <Text style={styles.specLine} numberOfLines={1}>{specLine}</Text>
@@ -210,6 +218,24 @@ const styles = StyleSheet.create({
     color: '#D97706',
     fontWeight: '600',
     fontStyle: 'italic',
+  },
+
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 3,
+    alignSelf: 'flex-start',
+    backgroundColor: '#ECFDF5',
+    borderRadius: 4,
+    paddingHorizontal: 5,
+    paddingVertical: 2,
+    marginTop: 2,
+  },
+  verifiedText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: '#1B4332',
+    letterSpacing: 0.3,
   },
 
   deleteBtn: {

@@ -1,8 +1,8 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/client.js';
-import { listings, users } from '../db/schema.js';
-import { eq, and, desc, ilike, or, sql, ne, SQL, inArray } from 'drizzle-orm';
+import { listings, users, sellerVerifications } from '../db/schema.js';
+import { eq, and, desc, ilike, or, sql, ne, SQL, inArray, leftJoin } from 'drizzle-orm';
 import { sendPushNotifications } from '../lib/notify.js';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
 
@@ -98,9 +98,11 @@ router.get('/', async (req, res) => {
           updatedAt: listings.updatedAt,
           userName: users.name,
           userPhone: users.phone,
+          sellerVerified: sql<boolean>`(${sellerVerifications.verificationStatus} = 'approved')`,
         })
         .from(listings)
         .leftJoin(users, eq(listings.userId, users.id))
+        .leftJoin(sellerVerifications, eq(listings.userId, sellerVerifications.userId))
         .where(where)
         .orderBy(desc(listings.createdAt))
         .limit(limit)
@@ -163,9 +165,13 @@ router.get('/:id', async (req, res) => {
         userName: users.name,
         userPhone: users.phone,
         userTelegram: users.telegramUsername,
+        sellerVerified: sql<boolean>`(${sellerVerifications.verificationStatus} = 'approved')`,
+        sellerBusinessName: sellerVerifications.businessName,
+        sellerBusinessType: sellerVerifications.businessType,
       })
       .from(listings)
       .leftJoin(users, eq(listings.userId, users.id))
+      .leftJoin(sellerVerifications, eq(listings.userId, sellerVerifications.userId))
       .where(eq(listings.id, req.params.id as string))
       .limit(1);
 
@@ -185,6 +191,9 @@ router.get('/:id', async (req, res) => {
         name: item.userName,
         phone: item.userPhone,
         telegramUsername: item.userTelegram,
+        verified: !!item.sellerVerified,
+        businessName: item.sellerBusinessName ?? null,
+        businessType: item.sellerBusinessType ?? null,
       },
     });
   } catch (error) {
