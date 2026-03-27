@@ -83,6 +83,25 @@ export function telegramReady() {
   if (typeof window === 'undefined') return;
   window.Telegram?.WebApp?.ready();
   window.Telegram?.WebApp?.expand();
+
+  // Listen for viewport changes (keyboard open/close on iPhone) and
+  // adjust the root element height so content isn't hidden behind the keyboard.
+  try {
+    const wa = window.Telegram?.WebApp as any;
+    if (wa?.onEvent) {
+      wa.onEvent('viewportChanged', (evt: { isStateStable: boolean }) => {
+        if (evt.isStateStable) {
+          const vh = wa.viewportStableHeight || wa.viewportHeight;
+          if (vh) {
+            document.documentElement.style.setProperty('height', `${vh}px`);
+            document.body.style.setProperty('height', `${vh}px`);
+            const root = document.getElementById('root');
+            if (root) root.style.setProperty('height', `${vh}px`);
+          }
+        }
+      });
+    }
+  } catch (_) { /* non-critical */ }
 }
 
 /**

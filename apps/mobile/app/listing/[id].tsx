@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, useWindowDimensions, FlatList, Alert, Platform } from 'react-native';
+import { View, Text, Image, TouchableOpacity, ScrollView, StyleSheet, ActivityIndicator, useWindowDimensions, FlatList, Alert, Platform, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
@@ -356,7 +356,7 @@ const styles = StyleSheet.create({
 
   // Gallery
   galleryContainer: { backgroundColor: '#F3F4F6', position: 'relative' },
-  galleryImage: { height: 280, backgroundColor: '#E5E7EB' },
+  galleryImage: { height: Math.min(280, Dimensions.get('window').width * 0.7), backgroundColor: '#E5E7EB' },
   dots: {
     flexDirection: 'row', justifyContent: 'center', gap: 6,
     paddingVertical: 10,

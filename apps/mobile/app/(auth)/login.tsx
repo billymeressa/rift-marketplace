@@ -2,13 +2,14 @@ import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet, Modal,
   ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView,
-  Linking, FlatList,
+  Linking, FlatList, Dimensions,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
 import { useAuth } from '../../lib/auth';
 import LanguageToggle from '../../components/LanguageToggle';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '../../hooks/useResponsive';
 import { isTelegramMiniApp, getTelegramInitData, requestContact } from '../../lib/telegram-webapp';
 
@@ -212,6 +213,7 @@ export default function AuthScreen() {
   const { t } = useTranslation();
   const { signIn } = useAuth();
   const { isMobile, formMaxWidth } = useResponsive();
+  const insets = useSafeAreaInsets();
 
   // Detect Telegram Mini App context once on mount
   const isTMA = Platform.OS === 'web' && isTelegramMiniApp();
@@ -475,12 +477,13 @@ export default function AuthScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
       <ScrollView contentContainerStyle={[styles.scroll, !isMobile && styles.scrollDesktop]} keyboardShouldPersistTaps="handled">
-        <View style={styles.langToggle}>
+        <View style={[styles.langToggle, { top: Math.max(insets.top, 20) + 12 }]}>
           <LanguageToggle />
         </View>
 
         <View style={[
           styles.content,
+          { paddingTop: Math.max(insets.top, 20) + 60, paddingBottom: Math.max(insets.bottom, 16) + 32 },
           !isMobile && {
             maxWidth: formMaxWidth,
             alignSelf: 'center' as const,
@@ -496,6 +499,7 @@ export default function AuthScreen() {
             marginVertical: 40,
           },
         ]}>
+
           <Text style={styles.logo}>{t('common.appName')}</Text>
 
           {/* Progress dots — only after phone step */}
@@ -572,6 +576,8 @@ export default function AuthScreen() {
                         placeholder={`e.g. ${country.example}`}
                         placeholderTextColor="#999"
                         keyboardType="phone-pad"
+                        textContentType="telephoneNumber"
+                        autoComplete="tel"
                         value={phone}
                         onChangeText={(v) => {
                           setPhone(cleanPhoneInput(v, country));
@@ -632,6 +638,8 @@ export default function AuthScreen() {
                   onChangeText={(v) => { setName(v); setError(''); }}
                   returnKeyType="next"
                   autoCapitalize="words"
+                  textContentType="name"
+                  autoComplete="name"
                   autoFocus
                 />
               </View>
@@ -647,8 +655,24 @@ export default function AuthScreen() {
                       <Ionicons name="close-circle-outline" size={18} color="#999" />
                     </TouchableOpacity>
                   </View>
-                ) : (
+                ) : tmaPhone === '' ? (
                   <>
+                    <TouchableOpacity
+                      style={styles.sharePhoneBtn}
+                      onPress={async () => {
+                        const result = await requestContact();
+                        if (result && result !== 'shared') {
+                          setTmaPhone(result);
+                        } else if (result === 'shared') {
+                          // Fallback: phone was shared via webhook, show manual input
+                          setTmaPhone('');
+                        }
+                      }}
+                    >
+                      <Ionicons name="shield-checkmark" size={20} color="#2AABEE" />
+                      <Text style={styles.sharePhoneBtnText}>Share via Telegram (verified)</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.orDivider}>or enter manually</Text>
                     <View style={styles.phoneRow}>
                       <TouchableOpacity
                         style={styles.countryBtn}
@@ -665,11 +689,13 @@ export default function AuthScreen() {
                         placeholder={country.example}
                         placeholderTextColor="#999"
                         keyboardType="phone-pad"
+                        textContentType="telephoneNumber"
+                        autoComplete="tel"
                         returnKeyType="next"
                       />
                     </View>
                   </>
-                )}
+                ) : null}
               </View>
 
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -708,6 +734,8 @@ export default function AuthScreen() {
                   onSubmitEditing={handleNameSubmit}
                   returnKeyType="go"
                   autoCapitalize="words"
+                  textContentType="name"
+                  autoComplete="name"
                   autoFocus
                 />
                 {error ? <Text style={styles.errorText}>{error}</Text> : null}
@@ -774,6 +802,8 @@ export default function AuthScreen() {
                     maxLength={i === 0 ? 6 : 1}
                     selectTextOnFocus
                     autoFocus={i === 0}
+                    textContentType="oneTimeCode"
+                    autoComplete="one-time-code"
                   />
                 ))}
               </View>
@@ -820,10 +850,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#fff' },
   scroll: { flexGrow: 1 },
   scrollDesktop: { backgroundColor: '#F3F4F6', justifyContent: 'center' },
-  langToggle: { position: 'absolute', top: 60, right: 20, zIndex: 10 },
+  langToggle: { position: 'absolute', right: 20, zIndex: 10 },
   content: {
     flex: 1, justifyContent: 'center',
-    paddingHorizontal: 24, paddingTop: 120, paddingBottom: 48,
+    paddingHorizontal: 24,
   },
   logo: {
     fontSize: 36, fontWeight: '800', color: '#1B4332',
