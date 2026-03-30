@@ -14,4 +14,12 @@ if (!body.code) {
   throw new Error('No code in response: ' + response.body);
 }
 
-output.devCode = body.code;
+var code = body.code;
+output.devCode = code;
+// Individual digits for explicit per-box entry
+output.d1 = code[0];
+output.d2 = code[1];
+output.d3 = code[2];
+output.d4 = code[3];
+output.d5 = code[4];
+output.d6 = code[5];
