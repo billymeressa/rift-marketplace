@@ -39,19 +39,30 @@ export default function RootLayout() {
   }, []);
 
   // ── Global TMA back button manager ─────────────────────────────────────────
-  // Show the Telegram back button on any non-root screen; hide it on root tabs
-  // and auth screens. This prevents Telegram from closing the app when the user
-  // presses the hardware/swipe back gesture.
+  // - On market tab (home): hide back button → Telegram close button exits app
+  // - On other tabs: show back button → navigates to market tab
+  // - On stack screens (detail pages): show back button → goes back in stack
   useEffect(() => {
     if (Platform.OS !== 'web' || !isTelegramMiniApp()) return;
     const btn = window.Telegram?.WebApp?.BackButton;
     if (!btn) return;
 
-    const isRootScreen = !segments[0] || ROOT_SEGMENTS.includes(segments[0] as string);
+    const isInTabs = segments[0] === '(tabs)';
+    const activeTab = segments[1]; // e.g. 'orders', 'create', 'messages', 'profile', 'index' or undefined
+    const isOnMarketTab = isInTabs && (!activeTab || activeTab === 'index');
+    const isInAuth = segments[0] === '(auth)';
 
-    if (isRootScreen) {
+    if (!segments[0] || isInAuth || isOnMarketTab) {
+      // Home / auth / unresolved → hide back button
       btn.hide();
+    } else if (isInTabs) {
+      // On a non-market tab → back goes to market
+      btn.show();
+      const handleBack = () => router.replace('/(tabs)');
+      btn.onClick(handleBack);
+      return () => btn.offClick(handleBack);
     } else {
+      // On a stack screen → back goes to previous screen
       btn.show();
       const handleBack = () => router.back();
       btn.onClick(handleBack);

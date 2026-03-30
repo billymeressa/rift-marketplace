@@ -224,8 +224,18 @@ export const api = {
   counterOrder: (id: string, data: any) =>
     apiRequest<any>(`/orders/${id}/counter`, { method: 'PUT', body: JSON.stringify(data) }),
 
-  payOrder: (id: string) =>
-    apiRequest<any>(`/orders/${id}/pay`, { method: 'PUT' }),
+  payOrder: (id: string, gateway?: 'chapa' | 'stripe' | 'telebirr') =>
+    apiRequest<{ checkoutUrl: string; txRef: string; gateway: string; amount: number; platformFee: number; currency: string }>(
+      `/orders/${id}/pay`, { method: 'PUT', body: JSON.stringify({ gateway }) }
+    ),
+
+  checkPaymentStatus: (id: string) =>
+    apiRequest<{ paymentStatus: 'success' | 'failed' | 'pending' | 'not_initiated'; orderStatus: string; escrowStatus: string }>(
+      `/orders/${id}/payment-status`
+    ),
+
+  devConfirmPayment: (txRef: string) =>
+    apiRequest<{ success: boolean; orderId: string }>(`/payments/dev-confirm/${txRef}`, { method: 'POST' }),
 
   shipOrder: (id: string) =>
     apiRequest<any>(`/orders/${id}/ship`, { method: 'PUT' }),

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,8 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Linking,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -30,6 +32,11 @@ export default function OrderDetailScreen() {
   const [counterQuantity, setCounterQuantity] = useState('');
   const [counterPrice, setCounterPrice] = useState('');
   const [counterTerms, setCounterTerms] = useState('');
+
+  const [pendingPayment, setPendingPayment] = useState<{ txRef: string; gateway: string; amount: number; platformFee: number; currency: string } | null>(null);
+  const [isPolling, setIsPolling] = useState(false);
+  const pollIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const [showGatewayPicker, setShowGatewayPicker] = useState(false);
 
   const [showDispute, setShowDispute] = useState(false);
   const [disputeReason, setDisputeReason] = useState('');
@@ -70,9 +77,62 @@ export default function OrderDetailScreen() {
     onError: (e: any) => Alert.alert('', e.message || t('common.error')),
   });
 
+  // Clean up polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+    };
+  }, []);
+
+  const startPolling = (txRef: string) => {
+    setIsPolling(true);
+    if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+
+    pollIntervalRef.current = setInterval(async () => {
+      try {
+        const result = await api.checkPaymentStatus(id!);
+        if (result.paymentStatus === 'success') {
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
+          setIsPolling(false);
+          setPendingPayment(null);
+          invalidateOrder();
+        } else if (result.paymentStatus === 'failed') {
+          clearInterval(pollIntervalRef.current!);
+          pollIntervalRef.current = null;
+          setIsPolling(false);
+          Alert.alert('Payment Failed', 'The payment was not completed. Please try again.');
+        }
+      } catch (_) {}
+    }, 5000);
+
+    // Stop polling after 15 minutes
+    setTimeout(() => {
+      if (pollIntervalRef.current) {
+        clearInterval(pollIntervalRef.current);
+        pollIntervalRef.current = null;
+        setIsPolling(false);
+      }
+    }, 15 * 60 * 1000);
+  };
+
   const payMutation = useMutation({
-    mutationFn: () => api.payOrder(id!),
-    onSuccess: invalidateOrder,
+    mutationFn: (gateway?: 'chapa' | 'stripe' | 'telebirr') => api.payOrder(id!, gateway),
+    onSuccess: async (data) => {
+      setShowGatewayPicker(false);
+      setPendingPayment({ txRef: data.txRef, gateway: data.gateway, amount: data.amount, platformFee: data.platformFee, currency: data.currency });
+
+      // Open Chapa checkout
+      const twa = Platform.OS === 'web' ? (window.Telegram?.WebApp as any) : null;
+      if (twa?.openLink) {
+        twa.openLink(data.checkoutUrl);
+      } else {
+        await Linking.openURL(data.checkoutUrl);
+      }
+
+      // Start polling for confirmation
+      startPolling(data.txRef);
+    },
     onError: (e: any) => Alert.alert('', e.message || t('common.error')),
   });
 
@@ -227,12 +287,65 @@ export default function OrderDetailScreen() {
         <Text style={styles.sectionTitle}>{t('order.status')}</Text>
         <View style={styles.statusRow}>
           <OrderStatusBadge status={order.status} />
-          {order.escrowStatus && (
-            <Text style={styles.escrowText}>
-              {t('order.escrow')}: {order.escrowStatus}
-            </Text>
+          {order.escrowStatus && order.escrowStatus !== 'none' && (
+            <View style={[styles.escrowBadge,
+              order.escrowStatus === 'held' ? styles.escrowHeld :
+              order.escrowStatus === 'released' ? styles.escrowReleased :
+              styles.escrowRefunded
+            ]}>
+              <Ionicons
+                name={order.escrowStatus === 'held' ? 'lock-closed' : order.escrowStatus === 'released' ? 'lock-open' : 'return-up-back-outline'}
+                size={12}
+                color={order.escrowStatus === 'held' ? '#92400E' : order.escrowStatus === 'released' ? '#065F46' : '#1E40AF'}
+              />
+              <Text style={[styles.escrowBadgeText,
+                order.escrowStatus === 'held' ? { color: '#92400E' } :
+                order.escrowStatus === 'released' ? { color: '#065F46' } :
+                { color: '#1E40AF' }
+              ]}>
+                {order.escrowStatus === 'held' ? 'Funds in Escrow' :
+                 order.escrowStatus === 'released' ? 'Funds Released' : 'Refunded'}
+              </Text>
+            </View>
           )}
         </View>
+
+        {/* Escrow amount breakdown when held */}
+        {order.escrowStatus === 'held' && order.totalPrice && (
+          <View style={styles.escrowBox}>
+            <View style={styles.escrowBoxRow}>
+              <Text style={styles.escrowBoxLabel}>Order Amount</Text>
+              <Text style={styles.escrowBoxValue}>
+                {order.currency === 'USD' ? '$' : ''}{Number(order.totalPrice).toLocaleString()}{order.currency === 'ETB' ? ' ETB' : ''}
+              </Text>
+            </View>
+            {order.platformFeeAmount && (
+              <View style={styles.escrowBoxRow}>
+                <Text style={styles.escrowBoxLabel}>Platform Fee (2%)</Text>
+                <Text style={styles.escrowBoxValue}>
+                  {order.currency === 'USD' ? '$' : ''}{Number(order.platformFeeAmount).toLocaleString()}{order.currency === 'ETB' ? ' ETB' : ''}
+                </Text>
+              </View>
+            )}
+            <View style={[styles.escrowBoxRow, { borderTopWidth: 1, borderTopColor: '#E5E7EB', paddingTop: 8, marginTop: 4 }]}>
+              <Text style={[styles.escrowBoxLabel, { fontWeight: '700', color: '#1A1D21' }]}>Seller Receives</Text>
+              <Text style={[styles.escrowBoxValue, { color: '#1B4332', fontWeight: '700' }]}>
+                {order.currency === 'USD' ? '$' : ''}{(Number(order.totalPrice) - Number(order.platformFeeAmount || 0)).toLocaleString()}{order.currency === 'ETB' ? ' ETB' : ''}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* Pending payment banner */}
+        {pendingPayment && isPolling && (
+          <View style={styles.pendingPayBanner}>
+            <ActivityIndicator size="small" color="#D97706" />
+            <View style={{ flex: 1 }}>
+              <Text style={styles.pendingPayTitle}>Awaiting Payment Confirmation</Text>
+              <Text style={styles.pendingPaySub}>Complete payment in your browser, then return here.</Text>
+            </View>
+          </View>
+        )}
       </View>
 
       {/* Timeline */}
@@ -295,20 +408,139 @@ export default function OrderDetailScreen() {
             </View>
           )}
 
-        {/* Buyer deposits payment */}
-        {isBuyer && order.status === 'accepted' && (
-          <TouchableOpacity
-            style={[styles.actionBtnFull, styles.payBtn]}
-            onPress={() => payMutation.mutate()}
-            disabled={payMutation.isPending}
-          >
-            <Ionicons name="wallet-outline" size={20} color="#fff" />
-            <Text style={styles.actionBtnText}>
-              {payMutation.isPending
-                ? t('common.loading')
-                : t('order.depositPayment')}
-            </Text>
-          </TouchableOpacity>
+        {/* Buyer deposits payment — gateway picker */}
+        {isBuyer && order.status === 'accepted' && !pendingPayment && (
+          <View style={styles.paySection}>
+            <View style={styles.paySummary}>
+              <Ionicons name="shield-checkmark-outline" size={20} color="#1B4332" />
+              <Text style={styles.paySummaryText}>
+                Payment held in escrow until you confirm delivery
+              </Text>
+            </View>
+
+            {!showGatewayPicker ? (
+              <TouchableOpacity
+                style={[styles.actionBtnFull, styles.payBtn]}
+                onPress={() => setShowGatewayPicker(true)}
+              >
+                <Ionicons name="card-outline" size={20} color="#fff" />
+                <Text style={styles.actionBtnText}>
+                  Pay {currencySymbol}{Number(order.totalPrice).toLocaleString()}{currencySuffix}
+                </Text>
+              </TouchableOpacity>
+            ) : (
+              <View style={styles.gatewayPicker}>
+                <Text style={styles.gatewayPickerTitle}>Choose payment method</Text>
+
+                {/* Chapa — local ETB */}
+                <TouchableOpacity
+                  style={[styles.gatewayOption, payMutation.isPending && styles.submitDisabled]}
+                  onPress={() => payMutation.mutate('chapa')}
+                  disabled={payMutation.isPending}
+                >
+                  <View style={[styles.gatewayIcon, { backgroundColor: '#FEF3C7' }]}>
+                    <Text style={styles.gatewayEmoji}>🇪🇹</Text>
+                  </View>
+                  <View style={styles.gatewayInfo}>
+                    <Text style={styles.gatewayName}>Chapa</Text>
+                    <Text style={styles.gatewaySub}>Ethiopian banks · Telebirr · ETB</Text>
+                  </View>
+                  {payMutation.isPending && payMutation.variables === 'chapa'
+                    ? <ActivityIndicator size="small" color="#1B4332" />
+                    : <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />}
+                </TouchableOpacity>
+
+                {/* Telebirr — Ethiopian mobile money */}
+                <TouchableOpacity
+                  style={[styles.gatewayOption, payMutation.isPending && styles.submitDisabled]}
+                  onPress={() => payMutation.mutate('telebirr')}
+                  disabled={payMutation.isPending}
+                >
+                  <View style={[styles.gatewayIcon, { backgroundColor: '#FEF3C7' }]}>
+                    <Text style={styles.gatewayEmoji}>📱</Text>
+                  </View>
+                  <View style={styles.gatewayInfo}>
+                    <Text style={styles.gatewayName}>Telebirr</Text>
+                    <Text style={styles.gatewaySub}>Ethio Telecom mobile money · ETB</Text>
+                  </View>
+                  {payMutation.isPending && payMutation.variables === 'telebirr'
+                    ? <ActivityIndicator size="small" color="#1B4332" />
+                    : <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />}
+                </TouchableOpacity>
+
+                {/* Stripe — international */}
+                <TouchableOpacity
+                  style={[styles.gatewayOption, payMutation.isPending && styles.submitDisabled]}
+                  onPress={() => payMutation.mutate('stripe')}
+                  disabled={payMutation.isPending}
+                >
+                  <View style={[styles.gatewayIcon, { backgroundColor: '#EFF6FF' }]}>
+                    <Text style={styles.gatewayEmoji}>💳</Text>
+                  </View>
+                  <View style={styles.gatewayInfo}>
+                    <Text style={styles.gatewayName}>Stripe</Text>
+                    <Text style={styles.gatewaySub}>Visa · Mastercard · USD · EUR · international</Text>
+                  </View>
+                  {payMutation.isPending && payMutation.variables === 'stripe'
+                    ? <ActivityIndicator size="small" color="#1B4332" />
+                    : <Ionicons name="chevron-forward" size={18} color="#9CA3AF" />}
+                </TouchableOpacity>
+
+                <TouchableOpacity onPress={() => setShowGatewayPicker(false)} style={styles.gatewayCancelLink}>
+                  <Text style={styles.gatewayCancelText}>Cancel</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </View>
+        )}
+
+        {/* Pending payment — allow re-opening or polling */}
+        {isBuyer && order.status === 'accepted' && pendingPayment && (
+          <View style={styles.paySection}>
+            <TouchableOpacity
+              style={[styles.actionBtnFull, styles.payBtn]}
+              onPress={async () => {
+                // Re-open the correct gateway checkout page
+                const url = pendingPayment.gateway === 'stripe'
+                  ? `https://checkout.stripe.com/c/pay/${pendingPayment.txRef}`
+                  : `https://checkout.chapa.co/checkout/payment/${pendingPayment.txRef}`;
+                const twa2 = Platform.OS === 'web' ? (window.Telegram?.WebApp as any) : null;
+                if (twa2?.openLink) {
+                  twa2.openLink(url);
+                } else {
+                  await Linking.openURL(url);
+                }
+                if (!isPolling) startPolling(pendingPayment.txRef);
+              }}
+            >
+              <Ionicons name="open-outline" size={20} color="#fff" />
+              <Text style={styles.actionBtnText}>
+                Re-open {pendingPayment.gateway === 'stripe' ? 'Stripe' : pendingPayment.gateway === 'telebirr' ? 'Telebirr' : 'Chapa'} Checkout
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.checkPaymentBtn}
+              onPress={async () => {
+                setIsPolling(false);
+                if (pollIntervalRef.current) clearInterval(pollIntervalRef.current);
+                try {
+                  const result = await api.checkPaymentStatus(id!);
+                  if (result.paymentStatus === 'success') {
+                    setPendingPayment(null);
+                    invalidateOrder();
+                  } else {
+                    Alert.alert('Payment Pending', 'Payment not confirmed yet. Complete checkout and try again.');
+                    startPolling(pendingPayment.txRef);
+                  }
+                } catch (e: any) {
+                  Alert.alert('', e.message || 'Failed to check status');
+                }
+              }}
+            >
+              <Ionicons name="refresh-outline" size={16} color="#D97706" />
+              <Text style={styles.checkPaymentBtnText}>I've Paid — Check Status</Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         {/* Seller marks as shipped */}
@@ -651,6 +883,108 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontStyle: 'italic',
   },
+  escrowBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 5,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+  },
+  escrowHeld: { backgroundColor: '#FEF3C7' },
+  escrowReleased: { backgroundColor: '#ECFDF5' },
+  escrowRefunded: { backgroundColor: '#EFF6FF' },
+  escrowBadgeText: { fontSize: 12, fontWeight: '600' },
+  escrowBox: {
+    backgroundColor: '#F8F9FA',
+    borderRadius: 12,
+    padding: 14,
+    gap: 8,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  escrowBoxRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  escrowBoxLabel: { fontSize: 13, color: '#6B7280' },
+  escrowBoxValue: { fontSize: 13, fontWeight: '600', color: '#1A1D21' },
+  pendingPayBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 10,
+    padding: 14,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  pendingPayTitle: { fontSize: 13, fontWeight: '700', color: '#92400E' },
+  pendingPaySub: { fontSize: 12, color: '#B45309', marginTop: 2 },
+  paySection: { gap: 10 },
+  paySummary: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    backgroundColor: '#ECFDF5',
+    borderRadius: 10,
+    padding: 12,
+  },
+  paySummaryText: { flex: 1, fontSize: 13, color: '#065F46', fontWeight: '500' },
+  checkPaymentBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#D97706',
+    backgroundColor: '#FFFBEB',
+  },
+  checkPaymentBtnText: { fontSize: 14, fontWeight: '700', color: '#D97706' },
+  gatewayPicker: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 14,
+    overflow: 'hidden',
+    backgroundColor: '#fff',
+  },
+  gatewayPickerTitle: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#6B7280',
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    paddingHorizontal: 16,
+    paddingTop: 14,
+    paddingBottom: 10,
+  },
+  gatewayOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+  },
+  gatewayIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gatewayEmoji: { fontSize: 22 },
+  gatewayInfo: { flex: 1 },
+  gatewayName: { fontSize: 15, fontWeight: '700', color: '#1A1D21' },
+  gatewaySub: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  gatewayCancelLink: { alignItems: 'center', paddingVertical: 14, borderTopWidth: 1, borderTopColor: '#F3F4F6' },
+  gatewayCancelText: { fontSize: 14, color: '#9CA3AF' },
   timelineSection: {
     marginBottom: 20,
   },

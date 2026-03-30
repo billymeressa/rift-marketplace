@@ -1,9 +1,10 @@
-import { Tabs } from 'expo-router';
+import { Tabs, usePathname, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Platform, View, Text, StyleSheet } from 'react-native';
+import { Platform, View, Text, StyleSheet, BackHandler } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect } from 'react';
 import LanguageToggle from '../../components/LanguageToggle';
 import { useResponsive } from '../../hooks/useResponsive';
 import { api } from '../../lib/api';
@@ -106,6 +107,23 @@ export default function TabLayout() {
   const insets = useSafeAreaInsets();
   const { isMobile } = useResponsive();
   const { token } = useAuth();
+  const pathname = usePathname();
+  const router = useRouter();
+
+  // Android: back on non-market tabs → go to market; back on market → exit app
+  useEffect(() => {
+    if (Platform.OS !== 'android') return;
+    const onBackPress = () => {
+      const isOnMarket = pathname === '/' || pathname === '/(tabs)' || pathname === '/(tabs)/index';
+      if (!isOnMarket) {
+        router.replace('/(tabs)');
+        return true; // handled
+      }
+      return false; // let system handle (exit app)
+    };
+    const sub = BackHandler.addEventListener('hardwareBackPress', onBackPress);
+    return () => sub.remove();
+  }, [pathname]);
 
   const { data: unreadData } = useQuery({
     queryKey: ['unreadCount'],

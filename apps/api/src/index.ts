@@ -16,6 +16,7 @@ import uploadRoutes from './routes/upload.js';
 import recommendationRoutes from './routes/recommendations.js';
 import telegramRoutes from './routes/telegram.js';
 import adminRoutes from './routes/admin.js';
+import paymentRoutes from './routes/payments.js';
 import { setWebhook, setChatMenuButton } from './lib/telegram.js';
 
 // Validate JWT_SECRET at startup
@@ -30,6 +31,8 @@ const port = parseInt(process.env.PORT || '3000');
 
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors());
+// Stripe webhook needs raw body — must be registered BEFORE express.json()
+app.use('/api/v1/payments/webhook/stripe', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '25mb' }));
 
 // Root
@@ -57,6 +60,7 @@ app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/recommendations', recommendationRoutes);
 app.use('/api/v1/telegram', telegramRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/payments', paymentRoutes);
 
 app.listen(port, () => {
   console.log(`API server running on http://localhost:${port}`);

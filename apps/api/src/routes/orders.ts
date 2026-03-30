@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/client.js';
-import { orders, listings, users } from '../db/schema.js';
+import { orders, listings, users, payments } from '../db/schema.js';
 import { eq, and, or, desc, sql, SQL } from 'drizzle-orm';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
+import { initializeChapaPayment, verifyChapaPayment, calculatePlatformFee, generateTxRef } from '../lib/chapa.js';
+import { initializeStripePayment, verifyStripeSession, isSupportedByStripe } from '../lib/stripe.js';
+import { initializeTelebirrPayment } from '../lib/telebirr.js';
 
 const router = Router();
 
@@ -344,18 +347,161 @@ router.put('/:id/counter', authMiddleware, async (req: AuthRequest, res) => {
   }
 });
 
-// PUT /orders/:id/pay - Simulate escrow deposit (buyer only)
+// PUT /orders/:id/pay - Initialize escrow payment (buyer only)
+// Body: { gateway?: 'chapa' | 'stripe' }
+// Auto-routing: ETB → Chapa, USD/EUR/etc → Stripe (buyer can override)
 router.put('/:id/pay', authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const result = await transitionOrder(
-      req.params.id as string, req.userId!, ['accepted'], 'buyer', 'payment_held',
-      { escrowStatus: 'held' }
-    );
-    if (result.error) { res.status(result.status!).json({ error: result.error }); return; }
-    res.json(result.data);
+    const orderId = req.params.id as string;
+    const { gateway: requestedGateway } = req.body as { gateway?: 'chapa' | 'stripe' | 'telebirr' };
+
+    const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    if (!order) { res.status(404).json({ error: 'Order not found' }); return; }
+    if (order.buyerId !== req.userId) { res.status(403).json({ error: 'Only the buyer can initiate payment' }); return; }
+    if (order.status !== 'accepted') { res.status(400).json({ error: `Cannot pay order with status '${order.status}'` }); return; }
+
+    // Fetch buyer + listing info
+    const [[buyer], [listing]] = await Promise.all([
+      db.select({ name: users.name }).from(users).where(eq(users.id, req.userId!)).limit(1),
+      db.select({ title: listings.title, productCategory: listings.productCategory, quantity: listings.quantity, unit: listings.unit })
+        .from(listings).where(eq(listings.id, order.listingId)).limit(1),
+    ]);
+
+    const amount = Number(order.totalPrice);
+    const platformFee = calculatePlatformFee(amount);
+    const txRef = generateTxRef(orderId);
+
+    const baseUrl = process.env.RENDER_EXTERNAL_URL || process.env.API_BASE_URL || 'http://localhost:3000';
+    const appUrl = process.env.EXPO_PUBLIC_APP_URL || 'https://t.me/NileXportBot/app';
+    const returnUrl = `${appUrl}?order=${orderId}&payment=complete`;
+    const cancelUrl = `${appUrl}?order=${orderId}&payment=cancelled`;
+
+    // Smart gateway routing: explicit override > currency-based auto-select
+    // ETB + no override → Chapa; USD/EUR/etc → Stripe; Telebirr = explicit only
+    const gateway: 'chapa' | 'stripe' | 'telebirr' = requestedGateway
+      ?? (isSupportedByStripe(order.currency) ? 'stripe' : 'chapa');
+
+    let checkoutUrl: string;
+    let stripeSessionId: string | undefined;
+
+    if (gateway === 'stripe') {
+      const result = await initializeStripePayment({
+        amount,
+        currency: order.currency,
+        txRef,
+        orderId,
+        productTitle: listing?.title || listing?.productCategory || 'Agricultural Commodity',
+        quantity: Number(order.quantity),
+        unit: order.unit,
+        successUrl: returnUrl,
+        cancelUrl,
+      });
+      checkoutUrl = result.checkoutUrl;
+      stripeSessionId = result.sessionId;
+    } else if (gateway === 'telebirr') {
+      const result = await initializeTelebirrPayment({
+        amount,
+        txRef,
+        subject: listing?.title || listing?.productCategory || 'Agricultural Commodity',
+        notifyUrl: `${baseUrl}/api/v1/payments/webhook/telebirr`,
+        returnUrl,
+      });
+      checkoutUrl = result.checkoutUrl;
+    } else {
+      const result = await initializeChapaPayment({
+        amount,
+        currency: order.currency,
+        buyerName: buyer?.name || 'Buyer',
+        txRef,
+        callbackUrl: `${baseUrl}/api/v1/payments/webhook/chapa`,
+        returnUrl,
+        title: `Order Payment — Nile Xport`,
+      });
+      checkoutUrl = result.checkoutUrl;
+    }
+
+    // Record pending payment
+    await db.insert(payments).values({
+      orderId,
+      txRef,
+      gateway,
+      amount: String(amount),
+      currency: order.currency,
+      platformFee: String(platformFee),
+      status: 'pending',
+      stripeSessionId: stripeSessionId || null,
+    });
+
+    // Store txRef on order
+    await db.update(orders)
+      .set({ paymentTxRef: txRef, platformFeeAmount: String(platformFee), updatedAt: new Date() })
+      .where(eq(orders.id, orderId));
+
+    res.json({ checkoutUrl, txRef, gateway, amount, platformFee, currency: order.currency });
   } catch (error) {
     console.error('Pay order error:', error);
-    res.status(500).json({ error: 'Failed to process payment' });
+    res.status(500).json({ error: 'Failed to initialize payment' });
+  }
+});
+
+// GET /orders/:id/payment-status - Poll payment status (buyer only)
+router.get('/:id/payment-status', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const orderId = req.params.id as string;
+    const [order] = await db.select().from(orders).where(eq(orders.id, orderId)).limit(1);
+    if (!order) { res.status(404).json({ error: 'Order not found' }); return; }
+    if (order.buyerId !== req.userId && order.sellerId !== req.userId) {
+      res.status(403).json({ error: 'Not authorized' }); return;
+    }
+
+    // If already confirmed by webhook, return current status
+    if (order.escrowStatus === 'held') {
+      res.json({ paymentStatus: 'success', orderStatus: order.status, escrowStatus: order.escrowStatus });
+      return;
+    }
+
+    if (!order.paymentTxRef) {
+      res.json({ paymentStatus: 'not_initiated', orderStatus: order.status, escrowStatus: order.escrowStatus });
+      return;
+    }
+
+    // Look up payment record to know which gateway was used
+    const [payment] = await db.select().from(payments).where(eq(payments.txRef, order.paymentTxRef)).limit(1);
+
+    let verifyResult: { status: 'success' | 'failed' | 'pending'; ref?: string; raw?: any };
+
+    if (payment?.gateway === 'stripe' && payment.stripeSessionId) {
+      const r = await verifyStripeSession(payment.stripeSessionId);
+      verifyResult = { status: r.status, ref: r.paymentIntentId };
+    } else {
+      const r = await verifyChapaPayment(order.paymentTxRef);
+      verifyResult = { status: r.status, ref: r.chapaRef, raw: r.raw };
+    }
+
+    if (verifyResult.status === 'success') {
+      const history = Array.isArray(order.statusHistory) ? order.statusHistory : [];
+      const gateway = payment?.gateway || 'chapa';
+      const [updated] = await db.update(orders)
+        .set({
+          status: 'payment_held',
+          escrowStatus: 'held',
+          statusHistory: addStatusEntry(history, 'payment_held', `Payment confirmed via ${gateway}`),
+          updatedAt: new Date(),
+        })
+        .where(eq(orders.id, orderId))
+        .returning();
+
+      await db.update(payments)
+        .set({ status: 'success', chapaRef: verifyResult.ref || null, chapaResponse: verifyResult.raw || null, updatedAt: new Date() })
+        .where(eq(payments.txRef, order.paymentTxRef));
+
+      res.json({ paymentStatus: 'success', orderStatus: updated.status, escrowStatus: updated.escrowStatus });
+    } else {
+      res.json({ paymentStatus: verifyResult.status, orderStatus: order.status, escrowStatus: order.escrowStatus });
+    }
+  } catch (error) {
+    console.error('Payment status error:', error);
+    res.status(500).json({ error: 'Failed to check payment status' });
   }
 });
 

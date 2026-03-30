@@ -59,7 +59,25 @@ export const orders = pgTable('orders', {
   deliveryTerms: text('delivery_terms'),
   status: varchar('status', { length: 20 }).notNull().default('proposed'),
   escrowStatus: varchar('escrow_status', { length: 20 }).notNull().default('none'),
+  paymentTxRef: varchar('payment_tx_ref', { length: 100 }),
+  platformFeeAmount: decimal('platform_fee_amount'),
   statusHistory: jsonb('status_history').notNull().default([]),
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const payments = pgTable('payments', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  orderId: uuid('order_id').notNull().references(() => orders.id),
+  txRef: varchar('tx_ref', { length: 100 }).notNull().unique(),
+  chapaRef: varchar('chapa_ref', { length: 100 }),
+  stripeSessionId: varchar('stripe_session_id', { length: 200 }),
+  amount: decimal('amount').notNull(),
+  currency: varchar('currency', { length: 3 }).notNull().default('ETB'),
+  platformFee: decimal('platform_fee').notNull(),
+  gateway: varchar('gateway', { length: 20 }).notNull().default('chapa'), // chapa | stripe
+  status: varchar('status', { length: 20 }).notNull().default('pending'), // pending | success | failed
+  chapaResponse: jsonb('chapa_response'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
