@@ -60,6 +60,48 @@ function publicUser(user: any) {
   };
 }
 
+// ─── GET /auth/dev/latest-otp ───────────────────────────────────────────────
+// Dev-only endpoint: returns the latest unused OTP for a phone number.
+// Only available when TELEGRAM_BOT_TOKEN is not set (dev mode).
+
+router.get('/dev/latest-otp', async (req, res) => {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  if (botToken || process.env.NODE_ENV === 'production') {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+
+  const phone = req.query.phone as string;
+  if (!phone) {
+    res.status(400).json({ error: 'phone query param required' });
+    return;
+  }
+
+  const normalized = normalizePhone(phone);
+  const now = new Date();
+
+  const [otp] = await db
+    .select({ code: otpCodes.code })
+    .from(otpCodes)
+    .where(
+      and(
+        eq(otpCodes.phone, normalized),
+        eq(otpCodes.purpose, 'auth'),
+        gt(otpCodes.expiresAt, now),
+        isNull(otpCodes.usedAt),
+      )
+    )
+    .orderBy(otpCodes.createdAt)
+    .limit(1);
+
+  if (!otp) {
+    res.status(404).json({ error: 'No valid OTP found' });
+    return;
+  }
+
+  res.json({ code: otp.code });
+});
+
 // ─── POST /auth/send-code ───────────────────────────────────────────────────
 // Unified endpoint for sign-in and sign-up.
 // Generates an OTP, stores it with a session ID, returns a Telegram deep link.

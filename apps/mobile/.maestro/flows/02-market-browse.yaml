@@ -1,0 +1,65 @@
+# ── 02-market-browse.yaml ─────────────────────────────────────────────────────
+# Market page: search, category filter, sort, scroll, tap a listing, go back
+# Prerequisite: user is already logged in (run 01-login first)
+# ──────────────────────────────────────────────────────────────────────────────
+
+appId: host.exp.Exponent
+
+---
+
+- openLink: "exp://localhost:8081"
+- extendedWaitUntil:
+    visible: "Market"
+    timeout: 15000
+- assertVisible: "Market"
+
+# ── Search ────────────────────────────────────────────────────────────────────
+- tapOn:
+    text: "Search products, regions, suppliers..."
+- inputText: "coffee"
+- pressKey: Enter
+- waitForAnimationToEnd
+
+# Clear search
+- tapOn:
+    text: "✕"
+    optional: true
+- waitForAnimationToEnd
+
+# ── Category chip ─────────────────────────────────────────────────────────────
+- scrollUntilVisible:
+    element:
+      text: "Coffee"
+    direction: RIGHT
+    timeout: 5000
+- tapOn:
+    text: "Coffee"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Coffee"
+- waitForAnimationToEnd
+
+# ── Sort ──────────────────────────────────────────────────────────────────────
+- tapOn:
+    text: "Price ↑"
+- waitForAnimationToEnd
+- tapOn:
+    text: "Newest"
+- waitForAnimationToEnd
+
+# ── Scroll listing feed ───────────────────────────────────────────────────────
+- scroll:
+    direction: DOWN
+    duration: 1000
+- scroll:
+    direction: UP
+    duration: 600
+
+# ── Tap first listing, verify navigation, go back ─────────────────────────────
+- tapOn:
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+- assertVisible: "Market"

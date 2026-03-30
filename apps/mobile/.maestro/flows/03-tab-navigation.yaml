@@ -1,0 +1,41 @@
+# ── 03-tab-navigation.yaml ────────────────────────────────────────────────────
+# Tab switching + back-button: each tab → back → returns to Market
+# Prerequisite: user is already logged in
+# ──────────────────────────────────────────────────────────────────────────────
+
+appId: host.exp.Exponent
+
+---
+
+- openLink: "exp://localhost:8081"
+- extendedWaitUntil:
+    visible: "Market"
+    timeout: 15000
+- assertVisible: "Market"
+
+# ── Orders → back → Market ────────────────────────────────────────────────────
+- tapOn:
+    text: "Orders"
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+- assertVisible: "Market"
+
+# ── Messages → back → Market ──────────────────────────────────────────────────
+- tapOn:
+    text: "Messages"
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+- assertVisible: "Market"
+
+# ── Profile → back → Market ───────────────────────────────────────────────────
+- tapOn:
+    text: "Profile"
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+- assertVisible: "Market"
+
+# ── Confirm Market is still active ───────────────────────────────────────────
+- assertVisible: "Market"

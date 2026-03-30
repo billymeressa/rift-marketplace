@@ -1,0 +1,60 @@
+# ── 01-login.yaml ─────────────────────────────────────────────────────────────
+# Login flow: phone entry → OTP (dev code from API) → Market
+# Prerequisites:
+#   1. Metro running:  npx expo start --ios
+#   2. API running WITHOUT Telegram bot token (dev OTP mode):
+#        TELEGRAM_BOT_TOKEN="" npm run dev
+# ──────────────────────────────────────────────────────────────────────────────
+
+appId: host.exp.Exponent
+
+---
+
+- openLink: "exp://localhost:8081"
+- extendedWaitUntil:
+    visible: "Nile Xport"
+    timeout: 15000
+
+# ── If already on OTP screen, go back to phone entry ─────────────────────────
+# Button accessibility text is ", Change phone number" (icon + label combined)
+- tapOn:
+    text: ".*Change phone number.*"
+    optional: true
+
+# Wait for phone screen — works whether we just navigated back or were already there
+- extendedWaitUntil:
+    visible: "We'll send your login code via Telegram"
+    timeout: 8000
+
+# ── Verify login screen ───────────────────────────────────────────────────────
+- assertVisible: "Nile Xport"
+- assertVisible: "We'll send your login code via Telegram"
+
+# ── Enter phone number ────────────────────────────────────────────────────────
+- tapOn:
+    point: "65%,55%"
+- eraseText: 20
+- inputText: "911234567"
+
+# ── Tap submit button ─────────────────────────────────────────────────────────
+- tapOn:
+    text: ".*Sign in with Telegram.*"
+- waitForAnimationToEnd
+
+# ── OTP screen: verify it appeared ───────────────────────────────────────────
+- assertVisible: "Code sent via Telegram"
+
+# ── Read devCode from API and enter it ───────────────────────────────────────
+- runScript:
+    file: ../scripts/get-dev-otp.js
+
+# Box 0 has autoFocus and maxLength=6 — type all 6 digits directly into it.
+# The multi-digit handler distributes them across all boxes and auto-verifies.
+- inputText: ${output.devCode}
+- waitForAnimationToEnd
+
+# ── Assert Market is visible after successful login ───────────────────────────
+- extendedWaitUntil:
+    visible: "Market"
+    timeout: 15000
+- assertVisible: "Market"

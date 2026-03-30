@@ -1,0 +1,52 @@
+# ── 04-orders-tabs.yaml ───────────────────────────────────────────────────────
+# Orders screen: buyer/seller tab switching, pull-to-refresh, order detail
+# Prerequisite: user is already logged in
+# ──────────────────────────────────────────────────────────────────────────────
+
+appId: host.exp.Exponent
+
+---
+
+- openLink: "exp://localhost:8081"
+- extendedWaitUntil:
+    visible: "Market"
+    timeout: 15000
+
+# Navigate to Orders tab
+- tapOn:
+    text: "Orders"
+- waitForAnimationToEnd
+
+# ── Verify both role tabs are shown ──────────────────────────────────────────
+- assertVisible: "As Buyer"
+- assertVisible: "As Seller"
+
+# ── Switch to Seller ──────────────────────────────────────────────────────────
+- tapOn:
+    text: "As Seller"
+- waitForAnimationToEnd
+
+# ── Switch back to Buyer ──────────────────────────────────────────────────────
+- tapOn:
+    text: "As Buyer"
+- waitForAnimationToEnd
+
+# ── Pull-to-refresh gesture ───────────────────────────────────────────────────
+- scroll:
+    direction: DOWN
+    duration: 400
+    startX: 50%
+    startY: 35%
+
+# ── Tap first order if any ────────────────────────────────────────────────────
+- tapOn:
+    index: 0
+    optional: true
+- waitForAnimationToEnd
+- back
+- waitForAnimationToEnd
+
+# ── Back to Market ────────────────────────────────────────────────────────────
+- back
+- waitForAnimationToEnd
+- assertVisible: "Market"

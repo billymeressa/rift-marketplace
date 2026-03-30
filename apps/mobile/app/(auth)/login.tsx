@@ -237,6 +237,13 @@ export default function AuthScreen() {
                    useRef<TextInput>(null), useRef<TextInput>(null), useRef<TextInput>(null)];
   const [otpDigits, setOtpDigits] = useState(['', '', '', '', '', '']);
 
+  // Auto-verify when all 6 OTP digits are filled (handles rapid keystroke batching)
+  useEffect(() => {
+    if (otpDigits.every(d => d !== '')) {
+      handleVerifyCode(otpDigits.join(''));
+    }
+  }, [otpDigits]);
+
   // Countdown timer
   useEffect(() => {
     if (countdown <= 0) return;
@@ -350,31 +357,29 @@ export default function AuthScreen() {
 
     // ── Paste / multi-digit input ──────────────────────────────────────────
     if (digits.length > 1) {
-      // Fill boxes starting from current index (or always from 0 if full code)
       const startAt = digits.length >= 6 ? 0 : index;
-      const next = [...otpDigits];
-      for (let i = 0; i < digits.length && startAt + i < 6; i++) {
-        next[startAt + i] = digits[i];
-      }
-      setOtpDigits(next);
+      setOtpDigits(prev => {
+        const next = [...prev];
+        for (let i = 0; i < digits.length && startAt + i < 6; i++) {
+          next[startAt + i] = digits[i];
+        }
+        return next;
+      });
       setError('');
-      // Focus the box after the last filled one (or last box)
       const nextFocus = Math.min(startAt + digits.length, 5);
       otpRefs[nextFocus].current?.focus();
-      const code = next.join('');
-      if (code.length === 6 && !next.includes('')) handleVerifyCode(code);
       return;
     }
 
-    // ── Single digit (normal typing) ───────────────────────────────────────
+    // ── Single digit (normal typing) — functional update avoids stale closure ──
     const digit = digits;
-    const next = [...otpDigits];
-    next[index] = digit;
-    setOtpDigits(next);
+    setOtpDigits(prev => {
+      const next = [...prev];
+      next[index] = digit;
+      return next;
+    });
     setError('');
     if (digit && index < 5) otpRefs[index + 1].current?.focus();
-    const code = next.join('');
-    if (code.length === 6) handleVerifyCode(code);
   };
 
   const handleOtpKeyPress = (key: string, index: number) => {
