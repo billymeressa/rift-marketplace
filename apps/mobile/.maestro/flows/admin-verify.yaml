@@ -10,49 +10,38 @@ appId: host.exp.Exponent
 
 - tapOn:
     text: ".*Profile.*tab.*"
+    optional: true
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 - takeScreenshot: 02-profile
 
-- tapOn:
-    text: "Admin Panel"
+# Navigate to admin via deep link
+- openLink: "exp://localhost:8081/--/admin"
+- waitForAnimationToEnd
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 - takeScreenshot: 03-admin-dashboard
 
-- tapOn:
-    text: "Orders"
-    optional: true
+- openLink: "exp://localhost:8081/--/admin/orders"
+- waitForAnimationToEnd
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 - takeScreenshot: 04-admin-orders
 
-- back
+- openLink: "exp://localhost:8081/--/admin/logistics"
 - waitForAnimationToEnd
-
-- tapOn:
-    text: "Logistics"
-    optional: true
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 - takeScreenshot: 05-admin-logistics
 
-- back
+- openLink: "exp://localhost:8081/--/admin/verifications"
 - waitForAnimationToEnd
-
-- tapOn:
-    text: "Verifications"
-    optional: true
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 - takeScreenshot: 06-admin-verifications
 
-- back
+- openLink: "exp://localhost:8081/--/admin/users"
 - waitForAnimationToEnd
-
-- tapOn:
-    text: "Users"
-    optional: true
 - waitForAnimationToEnd
 - waitForAnimationToEnd
 - takeScreenshot: 07-admin-users
