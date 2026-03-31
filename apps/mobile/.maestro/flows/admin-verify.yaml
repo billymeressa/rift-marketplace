@@ -1,0 +1,58 @@
+# admin-verify.yaml — Navigate admin screens and capture screenshots
+appId: host.exp.Exponent
+
+---
+
+- openLink: "exp://localhost:8081"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: 01-market
+
+- tapOn:
+    text: ".*Profile.*tab.*"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: 02-profile
+
+- tapOn:
+    text: "Admin Panel"
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: 03-admin-dashboard
+
+- tapOn:
+    text: "Orders"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: 04-admin-orders
+
+- back
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Logistics"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: 05-admin-logistics
+
+- back
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Verifications"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: 06-admin-verifications
+
+- back
+- waitForAnimationToEnd
+
+- tapOn:
+    text: "Users"
+    optional: true
+- waitForAnimationToEnd
+- waitForAnimationToEnd
+- takeScreenshot: 07-admin-users
