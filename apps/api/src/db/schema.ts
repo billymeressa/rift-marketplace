@@ -18,7 +18,7 @@ export const users = pgTable('users', {
   name: varchar('name', { length: 100 }).notNull().default(''),
   telegramUsername: varchar('telegram_username', { length: 50 }),
   preferredLanguage: varchar('preferred_language', { length: 2 }).notNull().default('am'),
-  role: varchar('role', { length: 20 }).notNull().default('user'), // 'user' | 'admin'
+  role: varchar('role', { length: 20 }).notNull().default('user'), // 'user' | 'admin' | 'inspector'
   passwordHash: text('password_hash'),
   pushToken: text('push_token'),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
@@ -62,8 +62,43 @@ export const orders = pgTable('orders', {
   paymentTxRef: varchar('payment_tx_ref', { length: 100 }),
   platformFeeAmount: decimal('platform_fee_amount'),
   statusHistory: jsonb('status_history').notNull().default([]),
+  inspectorId: uuid('inspector_id').references(() => users.id),
+  inspectionStatus: varchar('inspection_status', { length: 20 }),        // pending | passed | failed | skipped
+  inspectionNotes: text('inspection_notes'),
+  inspectionPhotos: jsonb('inspection_photos').notNull().default([]),
+  inspectionCompletedAt: timestamp('inspection_completed_at', { withTimezone: true }),
+  truckInfo: jsonb('truck_info'),                                          // {driverName, phone, plateNumber, waybillRef}
+  assignedTruckId: uuid('assigned_truck_id').references(() => trucks.id),
+  assignedDriverId: uuid('assigned_driver_id').references(() => drivers.id),
+  sealNumber: varchar('seal_number', { length: 50 }),
+  sealPhotos: jsonb('seal_photos').notNull().default([]),
+  pickupConfirmedAt: timestamp('pickup_confirmed_at', { withTimezone: true }),
+  pickupPhotos: jsonb('pickup_photos').notNull().default([]),
+  sealIntact: varchar('seal_intact', { length: 10 }), // 'yes' | 'no' | null
+  escrowAutoReleaseAt: timestamp('escrow_auto_release_at', { withTimezone: true }),
+  deliveryPhotos: jsonb('delivery_photos').notNull().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const trucks = pgTable('trucks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  plateNumber: varchar('plate_number', { length: 20 }).notNull().unique(),
+  make: varchar('make', { length: 50 }),
+  model: varchar('model', { length: 50 }),
+  capacityKg: decimal('capacity_kg'),
+  status: varchar('status', { length: 20 }).notNull().default('active'), // active | inactive
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const drivers = pgTable('drivers', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: varchar('name', { length: 100 }).notNull(),
+  phone: varchar('phone', { length: 20 }).notNull(),
+  licenseNumber: varchar('license_number', { length: 50 }),
+  truckId: uuid('truck_id').references(() => trucks.id),
+  status: varchar('status', { length: 20 }).notNull().default('active'), // active | inactive | suspended
+  createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const payments = pgTable('payments', {

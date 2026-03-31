@@ -67,6 +67,19 @@ export default function AdminDashboard() {
     staleTime: 30_000,
   });
 
+  const { data: escrowData } = useQuery({
+    queryKey: ['admin', 'escrow', 'summary'],
+    queryFn: adminApi.getEscrowSummary,
+    staleTime: 60_000,
+  });
+
+  const { data: ordersNeedingAction } = useQuery({
+    queryKey: ['admin', 'orders', 'needsAction'],
+    queryFn: () => adminApi.getOrders({ limit: 100 }),
+    staleTime: 60_000,
+    select: (data) => (data?.data ?? []).filter((o: any) => o.needsAction).length,
+  });
+
   const recentConvs = convData?.data?.slice(0, 4) ?? [];
 
   return (
@@ -146,6 +159,23 @@ export default function AdminDashboard() {
             sub="conv / user (7d)"
             color="#059669"
           />
+          <StatTile
+            icon="cash-outline"
+            label="Escrow Held"
+            value={escrowData ? `${escrowData.countHeld}` : '—'}
+            sub={escrowData ? `${escrowData.totalHeld.toLocaleString()} ETB` : undefined}
+            color="#D97706"
+            onPress={() => router.push('/admin/orders')}
+          />
+          <StatTile
+            icon="alert-circle"
+            label="Disputed"
+            value={escrowData?.countDisputed ?? '—'}
+            sub={escrowData?.countDisputed ? 'Needs resolution' : 'None'}
+            color="#DC2626"
+            alert={(escrowData?.countDisputed ?? 0) > 0}
+            onPress={() => router.push('/admin/orders')}
+          />
         </View>
       )}
 
@@ -176,6 +206,19 @@ export default function AdminDashboard() {
           label="Messages"
           color="#0088CC"
           onPress={() => router.push('/admin/conversations')}
+        />
+        <ActionBtn
+          icon="receipt-outline"
+          label="Orders"
+          badge={ordersNeedingAction}
+          color="#7B1FA2"
+          onPress={() => router.push('/admin/orders')}
+        />
+        <ActionBtn
+          icon="car-sport-outline"
+          label="Logistics"
+          color="#1E40AF"
+          onPress={() => router.push('/admin/logistics')}
         />
       </View>
 

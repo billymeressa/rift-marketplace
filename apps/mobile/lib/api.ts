@@ -73,6 +73,64 @@ export const adminApi = {
       method: 'PATCH',
       body: JSON.stringify({ status, note }),
     }),
+
+  // Admin - Orders
+  getOrders: (params?: { status?: string; escrowStatus?: string; page?: number; limit?: number }) => {
+    const q = params ? '?' + new URLSearchParams(
+      Object.fromEntries(Object.entries(params).filter(([, v]) => v != null).map(([k, v]) => [k, String(v)]))
+    ).toString() : '';
+    return adminRequest<{ data: any[]; page: number; limit: number; total: number; hasMore: boolean }>(
+      `/admin/orders${q}`
+    );
+  },
+  getOrder: (id: string) => adminRequest<any>(`/admin/orders/${id}`),
+
+  getInspectors: () => adminRequest<{ data: any[] }>('/admin/inspectors'),
+
+  assignInspector: (orderId: string, inspectorId: string) =>
+    adminRequest<any>(`/admin/orders/${orderId}/assign-inspector`, {
+      method: 'POST',
+      body: JSON.stringify({ inspectorId }),
+    }),
+
+  assignTruck: (orderId: string, truckId: string, driverId: string) =>
+    adminRequest<any>(`/admin/orders/${orderId}/assign-truck`, {
+      method: 'POST',
+      body: JSON.stringify({ truckId, driverId }),
+    }),
+
+  releaseEscrow: (orderId: string) =>
+    adminRequest<any>(`/admin/orders/${orderId}/release-escrow`, { method: 'POST' }),
+
+  refundEscrow: (orderId: string) =>
+    adminRequest<any>(`/admin/orders/${orderId}/refund-escrow`, { method: 'POST' }),
+
+  getEscrowSummary: () =>
+    adminRequest<{ totalHeld: number; countHeld: number; countDisputed: number; countAutoReleasing: number }>(
+      '/admin/escrow/summary'
+    ),
+
+  runAutoRelease: () =>
+    adminRequest<{ released: number; message: string }>('/admin/escrow/auto-release', { method: 'POST' }),
+
+  // Admin - Logistics
+  getTrucks: () => adminRequest<{ data: any[] }>('/logistics/trucks'),
+  addTruck: (data: { plateNumber: string; make?: string; model?: string; capacityKg?: number }) =>
+    adminRequest<any>('/logistics/trucks', { method: 'POST', body: JSON.stringify(data) }),
+  updateTruck: (id: string, status: 'active' | 'inactive') =>
+    adminRequest<any>(`/logistics/trucks/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
+
+  getDrivers: () => adminRequest<{ data: any[] }>('/logistics/drivers'),
+  addDriver: (data: { name: string; phone: string; licenseNumber?: string; truckId?: string }) =>
+    adminRequest<any>('/logistics/drivers', { method: 'POST', body: JSON.stringify(data) }),
+  updateDriver: (id: string, status: 'active' | 'inactive' | 'suspended') =>
+    adminRequest<any>(`/logistics/drivers/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
 };
 
 // ─── User-facing API ──────────────────────────────────────────────────────────
@@ -237,11 +295,23 @@ export const api = {
   devConfirmPayment: (txRef: string) =>
     apiRequest<{ success: boolean; orderId: string }>(`/payments/dev-confirm/${txRef}`, { method: 'POST' }),
 
-  shipOrder: (id: string) =>
-    apiRequest<any>(`/orders/${id}/ship`, { method: 'PUT' }),
+  assignInspector: (orderId: string, inspectorId: string) =>
+    apiRequest<any>(`/orders/${orderId}/assign-inspector`, { method: 'POST', body: JSON.stringify({ inspectorId }) }),
 
-  confirmDelivery: (id: string) =>
-    apiRequest<any>(`/orders/${id}/confirm-delivery`, { method: 'PUT' }),
+  submitInspection: (orderId: string, data: { result: 'passed' | 'failed'; notes?: string; photos?: string[] }) =>
+    apiRequest<any>(`/orders/${orderId}/inspection`, { method: 'POST', body: JSON.stringify(data) }),
+
+  shipOrder: (orderId: string, truckInfo: { driverName: string; phone: string; plateNumber: string; waybillRef?: string }) =>
+    apiRequest<any>(`/orders/${orderId}/ship`, { method: 'PUT', body: JSON.stringify(truckInfo) }),
+
+  assignTruck: (orderId: string, data: { truckId: string; driverId: string }) =>
+    apiRequest<any>(`/orders/${orderId}/assign-truck`, { method: 'POST', body: JSON.stringify(data) }),
+
+  confirmPickup: (orderId: string, pickupPhotos?: string[]) =>
+    apiRequest<any>(`/orders/${orderId}/ship`, { method: 'PUT', body: JSON.stringify({ pickupPhotos }) }),
+
+  confirmDelivery: (orderId: string, data: { sealIntact: 'yes' | 'no'; photos?: string[] }) =>
+    apiRequest<any>(`/orders/${orderId}/confirm-delivery`, { method: 'PUT', body: JSON.stringify(data) }),
 
   disputeOrder: (id: string, reason: string) =>
     apiRequest<any>(`/orders/${id}/dispute`, { method: 'PUT', body: JSON.stringify({ reason }) }),

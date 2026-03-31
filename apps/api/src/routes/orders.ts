@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
 import { db } from '../db/client.js';
-import { orders, listings, users, payments } from '../db/schema.js';
+import { orders, listings, users, payments, trucks, drivers } from '../db/schema.js';
 import { eq, and, or, desc, sql, SQL } from 'drizzle-orm';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
 import { initializeChapaPayment, verifyChapaPayment, calculatePlatformFee, generateTxRef } from '../lib/chapa.js';
@@ -37,6 +37,15 @@ function formatOrder(order: any) {
     totalPrice: Number(order.totalPrice),
     createdAt: order.createdAt instanceof Date ? order.createdAt.toISOString() : order.createdAt,
     updatedAt: order.updatedAt instanceof Date ? order.updatedAt.toISOString() : order.updatedAt,
+    inspectionCompletedAt: order.inspectionCompletedAt instanceof Date ? order.inspectionCompletedAt.toISOString() : order.inspectionCompletedAt,
+    escrowAutoReleaseAt: order.escrowAutoReleaseAt instanceof Date ? order.escrowAutoReleaseAt.toISOString() : order.escrowAutoReleaseAt,
+    pickupConfirmedAt: order.pickupConfirmedAt instanceof Date ? order.pickupConfirmedAt.toISOString() : order.pickupConfirmedAt,
+    assignedTruckId: order.assignedTruckId ?? null,
+    assignedDriverId: order.assignedDriverId ?? null,
+    sealNumber: order.sealNumber ?? null,
+    sealPhotos: order.sealPhotos ?? [],
+    pickupPhotos: order.pickupPhotos ?? [],
+    sealIntact: order.sealIntact ?? null,
   };
 }
 
@@ -505,30 +514,324 @@ router.get('/:id/payment-status', authMiddleware, async (req: AuthRequest, res) 
   }
 });
 
-// PUT /orders/:id/ship - Mark as shipped (seller only)
+// POST /orders/:id/assign-inspector (admin only)
+router.post('/:id/assign-inspector', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    if (req.userRole !== 'admin') {
+      res.status(403).json({ error: 'Admin access required' });
+      return;
+    }
+
+    const { inspectorId } = z.object({ inspectorId: z.string().uuid() }).parse(req.body);
+
+    const [order] = await db.select().from(orders).where(eq(orders.id, req.params.id as string)).limit(1);
+    if (!order) { res.status(404).json({ error: 'Order not found' }); return; }
+    if (order.status !== 'payment_held') {
+      res.status(400).json({ error: `Order must be in 'payment_held' status to assign inspector` });
+      return;
+    }
+
+    // Verify inspector exists
+    const [inspector] = await db.select({ id: users.id }).from(users).where(eq(users.id, inspectorId)).limit(1);
+    if (!inspector) { res.status(404).json({ error: 'Inspector user not found' }); return; }
+
+    const history = Array.isArray(order.statusHistory) ? order.statusHistory : [];
+    const [updated] = await db.update(orders)
+      .set({
+        inspectorId,
+        inspectionStatus: 'pending',
+        statusHistory: addStatusEntry(history, 'inspector_assigned', `Inspector assigned`),
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, req.params.id as string))
+      .returning();
+
+    res.json(formatOrder(updated));
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid input', details: error.errors });
+      return;
+    }
+    console.error('Assign inspector error:', error);
+    res.status(500).json({ error: 'Failed to assign inspector' });
+  }
+});
+
+// POST /orders/:id/inspection (inspector only)
+router.post('/:id/inspection', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    const data = z.object({
+      result: z.enum(['passed', 'failed']),
+      notes: z.string().max(2000).optional(),
+      photos: z.array(z.string()).optional(),
+      sealNumber: z.string().max(50).optional(),
+      sealPhotos: z.array(z.string()).optional(),
+    }).parse(req.body);
+
+    const [order] = await db.select().from(orders).where(eq(orders.id, req.params.id as string)).limit(1);
+    if (!order) { res.status(404).json({ error: 'Order not found' }); return; }
+
+    if (order.inspectorId !== req.userId) {
+      res.status(403).json({ error: 'Only the assigned inspector can submit an inspection' });
+      return;
+    }
+    if (order.inspectionStatus !== 'pending') {
+      res.status(400).json({ error: `Inspection is not pending (current: ${order.inspectionStatus})` });
+      return;
+    }
+
+    const history = Array.isArray(order.statusHistory) ? order.statusHistory : [];
+    const now = new Date();
+
+    if (data.result === 'passed') {
+      const noteWithSeal = data.sealNumber
+        ? `${data.notes ? data.notes + ' | ' : ''}Seal: ${data.sealNumber}`
+        : data.notes;
+      const [updated] = await db.update(orders)
+        .set({
+          inspectionStatus: 'passed',
+          inspectionNotes: data.notes ?? null,
+          inspectionPhotos: data.photos ?? [],
+          inspectionCompletedAt: now,
+          sealNumber: data.sealNumber ?? null,
+          sealPhotos: data.sealPhotos ?? [],
+          statusHistory: addStatusEntry(history, 'inspection_passed', noteWithSeal),
+          updatedAt: now,
+        })
+        .where(eq(orders.id, req.params.id as string))
+        .returning();
+      res.json(formatOrder(updated));
+    } else {
+      const [updated] = await db.update(orders)
+        .set({
+          inspectionStatus: 'failed',
+          inspectionNotes: data.notes ?? null,
+          inspectionPhotos: data.photos ?? [],
+          inspectionCompletedAt: now,
+          status: 'inspection_failed',
+          escrowStatus: 'refunded',
+          statusHistory: addStatusEntry(history, 'inspection_failed', data.notes),
+          updatedAt: now,
+        })
+        .where(eq(orders.id, req.params.id as string))
+        .returning();
+      res.json(formatOrder(updated));
+    }
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid input', details: error.errors });
+      return;
+    }
+    console.error('Inspection error:', error);
+    res.status(500).json({ error: 'Failed to submit inspection' });
+  }
+});
+
+// POST /orders/:id/assign-truck (admin only)
+router.post('/:id/assign-truck', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    if (req.userRole !== 'admin') {
+      res.status(403).json({ error: 'Admin access required' });
+      return;
+    }
+
+    const { truckId, driverId } = z.object({
+      truckId: z.string().uuid(),
+      driverId: z.string().uuid(),
+    }).parse(req.body);
+
+    const [order] = await db.select().from(orders).where(eq(orders.id, req.params.id as string)).limit(1);
+    if (!order) { res.status(404).json({ error: 'Order not found' }); return; }
+
+    if (order.inspectionStatus !== 'passed') {
+      res.status(400).json({ error: `Order inspection must have passed (current: ${order.inspectionStatus ?? 'none'})` });
+      return;
+    }
+    if (order.status !== 'payment_held') {
+      res.status(400).json({ error: `Order must be in 'payment_held' status (current: ${order.status})` });
+      return;
+    }
+
+    // Verify truck and driver exist
+    const [[truck], [driver]] = await Promise.all([
+      db.select({ id: trucks.id, plateNumber: trucks.plateNumber }).from(trucks).where(eq(trucks.id, truckId)).limit(1),
+      db.select({ id: drivers.id, name: drivers.name }).from(drivers).where(eq(drivers.id, driverId)).limit(1),
+    ]);
+    if (!truck) { res.status(404).json({ error: 'Truck not found' }); return; }
+    if (!driver) { res.status(404).json({ error: 'Driver not found' }); return; }
+
+    const history = Array.isArray(order.statusHistory) ? order.statusHistory : [];
+    const [updated] = await db.update(orders)
+      .set({
+        assignedTruckId: truckId,
+        assignedDriverId: driverId,
+        statusHistory: addStatusEntry(history, 'truck_assigned', `Truck assigned: ${truck.plateNumber}, Driver: ${driver.name}`),
+        updatedAt: new Date(),
+      })
+      .where(eq(orders.id, req.params.id as string))
+      .returning();
+
+    res.json(formatOrder(updated));
+  } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid input', details: error.errors });
+      return;
+    }
+    console.error('Assign truck error:', error);
+    res.status(500).json({ error: 'Failed to assign truck' });
+  }
+});
+
+// PUT /orders/:id/ship - Seller confirms driver pickup (seller only)
 router.put('/:id/ship', authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const result = await transitionOrder(req.params.id as string, req.userId!, ['payment_held'], 'seller', 'shipped');
-    if (result.error) { res.status(result.status!).json({ error: result.error }); return; }
-    res.json(result.data);
+    const data = z.object({
+      pickupPhotos: z.array(z.string()).optional(),
+    }).parse(req.body);
+
+    const [order] = await db.select().from(orders).where(eq(orders.id, req.params.id as string)).limit(1);
+    if (!order) { res.status(404).json({ error: 'Order not found' }); return; }
+    if (order.sellerId !== req.userId) { res.status(403).json({ error: 'Only the seller can confirm driver pickup' }); return; }
+    if (order.status !== 'payment_held') {
+      res.status(400).json({ error: `Cannot confirm pickup for order with status '${order.status}'` });
+      return;
+    }
+
+    // Block shipping if inspection was assigned and didn't pass
+    if (order.inspectionStatus && order.inspectionStatus !== 'passed') {
+      res.status(400).json({ error: `Cannot confirm pickup: inspection status is '${order.inspectionStatus}'` });
+      return;
+    }
+
+    // Truck must have been assigned by platform
+    if (!order.assignedTruckId) {
+      res.status(400).json({ error: 'A truck must be assigned by the platform before confirming pickup' });
+      return;
+    }
+
+    const history = Array.isArray(order.statusHistory) ? order.statusHistory : [];
+    const now = new Date();
+    const autoReleaseAt = new Date(now.getTime() + 72 * 60 * 60 * 1000); // NOW + 72hr
+
+    const [updated] = await db.update(orders)
+      .set({
+        status: 'shipped',
+        pickupConfirmedAt: now,
+        pickupPhotos: data.pickupPhotos ?? [],
+        escrowAutoReleaseAt: autoReleaseAt,
+        statusHistory: addStatusEntry(history, 'shipped', 'Driver pickup confirmed by seller'),
+        updatedAt: now,
+      })
+      .where(eq(orders.id, req.params.id as string))
+      .returning();
+
+    res.json(formatOrder(updated));
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid input', details: error.errors });
+      return;
+    }
     console.error('Ship order error:', error);
-    res.status(500).json({ error: 'Failed to mark as shipped' });
+    res.status(500).json({ error: 'Failed to confirm pickup' });
   }
 });
 
 // PUT /orders/:id/confirm-delivery - Buyer confirms receipt, releases escrow
 router.put('/:id/confirm-delivery', authMiddleware, async (req: AuthRequest, res) => {
   try {
-    const result = await transitionOrder(
-      req.params.id as string, req.userId!, ['shipped'], 'buyer', 'completed',
-      { escrowStatus: 'released' }
-    );
-    if (result.error) { res.status(result.status!).json({ error: result.error }); return; }
-    res.json(result.data);
+    const { photos, sealIntact } = z.object({
+      sealIntact: z.enum(['yes', 'no']),
+      photos: z.array(z.string()).optional(),
+    }).parse(req.body);
+
+    const [order] = await db.select().from(orders).where(eq(orders.id, req.params.id as string)).limit(1);
+    if (!order) { res.status(404).json({ error: 'Order not found' }); return; }
+    if (order.buyerId !== req.userId) { res.status(403).json({ error: 'Only the buyer can confirm delivery' }); return; }
+    if (order.status !== 'shipped') {
+      res.status(400).json({ error: `Cannot confirm delivery for order with status '${order.status}'` });
+      return;
+    }
+
+    const history = Array.isArray(order.statusHistory) ? order.statusHistory : [];
+    const now = new Date();
+
+    if (sealIntact === 'no') {
+      // Broken seal — open dispute, keep escrow held
+      const [updated] = await db.update(orders)
+        .set({
+          status: 'disputed',
+          sealIntact: 'no',
+          deliveryPhotos: photos && photos.length > 0 ? photos : order.deliveryPhotos,
+          statusHistory: addStatusEntry(history, 'disputed', 'Buyer reported broken seal on delivery'),
+          updatedAt: now,
+        })
+        .where(eq(orders.id, req.params.id as string))
+        .returning();
+      res.json(formatOrder(updated));
+    } else {
+      // Seal intact — complete order, release escrow
+      const [updated] = await db.update(orders)
+        .set({
+          status: 'completed',
+          sealIntact: 'yes',
+          escrowStatus: 'released',
+          escrowAutoReleaseAt: null,
+          deliveryPhotos: photos && photos.length > 0 ? photos : order.deliveryPhotos,
+          statusHistory: addStatusEntry(history, 'completed', 'Delivery confirmed by buyer — seal intact'),
+          updatedAt: now,
+        })
+        .where(eq(orders.id, req.params.id as string))
+        .returning();
+      res.json(formatOrder(updated));
+    }
   } catch (error) {
+    if (error instanceof z.ZodError) {
+      res.status(400).json({ error: 'Invalid input', details: error.errors });
+      return;
+    }
     console.error('Confirm delivery error:', error);
     res.status(500).json({ error: 'Failed to confirm delivery' });
+  }
+});
+
+// GET /orders/auto-release-check (admin only or cron)
+router.get('/auto-release-check', authMiddleware, async (req: AuthRequest, res) => {
+  try {
+    if (req.userRole !== 'admin') {
+      res.status(403).json({ error: 'Admin access required' });
+      return;
+    }
+
+    const now = new Date();
+    const overdueOrders = await db
+      .select()
+      .from(orders)
+      .where(
+        and(
+          eq(orders.status, 'shipped'),
+          eq(orders.escrowStatus, 'held'),
+          sql`${orders.escrowAutoReleaseAt} < ${now}`
+        )
+      );
+
+    let released = 0;
+    for (const order of overdueOrders) {
+      const history = Array.isArray(order.statusHistory) ? order.statusHistory : [];
+      await db.update(orders)
+        .set({
+          status: 'completed',
+          escrowStatus: 'released',
+          statusHistory: addStatusEntry(history as any[], 'completed', 'Auto-released after 72hr delivery window'),
+          updatedAt: now,
+        })
+        .where(eq(orders.id, order.id));
+      released++;
+    }
+
+    res.json({ released, message: `Auto-released ${released} order(s)` });
+  } catch (error) {
+    console.error('Auto-release check error:', error);
+    res.status(500).json({ error: 'Failed to run auto-release check' });
   }
 });
 

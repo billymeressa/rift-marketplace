@@ -1,0 +1,9 @@
+ALTER TABLE orders
+  ADD COLUMN IF NOT EXISTS inspector_id UUID REFERENCES users(id),
+  ADD COLUMN IF NOT EXISTS inspection_status VARCHAR(20),
+  ADD COLUMN IF NOT EXISTS inspection_notes TEXT,
+  ADD COLUMN IF NOT EXISTS inspection_photos JSONB NOT NULL DEFAULT '[]',
+  ADD COLUMN IF NOT EXISTS inspection_completed_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS truck_info JSONB,
+  ADD COLUMN IF NOT EXISTS escrow_auto_release_at TIMESTAMPTZ,
+  ADD COLUMN IF NOT EXISTS delivery_photos JSONB NOT NULL DEFAULT '[]';

@@ -45,6 +45,21 @@ export default function OrderDetailScreen() {
   const [reviewRating, setReviewRating] = useState(0);
   const [reviewComment, setReviewComment] = useState('');
 
+  // Ship / pickup confirmation state
+  const [showShipForm, setShowShipForm] = useState(false);
+  // Legacy ship form fields kept but unused for new flow
+  const [shipDriverName, setShipDriverName] = useState('');
+  const [shipPhone, setShipPhone] = useState('');
+  const [shipPlate, setShipPlate] = useState('');
+  const [shipWaybill, setShipWaybill] = useState('');
+
+  // Seal intact state for delivery confirmation
+  const [sealIntactChoice, setSealIntactChoice] = useState<'yes' | 'no' | null>(null);
+
+  // Inspection form state (for inspector role)
+  const [inspectionNotes, setInspectionNotes] = useState('');
+  const [inspectionResult, setInspectionResult] = useState<'passed' | 'failed' | null>(null);
+
   const { data: order, isLoading } = useQuery({
     queryKey: ['order', id],
     queryFn: () => api.getOrder(id!),
@@ -137,14 +152,40 @@ export default function OrderDetailScreen() {
   });
 
   const shipMutation = useMutation({
-    mutationFn: () => api.shipOrder(id!),
-    onSuccess: invalidateOrder,
+    mutationFn: (truckInfo: { driverName: string; phone: string; plateNumber: string; waybillRef?: string }) =>
+      api.shipOrder(id!, truckInfo),
+    onSuccess: () => {
+      setShowShipForm(false);
+      invalidateOrder();
+    },
+    onError: (e: any) => Alert.alert('', e.message || t('common.error')),
+  });
+
+  const confirmPickupMutation = useMutation({
+    mutationFn: () => api.confirmPickup(id!),
+    onSuccess: () => {
+      invalidateOrder();
+    },
     onError: (e: any) => Alert.alert('', e.message || t('common.error')),
   });
 
   const confirmMutation = useMutation({
-    mutationFn: () => api.confirmDelivery(id!),
-    onSuccess: invalidateOrder,
+    mutationFn: (data: { sealIntact: 'yes' | 'no' }) => api.confirmDelivery(id!, data),
+    onSuccess: () => {
+      setSealIntactChoice(null);
+      invalidateOrder();
+    },
+    onError: (e: any) => Alert.alert('', e.message || t('common.error')),
+  });
+
+  const inspectionMutation = useMutation({
+    mutationFn: (data: { result: 'passed' | 'failed'; notes?: string }) =>
+      api.submitInspection(id!, data),
+    onSuccess: () => {
+      setInspectionNotes('');
+      setInspectionResult(null);
+      invalidateOrder();
+    },
     onError: (e: any) => Alert.alert('', e.message || t('common.error')),
   });
 
@@ -241,6 +282,30 @@ export default function OrderDetailScreen() {
   };
 
   const canCancel = ['proposed', 'countered', 'accepted'].includes(order.status);
+  const isInspector = user?.id === order.inspectorId;
+  // Legacy canShip retained but new UI uses canConfirmPickup
+  const canShip = isSeller && order.status === 'payment_held' &&
+    (order.inspectionStatus === 'passed' || !order.inspectionStatus);
+  const canConfirmPickup = isSeller && order.status === 'payment_held' &&
+    !!order.assignedTruckId &&
+    (order.inspectionStatus === 'passed' || !order.inspectionStatus);
+
+  const handleShipSubmit = () => {
+    if (!shipDriverName.trim()) { Alert.alert('', 'Driver name is required'); return; }
+    if (!shipPhone.trim()) { Alert.alert('', 'Phone is required'); return; }
+    if (!shipPlate.trim()) { Alert.alert('', 'Plate number is required'); return; }
+    shipMutation.mutate({
+      driverName: shipDriverName.trim(),
+      phone: shipPhone.trim(),
+      plateNumber: shipPlate.trim(),
+      waybillRef: shipWaybill.trim() || undefined,
+    });
+  };
+
+  const handleInspectionSubmit = () => {
+    if (!inspectionResult) { Alert.alert('', 'Please select Pass or Fail'); return; }
+    inspectionMutation.mutate({ result: inspectionResult, notes: inspectionNotes.trim() || undefined });
+  };
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
@@ -368,6 +433,130 @@ export default function OrderDetailScreen() {
               </View>
             </View>
           ))}
+        </View>
+      )}
+
+      {/* Escrow + Logistics Stepper */}
+      {['payment_held', 'inspection_failed', 'shipped', 'completed', 'disputed'].includes(order.status) && (
+        <View style={styles.stepperSection}>
+          <Text style={styles.sectionTitle}>Order Progress</Text>
+          {[
+            {
+              label: 'Order Accepted',
+              done: true,
+              current: false,
+            },
+            {
+              label: 'Payment Held in Escrow',
+              done: ['payment_held', 'shipped', 'completed'].includes(order.status),
+              current: order.status === 'payment_held' && !order.inspectionStatus,
+              sub: order.escrowStatus === 'held' ? 'Funds secured' : undefined,
+            },
+            {
+              label: order.inspectionStatus
+                ? order.inspectionStatus === 'passed' ? 'Inspection Passed'
+                  : order.inspectionStatus === 'failed' ? 'Inspection Failed'
+                  : 'Inspection Pending'
+                : 'Inspection (skipped)',
+              done: order.inspectionStatus === 'passed',
+              current: order.inspectionStatus === 'pending',
+              failed: order.inspectionStatus === 'failed',
+              sub: order.inspectionStatus === 'passed' && order.sealNumber
+                ? `Seal #${order.sealNumber}${order.inspectionNotes ? ' · ' + order.inspectionNotes : ''}`
+                : order.inspectionNotes || undefined,
+              skip: !order.inspectorId,
+            },
+            {
+              label: order.assignedTruckId ? 'Truck Assigned' : 'Truck Assignment Pending',
+              done: !!order.assignedTruckId,
+              current: order.inspectionStatus === 'passed' && !order.assignedTruckId,
+              sub: order.assignedTruckId
+                ? `Truck & driver assigned by platform`
+                : undefined,
+              skip: false,
+            },
+            {
+              label: order.pickupConfirmedAt ? 'Picked Up by Driver' : 'Awaiting Driver Pickup',
+              done: ['shipped', 'completed'].includes(order.status),
+              current: order.status === 'payment_held' && !!order.assignedTruckId,
+              sub: order.pickupConfirmedAt
+                ? `Confirmed: ${new Date(order.pickupConfirmedAt).toLocaleString()}`
+                : undefined,
+            },
+            {
+              label: order.status === 'completed'
+                ? order.sealIntact === 'yes' ? 'Delivered — Seal Intact'
+                  : 'Delivered'
+                : order.status === 'disputed' ? 'Disputed — Seal Broken'
+                : 'Delivered & Funds Released',
+              done: order.status === 'completed' && order.escrowStatus === 'released',
+              current: false,
+              failed: order.status === 'disputed' && order.sealIntact === 'no',
+              sub: order.sealIntact === 'no' ? 'Buyer reported broken seal' : undefined,
+            },
+          ].map((step, i, arr) => {
+            const dotColor = step.failed ? '#F44336' : step.done ? '#1B4332' : step.current ? '#FF9800' : step.skip ? '#D1D5DB' : '#D1D5DB';
+            return (
+              <View key={i} style={styles.stepperItem}>
+                <View style={styles.stepperDotCol}>
+                  <View style={[styles.stepperDot, { backgroundColor: dotColor }]} />
+                  {i < arr.length - 1 && <View style={styles.stepperLine} />}
+                </View>
+                <View style={styles.stepperContent}>
+                  <Text style={[styles.stepperLabel, step.done && { color: '#1B4332' }, step.failed && { color: '#F44336' }, step.current && { color: '#FF9800' }]}>
+                    {step.label}
+                  </Text>
+                  {step.sub && <Text style={styles.stepperSub}>{step.sub}</Text>}
+                </View>
+              </View>
+            );
+          })}
+        </View>
+      )}
+
+      {/* Inspector: inspection form */}
+      {isInspector && order.inspectionStatus === 'pending' && (
+        <View style={styles.inspectionCard}>
+          <Text style={styles.sectionTitle}>Submit Inspection Result</Text>
+          <Text style={styles.inspectionHint}>You are the assigned inspector for this order.</Text>
+
+          <View style={styles.inspectionBtnRow}>
+            <TouchableOpacity
+              style={[styles.inspectionBtn, inspectionResult === 'passed' && styles.inspectionBtnPassActive]}
+              onPress={() => setInspectionResult('passed')}
+            >
+              <Ionicons name="checkmark-circle-outline" size={18} color={inspectionResult === 'passed' ? '#fff' : '#1B4332'} />
+              <Text style={[styles.inspectionBtnText, inspectionResult === 'passed' && { color: '#fff' }]}>Pass</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.inspectionBtn, inspectionResult === 'failed' && styles.inspectionBtnFailActive]}
+              onPress={() => setInspectionResult('failed')}
+            >
+              <Ionicons name="close-circle-outline" size={18} color={inspectionResult === 'failed' ? '#fff' : '#F44336'} />
+              <Text style={[styles.inspectionBtnText, inspectionResult === 'failed' && { color: '#fff' }]}>Fail</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.modalLabel}>Notes (optional)</Text>
+          <TextInput
+            style={[styles.modalInput, styles.modalTextArea]}
+            multiline
+            numberOfLines={3}
+            value={inspectionNotes}
+            onChangeText={setInspectionNotes}
+            placeholder="Add inspection notes..."
+            placeholderTextColor="#999"
+          />
+
+          <TouchableOpacity
+            style={[styles.actionBtnFull, { backgroundColor: '#1B4332', marginTop: 14 }, inspectionMutation.isPending && styles.submitDisabled]}
+            onPress={handleInspectionSubmit}
+            disabled={inspectionMutation.isPending}
+          >
+            <Text style={styles.actionBtnText}>
+              {inspectionMutation.isPending ? 'Submitting...' : 'Submit Inspection'}
+            </Text>
+          </TouchableOpacity>
         </View>
       )}
 
@@ -543,40 +732,136 @@ export default function OrderDetailScreen() {
           </View>
         )}
 
-        {/* Seller marks as shipped */}
-        {isSeller && order.status === 'payment_held' && (
-          <TouchableOpacity
-            style={[styles.actionBtnFull, styles.shipBtn]}
-            onPress={() => shipMutation.mutate()}
-            disabled={shipMutation.isPending}
-          >
-            <Ionicons name="airplane-outline" size={20} color="#fff" />
-            <Text style={styles.actionBtnText}>
-              {shipMutation.isPending
-                ? t('common.loading')
-                : t('order.markShipped')}
+        {/* Seller: Confirm Driver Pickup (platform-managed logistics) */}
+        {canConfirmPickup && (
+          <View style={styles.shipFormCard}>
+            <Text style={styles.sectionTitle}>Confirm Driver Pickup</Text>
+            <Text style={styles.inspectionHint}>
+              The platform has assigned a truck and driver for this order. Confirm once the driver has collected the goods.
             </Text>
-          </TouchableOpacity>
+            {order.sealNumber && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                <Ionicons name="shield-checkmark-outline" size={16} color="#1B4332" />
+                <Text style={{ fontSize: 13, color: '#1B4332', fontWeight: '600' }}>
+                  Seal #{order.sealNumber}
+                </Text>
+              </View>
+            )}
+            <TouchableOpacity
+              style={[styles.actionBtnFull, { backgroundColor: '#9C27B0', marginTop: 10 }, confirmPickupMutation.isPending && styles.submitDisabled]}
+              onPress={() =>
+                Alert.alert(
+                  'Confirm Driver Pickup',
+                  'Confirm that the assigned driver has collected the goods?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { text: 'Yes, Confirm', onPress: () => confirmPickupMutation.mutate() },
+                  ]
+                )
+              }
+              disabled={confirmPickupMutation.isPending}
+            >
+              <Ionicons name="checkmark-done-outline" size={20} color="#fff" />
+              <Text style={styles.actionBtnText}>
+                {confirmPickupMutation.isPending ? t('common.loading') : 'Confirm Driver Has Picked Up Goods'}
+              </Text>
+            </TouchableOpacity>
+          </View>
         )}
 
         {/* Buyer confirms delivery or opens dispute */}
         {isBuyer && order.status === 'shipped' && (
-          <View style={styles.actionRow}>
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.acceptBtn]}
-              onPress={() => confirmMutation.mutate()}
-              disabled={confirmMutation.isPending}
-            >
-              <Ionicons name="checkmark-done-outline" size={20} color="#fff" />
-              <Text style={styles.actionBtnText}>{t('order.confirmDelivery')}</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionBtn, styles.rejectBtn]}
-              onPress={() => setShowDispute(true)}
-            >
-              <Ionicons name="warning-outline" size={20} color="#fff" />
-              <Text style={styles.actionBtnText}>{t('order.openDispute')}</Text>
-            </TouchableOpacity>
+          <View style={{ gap: 10 }}>
+            {order.escrowAutoReleaseAt && (
+              <View style={styles.autoReleaseNote}>
+                <Ionicons name="time-outline" size={14} color="#B45309" />
+                <Text style={styles.autoReleaseText}>
+                  Funds auto-release on {new Date(order.escrowAutoReleaseAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })} if not confirmed
+                </Text>
+              </View>
+            )}
+
+            {/* Seal intact check */}
+            <View style={styles.sealCheckCard}>
+              <Text style={styles.sectionTitle}>Confirm Delivery</Text>
+              {order.sealNumber && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 10 }}>
+                  <Ionicons name="shield-outline" size={15} color="#1B4332" />
+                  <Text style={{ fontSize: 13, color: '#374151' }}>
+                    Expected seal: <Text style={{ fontWeight: '700', color: '#1B4332' }}>#{order.sealNumber}</Text>
+                  </Text>
+                </View>
+              )}
+              <Text style={{ fontSize: 14, fontWeight: '600', color: '#1A1D21', marginBottom: 10 }}>
+                Is the seal intact?
+              </Text>
+              <View style={{ flexDirection: 'row', gap: 10, marginBottom: 14 }}>
+                <TouchableOpacity
+                  style={[
+                    styles.sealBtn,
+                    sealIntactChoice === 'yes' && styles.sealBtnYesActive,
+                  ]}
+                  onPress={() => setSealIntactChoice('yes')}
+                >
+                  <Ionicons name="checkmark-circle-outline" size={18} color={sealIntactChoice === 'yes' ? '#fff' : '#1B4332'} />
+                  <Text style={[styles.sealBtnText, sealIntactChoice === 'yes' && { color: '#fff' }]}>Yes, Seal Intact</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.sealBtn,
+                    sealIntactChoice === 'no' && styles.sealBtnNoActive,
+                  ]}
+                  onPress={() => setSealIntactChoice('no')}
+                >
+                  <Ionicons name="close-circle-outline" size={18} color={sealIntactChoice === 'no' ? '#fff' : '#F44336'} />
+                  <Text style={[styles.sealBtnText, sealIntactChoice === 'no' && { color: '#fff' }]}>No, Seal Broken</Text>
+                </TouchableOpacity>
+              </View>
+              {sealIntactChoice && (
+                <TouchableOpacity
+                  style={[
+                    styles.actionBtnFull,
+                    sealIntactChoice === 'yes' ? styles.acceptBtn : { backgroundColor: '#F44336' },
+                    confirmMutation.isPending && styles.submitDisabled,
+                  ]}
+                  onPress={() => {
+                    if (sealIntactChoice === 'no') {
+                      Alert.alert(
+                        'Report Broken Seal',
+                        'This will open a dispute for this order. The escrowed funds will remain held until the dispute is resolved. Continue?',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'Yes, Open Dispute', style: 'destructive', onPress: () => confirmMutation.mutate({ sealIntact: 'no' }) },
+                        ]
+                      );
+                    } else {
+                      Alert.alert(
+                        'Confirm Delivery',
+                        'This will release the escrowed funds to the seller. Are you sure?',
+                        [
+                          { text: 'Cancel', style: 'cancel' },
+                          { text: 'Yes, Confirm', onPress: () => confirmMutation.mutate({ sealIntact: 'yes' }) },
+                        ]
+                      );
+                    }
+                  }}
+                  disabled={confirmMutation.isPending}
+                >
+                  <Ionicons
+                    name={sealIntactChoice === 'yes' ? 'checkmark-done-outline' : 'warning-outline'}
+                    size={20}
+                    color="#fff"
+                  />
+                  <Text style={styles.actionBtnText}>
+                    {confirmMutation.isPending
+                      ? t('common.loading')
+                      : sealIntactChoice === 'yes'
+                      ? t('order.confirmDelivery')
+                      : 'Report Broken Seal & Open Dispute'}
+                  </Text>
+                </TouchableOpacity>
+              )}
+            </View>
           </View>
         )}
 
@@ -1151,5 +1436,146 @@ const styles = StyleSheet.create({
   ratingRow: {
     alignItems: 'center',
     paddingVertical: 8,
+  },
+  // Stepper
+  stepperSection: {
+    marginBottom: 20,
+  },
+  stepperItem: {
+    flexDirection: 'row',
+    minHeight: 52,
+  },
+  stepperDotCol: {
+    width: 24,
+    alignItems: 'center',
+  },
+  stepperDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginTop: 3,
+  },
+  stepperLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: '#E5E7EB',
+    marginTop: 4,
+  },
+  stepperContent: {
+    flex: 1,
+    paddingLeft: 10,
+    paddingBottom: 16,
+  },
+  stepperLabel: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#9CA3AF',
+  },
+  stepperSub: {
+    fontSize: 12,
+    color: '#6B7280',
+    marginTop: 2,
+  },
+  // Inspection card
+  inspectionCard: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 12,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  inspectionHint: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 14,
+  },
+  inspectionBtnRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 8,
+  },
+  inspectionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#fff',
+  },
+  inspectionBtnPassActive: {
+    backgroundColor: '#1B4332',
+    borderColor: '#1B4332',
+  },
+  inspectionBtnFailActive: {
+    backgroundColor: '#F44336',
+    borderColor: '#F44336',
+  },
+  inspectionBtnText: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#1A1D21',
+  },
+  // Ship form
+  shipFormCard: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  // Auto-release note
+  autoReleaseNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  autoReleaseText: {
+    flex: 1,
+    fontSize: 12,
+    color: '#B45309',
+    fontWeight: '500',
+  },
+  // Seal check card
+  sealCheckCard: {
+    backgroundColor: '#FAFAFA',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  sealBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    borderColor: '#E5E7EB',
+    backgroundColor: '#fff',
+  },
+  sealBtnYesActive: {
+    backgroundColor: '#1B4332',
+    borderColor: '#1B4332',
+  },
+  sealBtnNoActive: {
+    backgroundColor: '#F44336',
+    borderColor: '#F44336',
+  },
+  sealBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#1A1D21',
   },
 });
